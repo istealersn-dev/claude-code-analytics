@@ -69,8 +69,8 @@ CREATE INDEX idx_sessions_project_name ON sessions(project_name);
 CREATE INDEX idx_sessions_model_name ON sessions(model_name);
 CREATE INDEX idx_sessions_session_id ON sessions(session_id);
 
+CREATE UNIQUE INDEX idx_session_metrics_session_id_unique ON session_metrics(session_id);
 CREATE INDEX idx_session_metrics_date_bucket ON session_metrics(date_bucket);
-CREATE INDEX idx_session_metrics_session_id ON session_metrics(session_id);
 CREATE INDEX idx_session_metrics_hour_bucket ON session_metrics(hour_bucket);
 CREATE INDEX idx_session_metrics_weekday ON session_metrics(weekday);
 
