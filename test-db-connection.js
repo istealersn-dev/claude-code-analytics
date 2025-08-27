@@ -3,7 +3,7 @@
 // Simple database connection test
 // Run with: node test-db-connection.js
 
-const { Client } = require('pg');
+import { Client } from 'pg';
 
 const client = new Client({
   host: 'localhost',
@@ -74,13 +74,7 @@ async function testConnection() {
   }
 }
 
-// Check if pg module is available
-try {
-  require('pg');
-} catch (error) {
-  console.log('📦 Installing pg dependency...');
-  console.log('Run: npm install pg');
-  process.exit(1);
-}
+// Check if database exists, if not create it first
+// You can run: createdb claude_code_analytics
 
 testConnection();

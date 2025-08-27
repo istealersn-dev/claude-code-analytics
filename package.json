@@ -4,22 +4,33 @@
   "description": "Personal usage analytics dashboard for Claude Code CLI with beautiful visualizations and detailed usage tracking",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx ts-node test/test-parser.ts",
+    "test:parser": "npx ts-node test/test-parser.ts",
+    "test:db": "npx ts-node test/test-database-insertion.ts",
     "dev": "npm run db:test && echo \"Ready to start development!\"",
+    "build": "npx tsc",
     "db:test": "node test-db-connection.js",
     "db:reset": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics -f schema.sql",
     "db:connect": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics"
   },
-  "keywords": ["claude-code", "analytics", "dashboard", "postgresql", "typescript", "tanstack"],
+  "keywords": [
+    "claude-code",
+    "analytics",
+    "dashboard",
+    "postgresql",
+    "typescript",
+    "tanstack"
+  ],
   "author": "Stanley Nadar",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   }
 }
