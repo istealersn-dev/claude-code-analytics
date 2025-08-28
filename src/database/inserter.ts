@@ -4,7 +4,8 @@ import {
   DatabaseSession, 
   DatabaseMessage, 
   SessionMetrics, 
-  ParsedSessionData 
+  ParsedSessionData,
+  SyncMetadata 
 } from '../types/index.js';
 
 export interface InsertionResult {
@@ -366,5 +367,139 @@ export class DatabaseInserter {
 
     const result = await this.db.query(query, [cutoffDate]);
     return result.rowCount || 0;
+  }
+
+  async getSyncMetadata(syncKey: string): Promise<SyncMetadata | null> {
+    const query = `
+      SELECT id, sync_key, last_sync_timestamp, files_processed, 
+             sessions_processed, sync_status, error_message,
+             created_at, updated_at
+      FROM sync_metadata 
+      WHERE sync_key = $1
+    `;
+
+    const result = await this.db.query(query, [syncKey]);
+    if (result.rows.length === 0) return null;
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      sync_key: row.sync_key,
+      last_sync_timestamp: row.last_sync_timestamp,
+      files_processed: row.files_processed,
+      sessions_processed: row.sessions_processed,
+      sync_status: row.sync_status,
+      error_message: row.error_message,
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    };
+  }
+
+  async upsertSyncMetadata(metadata: Omit<SyncMetadata, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
+    const query = `
+      INSERT INTO sync_metadata (
+        sync_key, last_sync_timestamp, files_processed, sessions_processed,
+        sync_status, error_message
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (sync_key) DO UPDATE SET
+        last_sync_timestamp = EXCLUDED.last_sync_timestamp,
+        files_processed = EXCLUDED.files_processed,
+        sessions_processed = EXCLUDED.sessions_processed,
+        sync_status = EXCLUDED.sync_status,
+        error_message = EXCLUDED.error_message,
+        updated_at = NOW()
+    `;
+
+    const values = [
+      metadata.sync_key,
+      metadata.last_sync_timestamp,
+      metadata.files_processed,
+      metadata.sessions_processed,
+      metadata.sync_status,
+      metadata.error_message
+    ];
+
+    await this.db.query(query, values);
+  }
+
+  async getLastSyncTimestamp(): Promise<Date | null> {
+    const metadata = await this.getSyncMetadata('global');
+    return metadata?.last_sync_timestamp || null;
+  }
+
+  async getSessionConflictInfo(sessionId: string): Promise<{
+    exists: boolean;
+    lastUpdated?: Date;
+    currentHash?: string;
+  }> {
+    const query = `
+      SELECT session_id, updated_at, 
+             md5(concat(
+               COALESCE(ended_at::text, ''),
+               COALESCE(duration_seconds::text, ''),
+               COALESCE(total_input_tokens::text, ''),
+               COALESCE(total_output_tokens::text, ''),
+               COALESCE(total_cost_usd::text, '')
+             )) as content_hash
+      FROM sessions 
+      WHERE session_id = $1
+    `;
+
+    const result = await this.db.query(query, [sessionId]);
+    
+    if (result.rows.length === 0) {
+      return { exists: false };
+    }
+
+    const row = result.rows[0];
+    return {
+      exists: true,
+      lastUpdated: row.updated_at,
+      currentHash: row.content_hash
+    };
+  }
+
+  async resolveSessionConflicts(
+    sessions: DatabaseSession[]
+  ): Promise<{
+    toInsert: DatabaseSession[];
+    toUpdate: DatabaseSession[];
+    toSkip: DatabaseSession[];
+  }> {
+    const toInsert: DatabaseSession[] = [];
+    const toUpdate: DatabaseSession[] = [];
+    const toSkip: DatabaseSession[] = [];
+
+    for (const session of sessions) {
+      const conflictInfo = await this.getSessionConflictInfo(session.session_id);
+      
+      if (!conflictInfo.exists) {
+        toInsert.push(session);
+        continue;
+      }
+
+      const sessionHash = this.calculateSessionHash(session);
+      
+      if (conflictInfo.currentHash !== sessionHash) {
+        toUpdate.push(session);
+      } else {
+        toSkip.push(session);
+      }
+    }
+
+    return { toInsert, toUpdate, toSkip };
+  }
+
+  private calculateSessionHash(session: DatabaseSession): string {
+    const crypto = require('crypto');
+    const content = [
+      session.ended_at?.toISOString() || '',
+      session.duration_seconds?.toString() || '',
+      session.total_input_tokens?.toString() || '',
+      session.total_output_tokens?.toString() || '',
+      session.total_cost_usd?.toString() || ''
+    ].join('');
+    
+    return crypto.createHash('md5').update(content).digest('hex');
   }
 }

@@ -5,6 +5,7 @@
 DROP TABLE IF EXISTS raw_messages CASCADE;
 DROP TABLE IF EXISTS session_metrics CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
+DROP TABLE IF EXISTS sync_metadata CASCADE;
 
 -- Core sessions table - metadata and timing
 CREATE TABLE sessions (
@@ -133,8 +134,32 @@ CREATE TRIGGER trigger_sessions_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Sync metadata for incremental data processing
+CREATE TABLE sync_metadata (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sync_key VARCHAR(255) UNIQUE NOT NULL, -- 'global' for full syncs, file paths for file-specific
+    last_sync_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    files_processed INTEGER DEFAULT 0,
+    sessions_processed INTEGER DEFAULT 0,
+    sync_status VARCHAR(50) DEFAULT 'completed', -- 'completed', 'in_progress', 'failed'
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for sync metadata
+CREATE INDEX idx_sync_metadata_sync_key ON sync_metadata(sync_key);
+CREATE INDEX idx_sync_metadata_last_sync ON sync_metadata(last_sync_timestamp);
+
+-- Trigger for sync metadata updated_at
+CREATE TRIGGER trigger_sync_metadata_updated_at
+    BEFORE UPDATE ON sync_metadata
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- Sample data retention policy (90 days as specified)
 -- This will be implemented as a scheduled job later
 COMMENT ON TABLE sessions IS 'Core session metadata with 90-day retention policy';
 COMMENT ON TABLE session_metrics IS 'Pre-aggregated analytics data for fast dashboard queries';
 COMMENT ON TABLE raw_messages IS 'Detailed message data for drill-down analysis';
+COMMENT ON TABLE sync_metadata IS 'Tracks last sync timestamps for incremental data processing';

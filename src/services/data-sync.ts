@@ -1,18 +1,23 @@
 import { JSONLParser } from '../parsers/jsonl-parser.js';
 import { DatabaseInserter, InsertionResult } from '../database/inserter.js';
 import { DatabaseConnection } from '../database/connection.js';
-import { ParsedSessionData, ParseError } from '../types/index.js';
+import { FileDiscoveryService } from '../utils/file-discovery.js';
+import { ParsedSessionData, ParseError, FileInfo } from '../types/index.js';
 
 export interface SyncOptions {
   dryRun?: boolean;
   maxFiles?: number;
   skipExisting?: boolean;
+  incremental?: boolean;
+  forceFullSync?: boolean;
 }
 
 export interface SyncResult {
   success: boolean;
   summary: {
     filesProcessed: number;
+    newFiles: number;
+    updatedFiles: number;
     sessionsInserted: number;
     messagesInserted: number;
     metricsInserted: number;
@@ -29,6 +34,7 @@ export interface SyncResult {
       sessionId: string;
       error: string;
     }>;
+    filesDiscovered: FileInfo[];
   };
   timing: {
     startTime: Date;
@@ -41,20 +47,28 @@ export class DataSyncService {
   private parser: JSONLParser;
   private inserter: DatabaseInserter;
   private db: DatabaseConnection;
+  private fileDiscovery: FileDiscoveryService;
 
-  constructor(db?: DatabaseConnection) {
+  constructor(db?: DatabaseConnection, claudeDataDir?: string) {
     this.db = db || DatabaseConnection.getInstance();
     this.parser = new JSONLParser();
     this.inserter = new DatabaseInserter(this.db);
+    this.fileDiscovery = new FileDiscoveryService(claudeDataDir);
   }
 
   async syncAllData(options: SyncOptions = {}): Promise<SyncResult> {
+    if (options.incremental && !options.forceFullSync) {
+      return await this.syncIncrementalData(options);
+    }
+
     const startTime = new Date();
     
     const result: SyncResult = {
       success: false,
       summary: {
         filesProcessed: 0,
+        newFiles: 0,
+        updatedFiles: 0,
         sessionsInserted: 0,
         messagesInserted: 0,
         metricsInserted: 0,
@@ -64,7 +78,8 @@ export class DataSyncService {
       details: {
         successful: [],
         failed: [],
-        insertionErrors: []
+        insertionErrors: [],
+        filesDiscovered: []
       },
       timing: {
         startTime,
@@ -74,7 +89,17 @@ export class DataSyncService {
     };
 
     try {
-      console.log('🚀 Starting data sync...');
+      console.log('🚀 Starting full data sync...');
+
+      // Mark sync as in progress
+      await this.inserter.upsertSyncMetadata({
+        sync_key: 'global',
+        last_sync_timestamp: startTime,
+        files_processed: 0,
+        sessions_processed: 0,
+        sync_status: 'in_progress',
+        error_message: undefined
+      });
       
       // Parse all JSONL files
       const parseResult = await this.parser.parseAllSessions();
@@ -147,11 +172,44 @@ export class DataSyncService {
         console.log(`✅ Insertion complete: ${result.summary.sessionsInserted} sessions, ${result.summary.messagesInserted} messages`);
       }
 
+      // Update sync metadata on success
+      if (result.success || result.details.insertionErrors.length === 0) {
+        await this.inserter.upsertSyncMetadata({
+          sync_key: 'global',
+          last_sync_timestamp: result.timing.endTime,
+          files_processed: result.summary.filesProcessed,
+          sessions_processed: result.summary.sessionsInserted,
+          sync_status: 'completed',
+          error_message: undefined
+        });
+      } else {
+        await this.inserter.upsertSyncMetadata({
+          sync_key: 'global',
+          last_sync_timestamp: result.timing.endTime,
+          files_processed: result.summary.filesProcessed,
+          sessions_processed: result.summary.sessionsInserted,
+          sync_status: 'failed',
+          error_message: `${result.details.insertionErrors.length} insertion errors occurred`
+        });
+      }
+
     } catch (error) {
       console.error('💥 Sync failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       result.details.insertionErrors.push({
         sessionId: 'sync_process',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage
+      });
+
+      // Update sync metadata with error
+      await this.inserter.upsertSyncMetadata({
+        sync_key: 'global',
+        last_sync_timestamp: startTime,
+        files_processed: result.summary.filesProcessed,
+        sessions_processed: result.summary.sessionsInserted,
+        sync_status: 'failed',
+        error_message: errorMessage
       });
     }
 
@@ -163,13 +221,15 @@ export class DataSyncService {
     return result;
   }
 
-  async syncSpecificFiles(filePaths: string[], options: SyncOptions = {}): Promise<SyncResult> {
+  async syncIncrementalData(options: SyncOptions = {}): Promise<SyncResult> {
     const startTime = new Date();
     
     const result: SyncResult = {
       success: false,
       summary: {
-        filesProcessed: filePaths.length,
+        filesProcessed: 0,
+        newFiles: 0,
+        updatedFiles: 0,
         sessionsInserted: 0,
         messagesInserted: 0,
         metricsInserted: 0,
@@ -179,7 +239,122 @@ export class DataSyncService {
       details: {
         successful: [],
         failed: [],
-        insertionErrors: []
+        insertionErrors: [],
+        filesDiscovered: []
+      },
+      timing: {
+        startTime,
+        endTime: new Date(),
+        durationMs: 0
+      }
+    };
+
+    try {
+      console.log('🔄 Starting incremental data sync...');
+
+      // Get last sync timestamp
+      const lastSyncTimestamp = await this.inserter.getLastSyncTimestamp();
+      
+      if (lastSyncTimestamp) {
+        console.log(`📅 Last sync: ${lastSyncTimestamp.toISOString()}`);
+      } else {
+        console.log('🆕 No previous sync found - performing full sync');
+        return await this.syncAllData({ ...options, forceFullSync: true });
+      }
+
+      // Discover new and updated files
+      const fileDiscoveryResult = await this.fileDiscovery.findNewAndUpdatedFiles(lastSyncTimestamp);
+      
+      result.details.filesDiscovered = fileDiscoveryResult.allFiles;
+      result.summary.newFiles = fileDiscoveryResult.newFiles.length;
+      result.summary.updatedFiles = fileDiscoveryResult.updatedFiles.length;
+
+      const filesToProcess = [...fileDiscoveryResult.newFiles, ...fileDiscoveryResult.updatedFiles];
+
+      if (filesToProcess.length === 0) {
+        console.log('✨ No new or updated files found');
+        result.success = true;
+        result.timing.endTime = new Date();
+        result.timing.durationMs = result.timing.endTime.getTime() - startTime.getTime();
+        return result;
+      }
+
+      console.log(`📁 Found ${fileDiscoveryResult.newFiles.length} new and ${fileDiscoveryResult.updatedFiles.length} updated files`);
+
+      // Limit files if specified
+      let filesToSync = filesToProcess;
+      if (options.maxFiles && options.maxFiles > 0) {
+        filesToSync = filesToProcess.slice(0, options.maxFiles);
+        console.log(`🔢 Limited to ${options.maxFiles} files`);
+      }
+
+      // Process each file
+      const filePaths = filesToSync.map(file => file.path);
+      const specificFilesResult = await this.syncSpecificFiles(filePaths, options);
+
+      // Merge results
+      result.summary.filesProcessed = specificFilesResult.summary.filesProcessed;
+      result.summary.sessionsInserted = specificFilesResult.summary.sessionsInserted;
+      result.summary.messagesInserted = specificFilesResult.summary.messagesInserted;
+      result.summary.metricsInserted = specificFilesResult.summary.metricsInserted;
+      result.summary.duplicatesSkipped = specificFilesResult.summary.duplicatesSkipped;
+      result.summary.errors = specificFilesResult.summary.errors;
+      
+      result.details.successful = specificFilesResult.details.successful;
+      result.details.failed = specificFilesResult.details.failed;
+      result.details.insertionErrors = specificFilesResult.details.insertionErrors;
+      result.success = specificFilesResult.success;
+
+      // Update sync metadata
+      if (result.success) {
+        await this.inserter.upsertSyncMetadata({
+          sync_key: 'global',
+          last_sync_timestamp: result.timing.endTime,
+          files_processed: result.summary.filesProcessed,
+          sessions_processed: result.summary.sessionsInserted,
+          sync_status: 'completed',
+          error_message: undefined
+        });
+      }
+
+      console.log(`✅ Incremental sync complete: ${result.summary.newFiles} new, ${result.summary.updatedFiles} updated files`);
+
+    } catch (error) {
+      console.error('💥 Incremental sync failed:', error);
+      result.details.insertionErrors.push({
+        sessionId: 'incremental_sync_process',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+
+    result.timing.endTime = new Date();
+    result.timing.durationMs = result.timing.endTime.getTime() - startTime.getTime();
+
+    console.log(`⏱️ Incremental sync completed in ${result.timing.durationMs}ms`);
+    
+    return result;
+  }
+
+  async syncSpecificFiles(filePaths: string[], options: SyncOptions = {}): Promise<SyncResult> {
+    const startTime = new Date();
+    
+    const result: SyncResult = {
+      success: false,
+      summary: {
+        filesProcessed: filePaths.length,
+        newFiles: 0,
+        updatedFiles: 0,
+        sessionsInserted: 0,
+        messagesInserted: 0,
+        metricsInserted: 0,
+        duplicatesSkipped: 0,
+        errors: 0
+      },
+      details: {
+        successful: [],
+        failed: [],
+        insertionErrors: [],
+        filesDiscovered: []
       },
       timing: {
         startTime,
@@ -275,5 +450,56 @@ export class DataSyncService {
 
   async healthCheck() {
     return await this.db.healthCheck();
+  }
+
+  async getSyncStatus() {
+    const syncMetadata = await this.inserter.getSyncMetadata('global');
+    const fileStats = await this.fileDiscovery.getFileStats();
+    const sessionStats = await this.inserter.getSessionStats();
+
+    return {
+      lastSync: syncMetadata,
+      fileSystem: fileStats,
+      database: sessionStats,
+      isHealthy: await this.db.testConnection()
+    };
+  }
+
+  async previewIncrementalSync(): Promise<{
+    newFiles: FileInfo[];
+    updatedFiles: FileInfo[];
+    estimatedSessions: number;
+  }> {
+    const lastSyncTimestamp = await this.inserter.getLastSyncTimestamp();
+    
+    if (!lastSyncTimestamp) {
+      const allFiles = await this.fileDiscovery.findClaudeCodeFiles();
+      return {
+        newFiles: allFiles,
+        updatedFiles: [],
+        estimatedSessions: allFiles.length
+      };
+    }
+
+    const fileDiscoveryResult = await this.fileDiscovery.findNewAndUpdatedFiles(lastSyncTimestamp);
+    
+    return {
+      newFiles: fileDiscoveryResult.newFiles,
+      updatedFiles: fileDiscoveryResult.updatedFiles,
+      estimatedSessions: fileDiscoveryResult.newFiles.length + fileDiscoveryResult.updatedFiles.length
+    };
+  }
+
+  async forceSyncMetadataReset(): Promise<void> {
+    console.log('🔄 Resetting sync metadata...');
+    await this.inserter.upsertSyncMetadata({
+      sync_key: 'global',
+      last_sync_timestamp: new Date(0), // Unix epoch
+      files_processed: 0,
+      sessions_processed: 0,
+      sync_status: 'completed',
+      error_message: undefined
+    });
+    console.log('✅ Sync metadata reset - next sync will be full sync');
   }
 }

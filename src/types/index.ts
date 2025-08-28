@@ -122,3 +122,23 @@ export interface ParseResult {
   errors: ParseError[];
   warnings: string[];
 }
+
+export interface SyncMetadata {
+  id?: string;
+  sync_key: string;
+  last_sync_timestamp: Date;
+  files_processed: number;
+  sessions_processed: number;
+  sync_status: 'completed' | 'in_progress' | 'failed';
+  error_message?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface FileInfo {
+  path: string;
+  modified_time: Date;
+  size: number;
+  is_new: boolean;
+  is_updated: boolean;
+}
