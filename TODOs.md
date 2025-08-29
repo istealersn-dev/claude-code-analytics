@@ -39,7 +39,7 @@
   - [ ] Data retention cleanup (90-day policy)
 
 - [ ] **1.5** API foundation
-  - [ ] Express.js or Fastify server setup
+  - [ ] Fastify server setup
   - [ ] Environment configuration management
   - [ ] Error handling middleware
   - [ ] Request logging and monitoring
