@@ -1,6 +1,6 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Pool, PoolClient, QueryResult } from 'pg';
-import * as fs from 'fs';
-import * as path from 'path';
 
 interface DatabaseConfig {
   host: string;
