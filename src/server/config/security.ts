@@ -1,7 +1,7 @@
-import { FastifyInstance } from 'fastify';
-import { AppConfig } from '../app.js';
+import type { FastifyInstance } from 'fastify';
+import type { AppConfig } from '../app.js';
 
-export async function setupSecurity(app: FastifyInstance, config: AppConfig): Promise<void> {
+export async function setupSecurity(app: FastifyInstance, _config: AppConfig): Promise<void> {
   // Register helmet plugin for security headers
   await app.register(import('@fastify/helmet'), {
     crossOriginEmbedderPolicy: false, // Allow embedding for dashboard
@@ -10,7 +10,7 @@ export async function setupSecurity(app: FastifyInstance, config: AppConfig): Pr
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+        imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
@@ -36,9 +36,9 @@ export async function setupSecurity(app: FastifyInstance, config: AppConfig): Pr
         error: 'Too Many Requests',
         message: 'Rate limit exceeded, retry in 1 minute',
         statusCode: 429,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-    }
+    },
   });
 
   // Register sensible plugin for additional utilities

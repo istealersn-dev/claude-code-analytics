@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { Pool, PoolClient, QueryResult } from 'pg';
+import type { PoolClient, QueryResult } from 'pg';
+import { Pool } from 'pg';
 
 interface DatabaseConfig {
   host: string;
@@ -33,7 +34,7 @@ export class DatabaseConnection {
 
     this.pool.on('error', (err) => {
       console.error('Unexpected error on idle client', err);
-      process.exit(-1);
+      throw new Error('Database connection lost');
     });
   }
 
@@ -50,27 +51,30 @@ export class DatabaseConnection {
   public static getDefaultConfig(): DatabaseConfig {
     return {
       host: process.env['DB_HOST'] || 'localhost',
-      port: parseInt(process.env['DB_PORT'] || '5432'),
+      port: Number.parseInt(process.env['DB_PORT'] || '5432', 10),
       database: process.env['DB_NAME'] || 'claude_code_analytics',
       user: process.env['DB_USER'] || process.env['USER'] || 'postgres',
       password: process.env['DB_PASSWORD'],
       ssl: process.env['NODE_ENV'] === 'production',
-      max: parseInt(process.env['DB_POOL_SIZE'] || '20'),
-      idleTimeoutMillis: parseInt(process.env['DB_IDLE_TIMEOUT'] || '30000'),
-      connectionTimeoutMillis: parseInt(process.env['DB_CONNECTION_TIMEOUT'] || '5000'),
+      max: Number.parseInt(process.env['DB_POOL_SIZE'] || '20', 10),
+      idleTimeoutMillis: Number.parseInt(process.env['DB_IDLE_TIMEOUT'] || '30000', 10),
+      connectionTimeoutMillis: Number.parseInt(process.env['DB_CONNECTION_TIMEOUT'] || '5000', 10),
     };
   }
 
-  public async query<T extends Record<string, any> = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+  public async query<T extends Record<string, unknown> = Record<string, unknown>>(
+    text: string,
+    params?: unknown[],
+  ): Promise<QueryResult<T>> {
     const start = Date.now();
     try {
       const result = await this.pool.query(text, params);
       const duration = Date.now() - start;
-      
+
       if (process.env['NODE_ENV'] === 'development') {
         console.log(`Query executed in ${duration}ms:`, text.substring(0, 100));
       }
-      
+
       return result;
     } catch (error) {
       console.error('Database query error:', error);
@@ -86,7 +90,7 @@ export class DatabaseConnection {
 
   public async transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.getClient();
-    
+
     try {
       await client.query('BEGIN');
       const result = await callback(client);
@@ -102,10 +106,12 @@ export class DatabaseConnection {
 
   public async testConnection(): Promise<boolean> {
     try {
-      const result = await this.query('SELECT NOW() as current_time, version() as version');
+      const result = await this.query<{ current_time: Date; version: string }>(
+        'SELECT NOW() as current_time, version() as version',
+      );
       console.log('✅ Database connection successful');
-      console.log('📅 Server time:', result.rows[0].current_time);
-      console.log('🔧 PostgreSQL version:', result.rows[0].version.split(',')[0]);
+      console.log('📅 Server time:', result.rows[0]?.current_time);
+      console.log('🔧 PostgreSQL version:', result.rows[0]?.version.split(',')[0]);
       return true;
     } catch (error) {
       console.error('❌ Database connection failed:', error);
@@ -115,13 +121,13 @@ export class DatabaseConnection {
 
   public async initializeSchema(): Promise<void> {
     const schemaPath = path.join(process.cwd(), 'schema.sql');
-    
+
     if (!fs.existsSync(schemaPath)) {
-      throw new Error('Schema file not found at: ' + schemaPath);
+      throw new Error(`Schema file not found at: ${schemaPath}`);
     }
 
     const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
-    
+
     try {
       await this.query(schemaSql);
       console.log('✅ Database schema initialized successfully');
@@ -164,9 +170,9 @@ export class DatabaseConnection {
       const start = Date.now();
       await this.query('SELECT 1');
       const latency = Date.now() - start;
-      
+
       const poolStats = await this.getStats();
-      
+
       return {
         status: 'healthy',
         details: {
@@ -175,7 +181,7 @@ export class DatabaseConnection {
           latency,
         },
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'unhealthy',
         details: {

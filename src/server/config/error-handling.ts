@@ -1,5 +1,5 @@
-import { FastifyInstance, FastifyError, FastifyRequest, FastifyReply } from 'fastify';
-import { AppConfig } from '../app.js';
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { AppConfig } from '../app.js';
 
 export interface ApiError {
   error: string;
@@ -7,37 +7,43 @@ export interface ApiError {
   statusCode: number;
   timestamp: string;
   requestId?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export async function setupErrorHandling(app: FastifyInstance, config: AppConfig): Promise<void> {
   // Global error handler
   app.setErrorHandler(async (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
-    const requestId = (typeof request.headers['x-request-id'] === 'string' ? request.headers['x-request-id'] : undefined) || request.id;
-    
+    const requestId =
+      (typeof request.headers['x-request-id'] === 'string'
+        ? request.headers['x-request-id']
+        : undefined) || request.id;
+
     // Log error details
-    request.log.error({
-      error: error.message,
-      stack: error.stack,
-      requestId,
-      url: request.url,
-      method: request.method,
-      statusCode: error.statusCode
-    }, 'Request error');
+    request.log.error(
+      {
+        error: error.message,
+        stack: error.stack,
+        requestId,
+        url: request.url,
+        method: request.method,
+        statusCode: error.statusCode,
+      },
+      'Request error',
+    );
 
     const apiError: ApiError = {
       error: error.name || 'Internal Server Error',
       message: error.message || 'An unexpected error occurred',
       statusCode: error.statusCode || 500,
       timestamp: new Date().toISOString(),
-      requestId
+      requestId,
     };
 
     // Add error details in development mode
     if (config.nodeEnv === 'development') {
       apiError.details = {
         stack: error.stack,
-        validation: error.validation || undefined
+        validation: error.validation || undefined,
       };
     }
 
@@ -63,28 +69,37 @@ export async function setupErrorHandling(app: FastifyInstance, config: AppConfig
       message: `Route ${request.method} ${request.url} not found`,
       statusCode: 404,
       timestamp: new Date().toISOString(),
-      requestId: (typeof request.headers['x-request-id'] === 'string' ? request.headers['x-request-id'] : undefined) || request.id
+      requestId:
+        (typeof request.headers['x-request-id'] === 'string'
+          ? request.headers['x-request-id']
+          : undefined) || request.id,
     };
 
     return reply.status(404).send(apiError);
   });
 
   // Request/response logging hook
-  app.addHook('onRequest', async (request, reply) => {
-    request.log.info({
-      method: request.method,
-      url: request.url,
-      userAgent: request.headers['user-agent'],
-      ip: request.ip
-    }, 'Incoming request');
+  app.addHook('onRequest', async (request, _reply) => {
+    request.log.info(
+      {
+        method: request.method,
+        url: request.url,
+        userAgent: request.headers['user-agent'],
+        ip: request.ip,
+      },
+      'Incoming request',
+    );
   });
 
   app.addHook('onResponse', async (request, reply) => {
-    request.log.info({
-      method: request.method,
-      url: request.url,
-      statusCode: reply.statusCode,
-      responseTime: reply.elapsedTime
-    }, 'Request completed');
+    request.log.info(
+      {
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        responseTime: reply.elapsedTime,
+      },
+      'Request completed',
+    );
   });
 }

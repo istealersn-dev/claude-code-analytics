@@ -1,6 +1,6 @@
+import { promises as fs } from 'node:fs';
+import { join } from 'node:path';
 import { DatabaseConnection } from './connection.js';
-import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
 
 export interface Migration {
   id: string;
@@ -52,16 +52,20 @@ export class MigrationManager {
 
   private async getNextBatchNumber(): Promise<number> {
     const result = await this.db.query(
-      'SELECT COALESCE(MAX(batch), 0) + 1 as next_batch FROM migrations'
+      'SELECT COALESCE(MAX(batch), 0) + 1 as next_batch FROM migrations',
     );
-    return result.rows[0].next_batch;
+    const row = result.rows[0];
+    if (!row) {
+      return 1;
+    }
+    return Number((row as any)['next_batch'] || 0) + (Number((row as any)['next_batch'] || 0) > 0 ? 0 : 1);
   }
 
   private async getAppliedMigrations(): Promise<MigrationRecord[]> {
     const result = await this.db.query(
-      'SELECT id, name, applied_at, batch FROM migrations ORDER BY applied_at ASC'
+      'SELECT id, name, applied_at, batch FROM migrations ORDER BY applied_at ASC',
     );
-    return result.rows;
+    return result.rows as unknown as MigrationRecord[];
   }
 
   private async getMigrationFiles(): Promise<Migration[]> {
@@ -74,7 +78,7 @@ export class MigrationManager {
 
     const files = await fs.readdir(this.migrationsPath);
     const migrationFiles = files
-      .filter(file => file.endsWith('.sql') || file.endsWith('.js') || file.endsWith('.ts'))
+      .filter((file) => file.endsWith('.sql') || file.endsWith('.js') || file.endsWith('.ts'))
       .sort();
 
     const migrations: Migration[] = [];
@@ -93,7 +97,7 @@ export class MigrationManager {
   private async parseMigrationFile(filePath: string, fileName: string): Promise<Migration | null> {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
-      
+
       if (fileName.endsWith('.sql')) {
         return this.parseSQLMigration(content, fileName);
       } else if (fileName.endsWith('.js') || fileName.endsWith('.ts')) {
@@ -112,21 +116,21 @@ export class MigrationManager {
     const match = fileName.match(/^(\d{14})_(.+)\.sql$/);
     const id = match?.[1] ?? fileName.replace('.sql', '');
     const name = match?.[2]?.replace(/_/g, ' ') ?? fileName.replace('.sql', '');
-    
+
     // Split content by -- DOWN marker
-    const parts = content.split(/^\s*--\s*DOWN\s*$/mi);
+    const parts = content.split(/^\s*--\s*DOWN\s*$/im);
     const up = parts[0]?.trim() ?? '';
     const down = parts[1]?.trim() ?? '';
-    
+
     // Parse timestamp from ID or use current time
     let timestamp: Date;
     if (match && id) {
-      const year = parseInt(id.substring(0, 4));
-      const month = parseInt(id.substring(4, 6)) - 1;
-      const day = parseInt(id.substring(6, 8));
-      const hour = parseInt(id.substring(8, 10));
-      const minute = parseInt(id.substring(10, 12));
-      const second = parseInt(id.substring(12, 14));
+      const year = parseInt(id.substring(0, 4), 10);
+      const month = parseInt(id.substring(4, 6), 10) - 1;
+      const day = parseInt(id.substring(6, 8), 10);
+      const hour = parseInt(id.substring(8, 10), 10);
+      const minute = parseInt(id.substring(10, 12), 10);
+      const second = parseInt(id.substring(12, 14), 10);
       timestamp = new Date(year, month, day, hour, minute, second);
     } else {
       timestamp = new Date();
@@ -144,12 +148,12 @@ export class MigrationManager {
 
     let timestamp: Date;
     if (match && id) {
-      const year = parseInt(id.substring(0, 4));
-      const month = parseInt(id.substring(4, 6)) - 1;
-      const day = parseInt(id.substring(6, 8));
-      const hour = parseInt(id.substring(8, 10));
-      const minute = parseInt(id.substring(10, 12));
-      const second = parseInt(id.substring(12, 14));
+      const year = parseInt(id.substring(0, 4), 10);
+      const month = parseInt(id.substring(4, 6), 10) - 1;
+      const day = parseInt(id.substring(6, 8), 10);
+      const hour = parseInt(id.substring(8, 10), 10);
+      const minute = parseInt(id.substring(10, 12), 10);
+      const second = parseInt(id.substring(12, 14), 10);
       timestamp = new Date(year, month, day, hour, minute, second);
     } else {
       timestamp = new Date();
@@ -160,27 +164,27 @@ export class MigrationManager {
       name,
       up: `-- JavaScript migration: ${filePath}`,
       down: `-- JavaScript rollback: ${filePath}`,
-      timestamp
+      timestamp,
     };
   }
 
   async getStatus(): Promise<MigrationStatus> {
     await this.ensureMigrationsTable();
-    
+
     const [applied, allMigrations] = await Promise.all([
       this.getAppliedMigrations(),
-      this.getMigrationFiles()
+      this.getMigrationFiles(),
     ]);
 
-    const appliedIds = new Set(applied.map(m => m.id));
-    const pending = allMigrations.filter(m => !appliedIds.has(m.id));
+    const appliedIds = new Set(applied.map((m) => m.id));
+    const pending = allMigrations.filter((m) => !appliedIds.has(m.id));
 
     return {
       applied,
       pending,
       total: allMigrations.length,
       appliedCount: applied.length,
-      pendingCount: pending.length
+      pendingCount: pending.length,
     };
   }
 
@@ -190,10 +194,10 @@ export class MigrationManager {
     errors: Array<{ migration: Migration; error: string }>;
   }> {
     console.log('🚀 Running pending migrations...');
-    
+
     await this.ensureMigrationsTable();
     const status = await this.getStatus();
-    
+
     if (status.pendingCount === 0) {
       console.log('✨ No pending migrations found');
       return { success: true, applied: [], errors: [] };
@@ -206,33 +210,33 @@ export class MigrationManager {
     for (const migration of status.pending) {
       try {
         console.log(`📋 Applying migration: ${migration.name} (${migration.id})`);
-        
+
         await this.db.transaction(async (client) => {
           // Run the migration
           await client.query(migration.up);
-          
+
           // Record the migration
-          await client.query(
-            'INSERT INTO migrations (id, name, batch) VALUES ($1, $2, $3)',
-            [migration.id, migration.name, batch]
-          );
+          await client.query('INSERT INTO migrations (id, name, batch) VALUES ($1, $2, $3)', [
+            migration.id,
+            migration.name,
+            batch,
+          ]);
         });
 
         applied.push(migration);
         console.log(`✅ Applied migration: ${migration.name}`);
-        
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(`❌ Failed to apply migration ${migration.name}:`, errorMessage);
         errors.push({ migration, error: errorMessage });
-        
+
         // Stop on first error to maintain consistency
         break;
       }
     }
 
     const success = errors.length === 0;
-    
+
     if (success) {
       console.log(`🎉 Successfully applied ${applied.length} migrations`);
     } else {
@@ -248,17 +252,17 @@ export class MigrationManager {
     errors: Array<{ migration: MigrationRecord; error: string }>;
   }> {
     console.log(`🔄 Rolling back ${steps} migration(s)...`);
-    
+
     await this.ensureMigrationsTable();
-    
+
     // Get the last applied migrations
     const result = await this.db.query(
       'SELECT id, name, applied_at, batch FROM migrations ORDER BY applied_at DESC LIMIT $1',
-      [steps]
+      [steps],
     );
 
-    const migrationsToRollback: MigrationRecord[] = result.rows;
-    
+    const migrationsToRollback: MigrationRecord[] = result.rows as unknown as MigrationRecord[];
+
     if (migrationsToRollback.length === 0) {
       console.log('✨ No migrations to rollback');
       return { success: true, rolledBack: [], errors: [] };
@@ -266,50 +270,49 @@ export class MigrationManager {
 
     // Get migration files to find the down scripts
     const allMigrations = await this.getMigrationFiles();
-    const migrationMap = new Map(allMigrations.map(m => [m.id, m]));
+    const migrationMap = new Map(allMigrations.map((m) => [m.id, m]));
 
     const rolledBack: MigrationRecord[] = [];
     const errors: Array<{ migration: MigrationRecord; error: string }> = [];
 
     for (const appliedMigration of migrationsToRollback) {
       const migrationFile = migrationMap.get(appliedMigration.id);
-      
+
       if (!migrationFile) {
         errors.push({
           migration: appliedMigration,
-          error: `Migration file not found for ${appliedMigration.id}`
+          error: `Migration file not found for ${appliedMigration.id}`,
         });
         continue;
       }
 
       try {
         console.log(`📋 Rolling back migration: ${appliedMigration.name} (${appliedMigration.id})`);
-        
+
         await this.db.transaction(async (client) => {
           // Run the rollback
           if (migrationFile.down) {
             await client.query(migrationFile.down);
           }
-          
+
           // Remove the migration record
           await client.query('DELETE FROM migrations WHERE id = $1', [appliedMigration.id]);
         });
 
         rolledBack.push(appliedMigration);
         console.log(`✅ Rolled back migration: ${appliedMigration.name}`);
-        
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(`❌ Failed to rollback migration ${appliedMigration.name}:`, errorMessage);
         errors.push({ migration: appliedMigration, error: errorMessage });
-        
+
         // Stop on first error to maintain consistency
         break;
       }
     }
 
     const success = errors.length === 0;
-    
+
     if (success) {
       console.log(`🎉 Successfully rolled back ${rolledBack.length} migrations`);
     } else {
@@ -321,11 +324,11 @@ export class MigrationManager {
 
   async reset(): Promise<void> {
     console.log('🔄 Resetting all migrations...');
-    
+
     await this.ensureMigrationsTable();
-    
+
     const applied = await this.getAppliedMigrations();
-    
+
     if (applied.length === 0) {
       console.log('✨ No migrations to reset');
       return;
@@ -341,7 +344,7 @@ export class MigrationManager {
       .toISOString()
       .replace(/[-:T]/g, '')
       .replace(/\.\d{3}Z$/, '');
-    
+
     const fileName = `${id}_${name.replace(/\s+/g, '_').toLowerCase()}.sql`;
     const filePath = join(this.migrationsPath, fileName);
 
@@ -365,7 +368,7 @@ export class MigrationManager {
     }
 
     await fs.writeFile(filePath, content);
-    
+
     console.log(`✅ Created migration: ${fileName}`);
     return filePath;
   }

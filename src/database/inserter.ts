@@ -1,12 +1,12 @@
-import { PoolClient } from 'pg';
-import { DatabaseConnection } from './connection.js';
-import { 
-  DatabaseSession, 
-  DatabaseMessage, 
-  SessionMetrics, 
+import type { PoolClient } from 'pg';
+import type {
+  DatabaseMessage,
+  DatabaseSession,
   ParsedSessionData,
-  SyncMetadata 
+  SessionMetrics,
+  SyncMetadata,
 } from '../types/index.js';
+import { DatabaseConnection } from './connection.js';
 
 export interface InsertionResult {
   success: boolean;
@@ -17,7 +17,7 @@ export interface InsertionResult {
   };
   errors: Array<{
     type: 'session' | 'message' | 'metric';
-    data: any;
+    data: Record<string, unknown>;
     error: string;
   }>;
   duplicatesSkipped: number;
@@ -35,7 +35,7 @@ export class DatabaseInserter {
       success: false,
       inserted: { sessions: 0, messages: 0, metrics: 0 },
       errors: [],
-      duplicatesSkipped: 0
+      duplicatesSkipped: 0,
     };
 
     return await this.db.transaction(async (client) => {
@@ -66,8 +66,8 @@ export class DatabaseInserter {
       } catch (error) {
         result.errors.push({
           type: 'session',
-          data: sessionData.session,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          data: sessionData.session as unknown as Record<string, unknown>,
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         throw error;
       }
@@ -79,7 +79,7 @@ export class DatabaseInserter {
       success: false,
       inserted: { sessions: 0, messages: 0, metrics: 0 },
       errors: [],
-      duplicatesSkipped: 0
+      duplicatesSkipped: 0,
     };
 
     return await this.db.transaction(async (client) => {
@@ -94,8 +94,8 @@ export class DatabaseInserter {
         } catch (error) {
           result.errors.push({
             type: 'session',
-            data: sessionData.session,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            data: sessionData.session as unknown as Record<string, unknown>,
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
@@ -106,14 +106,14 @@ export class DatabaseInserter {
   }
 
   private async insertSessionDataInTransaction(
-    client: PoolClient, 
-    sessionData: ParsedSessionData
+    client: PoolClient,
+    sessionData: ParsedSessionData,
   ): Promise<InsertionResult> {
     const result: InsertionResult = {
       success: false,
       inserted: { sessions: 0, messages: 0, metrics: 0 },
       errors: [],
-      duplicatesSkipped: 0
+      duplicatesSkipped: 0,
     };
 
     // Insert session
@@ -142,8 +142,8 @@ export class DatabaseInserter {
   }
 
   private async insertOrUpdateSession(
-    client: PoolClient, 
-    session: DatabaseSession
+    client: PoolClient,
+    session: DatabaseSession,
   ): Promise<{ inserted: boolean; sessionId?: string }> {
     const insertQuery = `
       INSERT INTO sessions (
@@ -179,29 +179,29 @@ export class DatabaseInserter {
       session.total_cost_usd,
       session.tools_used,
       session.cache_hit_count,
-      session.cache_miss_count
+      session.cache_miss_count,
     ];
 
     const result = await client.query(insertQuery, values);
     const row = result.rows[0];
-    
+
     return {
       inserted: row.inserted,
-      sessionId: row.id
+      sessionId: row.id,
     };
   }
 
   private async batchInsertMessages(
-    client: PoolClient, 
-    messages: DatabaseMessage[]
-  ): Promise<{ inserted: number; errors: any[] }> {
-    const errors: any[] = [];
+    client: PoolClient,
+    messages: DatabaseMessage[],
+  ): Promise<{ inserted: number; errors: Array<{ type: 'session' | 'message' | 'metric'; data: Record<string, unknown>; error: string }> }> {
+    const errors: Array<{ type: 'session' | 'message' | 'metric'; data: Record<string, unknown>; error: string }> = [];
     let inserted = 0;
 
     // First, get the actual session UUID from session_id string
     const sessionIdQuery = 'SELECT id FROM sessions WHERE session_id = $1';
     const sessionResult = await client.query(sessionIdQuery, [messages[0]?.session_id]);
-    
+
     if (sessionResult.rows.length === 0) {
       throw new Error(`Session not found: ${messages[0]?.session_id}`);
     }
@@ -215,20 +215,23 @@ export class DatabaseInserter {
     const batchSize = 100;
     for (let i = 0; i < messages.length; i += batchSize) {
       const batch = messages.slice(i, i + batchSize);
-      
+
       const insertQuery = `
         INSERT INTO raw_messages (
           session_id, message_index, role, content, content_length,
           input_tokens, output_tokens, tool_name, tool_input, tool_output,
           timestamp, processing_time_ms
-        ) VALUES ${batch.map((_, idx) => 
-          `($${idx * 12 + 1}, $${idx * 12 + 2}, $${idx * 12 + 3}, $${idx * 12 + 4}, $${idx * 12 + 5}, 
+        ) VALUES ${batch
+          .map(
+            (_, idx) =>
+              `($${idx * 12 + 1}, $${idx * 12 + 2}, $${idx * 12 + 3}, $${idx * 12 + 4}, $${idx * 12 + 5}, 
            $${idx * 12 + 6}, $${idx * 12 + 7}, $${idx * 12 + 8}, $${idx * 12 + 9}, $${idx * 12 + 10}, 
-           $${idx * 12 + 11}, $${idx * 12 + 12})`
-        ).join(', ')}
+           $${idx * 12 + 11}, $${idx * 12 + 12})`,
+          )
+          .join(', ')}
       `;
 
-      const values = batch.flatMap(msg => [
+      const values = batch.flatMap((msg) => [
         sessionUuid,
         msg.message_index,
         msg.role,
@@ -240,7 +243,7 @@ export class DatabaseInserter {
         msg.tool_input,
         msg.tool_output,
         msg.timestamp,
-        msg.processing_time_ms
+        msg.processing_time_ms,
       ]);
 
       try {
@@ -249,8 +252,8 @@ export class DatabaseInserter {
       } catch (error) {
         errors.push({
           type: 'message',
-          data: batch,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          data: batch as unknown as Record<string, unknown>,
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
@@ -259,13 +262,13 @@ export class DatabaseInserter {
   }
 
   private async insertOrUpdateMetrics(
-    client: PoolClient, 
-    metrics: SessionMetrics
+    client: PoolClient,
+    metrics: SessionMetrics,
   ): Promise<{ inserted: boolean }> {
     // Get session UUID
     const sessionIdQuery = 'SELECT id FROM sessions WHERE session_id = $1';
     const sessionResult = await client.query(sessionIdQuery, [metrics.session_id]);
-    
+
     if (sessionResult.rows.length === 0) {
       throw new Error(`Session not found: ${metrics.session_id}`);
     }
@@ -305,7 +308,7 @@ export class DatabaseInserter {
       metrics.duration_seconds,
       metrics.message_count,
       metrics.tool_usage_count,
-      metrics.cache_efficiency
+      metrics.cache_efficiency,
     ];
 
     const result = await client.query(insertQuery, values);
@@ -321,8 +324,8 @@ export class DatabaseInserter {
       WHERE session_id = ANY($1)
     `;
 
-    const result = await this.db.query(query, [sessionIds]);
-    return result.rows.map(row => row.session_id);
+    const result = await this.db.query<{session_id: string}>(query, [sessionIds]);
+    return result.rows.map((row) => row.session_id);
   }
 
   async getSessionStats(): Promise<{
@@ -342,17 +345,32 @@ export class DatabaseInserter {
       LEFT JOIN raw_messages m ON s.id = m.session_id
     `;
 
-    const result = await this.db.query(query);
+    const result = await this.db.query<{
+      total_sessions: string;
+      total_messages: string;
+      total_cost: string;
+      earliest_session: Date | null;
+      latest_session: Date | null;
+    }>(query);
     const row = result.rows[0];
 
+    if (!row) {
+      return {
+        totalSessions: 0,
+        totalMessages: 0,
+        totalCost: 0,
+        dateRange: { earliest: null, latest: null },
+      };
+    }
+
     return {
-      totalSessions: parseInt(row.total_sessions),
-      totalMessages: parseInt(row.total_messages),
-      totalCost: parseFloat(row.total_cost),
+      totalSessions: Number.parseInt(row.total_sessions, 10),
+      totalMessages: Number.parseInt(row.total_messages, 10),
+      totalCost: Number.parseFloat(row.total_cost),
       dateRange: {
         earliest: row.earliest_session,
-        latest: row.latest_session
-      }
+        latest: row.latest_session,
+      },
     };
   }
 
@@ -378,10 +396,22 @@ export class DatabaseInserter {
       WHERE sync_key = $1
     `;
 
-    const result = await this.db.query(query, [syncKey]);
+    const result = await this.db.query<{
+      id: string;
+      sync_key: string;
+      last_sync_timestamp: Date;
+      files_processed: number;
+      sessions_processed: number;
+      sync_status: 'completed' | 'in_progress' | 'failed';
+      error_message?: string;
+      created_at?: Date;
+      updated_at?: Date;
+    }>(query, [syncKey]);
     if (result.rows.length === 0) return null;
 
     const row = result.rows[0];
+    if (!row) return null;
+    
     return {
       id: row.id,
       sync_key: row.sync_key,
@@ -391,11 +421,13 @@ export class DatabaseInserter {
       sync_status: row.sync_status,
       error_message: row.error_message,
       created_at: row.created_at,
-      updated_at: row.updated_at
+      updated_at: row.updated_at,
     };
   }
 
-  async upsertSyncMetadata(metadata: Omit<SyncMetadata, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
+  async upsertSyncMetadata(
+    metadata: Omit<SyncMetadata, 'id' | 'created_at' | 'updated_at'>,
+  ): Promise<void> {
     const query = `
       INSERT INTO sync_metadata (
         sync_key, last_sync_timestamp, files_processed, sessions_processed,
@@ -416,7 +448,7 @@ export class DatabaseInserter {
       metadata.files_processed,
       metadata.sessions_processed,
       metadata.sync_status,
-      metadata.error_message
+      metadata.error_message,
     ];
 
     await this.db.query(query, values);
@@ -445,23 +477,27 @@ export class DatabaseInserter {
       WHERE session_id = $1
     `;
 
-    const result = await this.db.query(query, [sessionId]);
-    
+    const result = await this.db.query<{
+      session_id: string;
+      updated_at?: Date;
+      content_hash?: string;
+    }>(query, [sessionId]);
+
     if (result.rows.length === 0) {
       return { exists: false };
     }
 
     const row = result.rows[0];
+    if (!row) return { exists: false };
+    
     return {
       exists: true,
       lastUpdated: row.updated_at,
-      currentHash: row.content_hash
+      currentHash: row.content_hash,
     };
   }
 
-  async resolveSessionConflicts(
-    sessions: DatabaseSession[]
-  ): Promise<{
+  async resolveSessionConflicts(sessions: DatabaseSession[]): Promise<{
     toInsert: DatabaseSession[];
     toUpdate: DatabaseSession[];
     toSkip: DatabaseSession[];
@@ -472,14 +508,14 @@ export class DatabaseInserter {
 
     for (const session of sessions) {
       const conflictInfo = await this.getSessionConflictInfo(session.session_id);
-      
+
       if (!conflictInfo.exists) {
         toInsert.push(session);
         continue;
       }
 
       const sessionHash = this.calculateSessionHash(session);
-      
+
       if (conflictInfo.currentHash !== sessionHash) {
         toUpdate.push(session);
       } else {
@@ -491,15 +527,15 @@ export class DatabaseInserter {
   }
 
   private calculateSessionHash(session: DatabaseSession): string {
-    const crypto = require('crypto');
+    const crypto = require('node:crypto');
     const content = [
       session.ended_at?.toISOString() || '',
       session.duration_seconds?.toString() || '',
       session.total_input_tokens?.toString() || '',
       session.total_output_tokens?.toString() || '',
-      session.total_cost_usd?.toString() || ''
+      session.total_cost_usd?.toString() || '',
     ].join('');
-    
+
     return crypto.createHash('md5').update(content).digest('hex');
   }
 }

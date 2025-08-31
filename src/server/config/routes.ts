@@ -1,8 +1,8 @@
-import { FastifyInstance } from 'fastify';
-import { healthRoutes } from '../routes/health.js';
+import type { FastifyInstance } from 'fastify';
 import { analyticsRoutes } from '../routes/analytics.js';
-import { syncRoutes } from '../routes/sync.js';
+import { healthRoutes } from '../routes/health.js';
 import { retentionRoutes } from '../routes/retention.js';
+import { syncRoutes } from '../routes/sync.js';
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   // Register API routes with prefix

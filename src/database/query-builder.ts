@@ -53,11 +53,11 @@ export interface TokenAnalysis {
   weeklyTokens: { input: TimeSeriesPoint[]; output: TimeSeriesPoint[] };
   monthlyTokens: { input: TimeSeriesPoint[]; output: TimeSeriesPoint[] };
   tokensByModel: Array<{ model: string; input_tokens: number; output_tokens: number }>;
-  tokenEfficiency: Array<{ 
-    date: string; 
-    input_tokens: number; 
-    output_tokens: number; 
-    efficiency_ratio: number 
+  tokenEfficiency: Array<{
+    date: string;
+    input_tokens: number;
+    output_tokens: number;
+    efficiency_ratio: number;
   }>;
 }
 
@@ -68,9 +68,9 @@ export class AnalyticsQueryBuilder {
     this.db = db || DatabaseConnection.getInstance();
   }
 
-  private buildWhereClause(filters: AnalyticsFilters): { whereClause: string; params: any[] } {
+  private buildWhereClause(filters: AnalyticsFilters): { whereClause: string; params: unknown[] } {
     const conditions: string[] = [];
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     if (filters.dateFrom) {
@@ -104,7 +104,7 @@ export class AnalyticsQueryBuilder {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    
+
     return { whereClause, params };
   }
 
@@ -164,16 +164,25 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(metricsQuery, params);
     const row = result.rows[0];
+    
+    if (!row) {
+      throw new Error('No data found for metrics query');
+    }
+
+    const metrics = (row as any)['metrics'] || {};
+    const topModels = (row as any)['top_models'] || [];
+    const topProjects = (row as any)['top_projects'] || [];
+    const topTools = (row as any)['top_tools'] || [];
 
     return {
-      totalSessions: row.metrics.total_sessions,
-      totalCost: parseFloat(row.metrics.total_cost),
-      totalInputTokens: row.metrics.total_input_tokens,
-      totalOutputTokens: row.metrics.total_output_tokens,
-      averageSessionDuration: parseFloat(row.metrics.avg_duration),
-      topModels: row.top_models || [],
-      topProjects: row.top_projects || [],
-      topTools: row.top_tools || []
+      totalSessions: metrics.total_sessions || 0,
+      totalCost: parseFloat(metrics.total_cost || '0'),
+      totalInputTokens: metrics.total_input_tokens || 0,
+      totalOutputTokens: metrics.total_output_tokens || 0,
+      averageSessionDuration: parseFloat(metrics.avg_duration || '0'),
+      topModels: Array.isArray(topModels) ? topModels : [],
+      topProjects: Array.isArray(topProjects) ? topProjects : [],
+      topTools: Array.isArray(topTools) ? topTools : [],
     };
   }
 
@@ -263,34 +272,55 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(costQuery, params);
     const row = result.rows[0];
+    
+    if (!row) {
+      throw new Error('No data found for cost analysis query');
+    }
+
+    const dailyCosts = (row as any)['daily_costs'] || [];
+    const weeklyCosts = (row as any)['weekly_costs'] || [];
+    const monthlyCosts = (row as any)['monthly_costs'] || [];
+    const costByModel = (row as any)['cost_by_model'] || [];
+    const costByProject = (row as any)['cost_by_project'] || [];
+    const mostExpensiveSessions = (row as any)['most_expensive_sessions'] || [];
 
     return {
-      dailyCosts: (row.daily_costs || []).map((item: any) => ({
-        date: item.date,
-        value: parseFloat(item.value),
-        count: item.count
-      })),
-      weeklyCosts: (row.weekly_costs || []).map((item: any) => ({
-        date: item.date,
-        value: parseFloat(item.value),
-        count: item.count
-      })),
-      monthlyCosts: (row.monthly_costs || []).map((item: any) => ({
-        date: item.date,
-        value: parseFloat(item.value),
-        count: item.count
-      })),
-      costByModel: (row.cost_by_model || []).map((item: any) => ({
-        model: item.model || 'Unknown',
-        cost: parseFloat(item.cost),
-        percentage: parseFloat(item.percentage) || 0
-      })),
-      costByProject: (row.cost_by_project || []).map((item: any) => ({
-        project: item.project || 'Unknown',
-        cost: parseFloat(item.cost),
-        percentage: parseFloat(item.percentage) || 0
-      })),
-      mostExpensiveSessions: row.most_expensive_sessions || []
+      dailyCosts: Array.isArray(dailyCosts) ? dailyCosts.map(
+        (item: { date: string; value: string; count: number }) => ({
+          date: item.date,
+          value: parseFloat(item.value),
+          count: item.count,
+        }),
+      ) : [],
+      weeklyCosts: Array.isArray(weeklyCosts) ? weeklyCosts.map(
+        (item: { date: string; value: string; count: number }) => ({
+          date: item.date,
+          value: parseFloat(item.value),
+          count: item.count,
+        }),
+      ) : [],
+      monthlyCosts: Array.isArray(monthlyCosts) ? monthlyCosts.map(
+        (item: { date: string; value: string; count: number }) => ({
+          date: item.date,
+          value: parseFloat(item.value),
+          count: item.count,
+        }),
+      ) : [],
+      costByModel: Array.isArray(costByModel) ? costByModel.map(
+        (item: { model: string; cost: string; percentage: string }) => ({
+          model: item.model || 'Unknown',
+          cost: parseFloat(item.cost),
+          percentage: parseFloat(item.percentage) || 0,
+        }),
+      ) : [],
+      costByProject: Array.isArray(costByProject) ? costByProject.map(
+        (item: { project: string; cost: string; percentage: string }) => ({
+          project: item.project || 'Unknown',
+          cost: parseFloat(item.cost),
+          percentage: parseFloat(item.percentage) || 0,
+        }),
+      ) : [],
+      mostExpensiveSessions: Array.isArray(mostExpensiveSessions) ? mostExpensiveSessions : [],
     };
   }
 
@@ -371,26 +401,38 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(tokenQuery, params);
     const row = result.rows[0];
+    
+    if (!row) {
+      throw new Error('No data found for token analysis query');
+    }
 
-    const transformTokenData = (data: any[]) => ({
-      input: data.map(item => ({
+    const dailyTokens = (row as any)['daily_tokens'] || [];
+    const weeklyTokens = (row as any)['weekly_tokens'] || [];
+    const monthlyTokens = (row as any)['monthly_tokens'] || [];
+    const tokensByModel = (row as any)['tokens_by_model'] || [];
+    const tokenEfficiency = (row as any)['token_efficiency'] || [];
+
+    const transformTokenData = (
+      data: Array<{ date: string; input_tokens: number; output_tokens: number; count: number }>,
+    ) => ({
+      input: data.map((item) => ({
         date: item.date,
         value: item.input_tokens,
-        count: item.count
+        count: item.count,
       })),
-      output: data.map(item => ({
+      output: data.map((item) => ({
         date: item.date,
         value: item.output_tokens,
-        count: item.count
-      }))
+        count: item.count,
+      })),
     });
 
     return {
-      dailyTokens: transformTokenData(row.daily_tokens || []),
-      weeklyTokens: transformTokenData(row.weekly_tokens || []),
-      monthlyTokens: transformTokenData(row.monthly_tokens || []),
-      tokensByModel: row.tokens_by_model || [],
-      tokenEfficiency: row.token_efficiency || []
+      dailyTokens: transformTokenData(Array.isArray(dailyTokens) ? dailyTokens : []),
+      weeklyTokens: transformTokenData(Array.isArray(weeklyTokens) ? weeklyTokens : []),
+      monthlyTokens: transformTokenData(Array.isArray(monthlyTokens) ? monthlyTokens : []),
+      tokensByModel: Array.isArray(tokensByModel) ? tokensByModel : [],
+      tokenEfficiency: Array.isArray(tokenEfficiency) ? tokenEfficiency : [],
     };
   }
 
@@ -400,7 +442,7 @@ export class AnalyticsQueryBuilder {
     hasMore: boolean;
   }> {
     const { whereClause, params } = this.buildWhereClause(filters);
-    
+
     let nextParamIndex = params.length + 1;
     let limitClause = '';
     let offsetClause = '';
@@ -444,17 +486,26 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(sessionsQuery, params);
     const row = result.rows[0];
+    
+    if (!row) {
+      return {
+        sessions: [],
+        total: 0,
+        hasMore: false,
+      };
+    }
 
-    const sessions = row.sessions || [];
-    const total = parseInt(row.total) || 0;
-    const hasMore = filters.offset !== undefined && filters.limit !== undefined 
-      ? (filters.offset + filters.limit) < total 
-      : false;
+    const sessions = (row as any)['sessions'] || [];
+    const total = parseInt(String((row as any)['total'] || 0), 10);
+    const hasMore =
+      filters.offset !== undefined && filters.limit !== undefined
+        ? filters.offset + filters.limit < total
+        : false;
 
     return {
-      sessions,
+      sessions: Array.isArray(sessions) ? sessions : [],
       total,
-      hasMore
+      hasMore,
     };
   }
 
@@ -483,12 +534,12 @@ export class AnalyticsQueryBuilder {
     `;
 
     const result = await this.db.query(query, [sessionId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
 
-    return result.rows[0];
+    return result.rows[0] as unknown as SessionSummary;
   }
 
   async getDashboardSummary(filters: AnalyticsFilters = {}): Promise<{
@@ -537,13 +588,26 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(summaryQuery, params);
     const row = result.rows[0];
+    
+    if (!row) {
+      return {
+        totalSessions: 0,
+        totalCost: 0,
+        totalTokens: 0,
+        averageCostPerSession: 0,
+        recentSessions: [],
+      };
+    }
+
+    const summary = (row as any)['summary'] || {};
+    const recentSessions = (row as any)['recent_sessions'] || [];
 
     return {
-      totalSessions: row.summary.total_sessions,
-      totalCost: parseFloat(row.summary.total_cost),
-      totalTokens: row.summary.total_tokens,
-      averageCostPerSession: parseFloat(row.summary.avg_cost_per_session),
-      recentSessions: row.recent_sessions || []
+      totalSessions: summary.total_sessions || 0,
+      totalCost: parseFloat(summary.total_cost || '0'),
+      totalTokens: summary.total_tokens || 0,
+      averageCostPerSession: parseFloat(summary.avg_cost_per_session || '0'),
+      recentSessions: Array.isArray(recentSessions) ? recentSessions : [],
     };
   }
 }

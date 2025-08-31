@@ -116,16 +116,17 @@ async function testDatabaseInsertion() {
     console.log('🔍 Data Integrity Check:');
     
     for (const row of validationResult.rows) {
-      const tokenMatch = row.total_input_tokens === parseInt(row.sum_input_tokens) &&
-                         row.total_output_tokens === parseInt(row.sum_output_tokens);
+      const rowData = row as any;
+      const tokenMatch = rowData['total_input_tokens'] === parseInt(String(rowData['sum_input_tokens'])) &&
+                         rowData['total_output_tokens'] === parseInt(String(rowData['sum_output_tokens']));
       
-      console.log(`   - Session ${row.session_id}:`);
-      console.log(`     Messages: ${row.message_count}`);
+      console.log(`   - Session ${rowData['session_id']}:`);
+      console.log(`     Messages: ${rowData['message_count']}`);
       console.log(`     Token integrity: ${tokenMatch ? '✅' : '❌'}`);
       
       if (!tokenMatch) {
-        console.log(`     Expected: ${row.total_input_tokens}/${row.total_output_tokens}`);
-        console.log(`     Actual: ${row.sum_input_tokens}/${row.sum_output_tokens}`);
+        console.log(`     Expected: ${rowData['total_input_tokens']}/${rowData['total_output_tokens']}`);
+        console.log(`     Actual: ${rowData['sum_input_tokens']}/${rowData['sum_output_tokens']}`);
       }
     }
 

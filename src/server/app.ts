@@ -1,11 +1,11 @@
-import fastify, { FastifyInstance } from 'fastify';
+import fastify, { type FastifyInstance } from 'fastify';
 import 'dotenv/config';
 import { DatabaseConnection } from '../database/connection.js';
-import { setupSecurity } from './config/security.js';
-import { setupCors } from './config/cors.js';
 import { setupCompression } from './config/compression.js';
+import { setupCors } from './config/cors.js';
 import { setupErrorHandling } from './config/error-handling.js';
 import { registerRoutes } from './config/routes.js';
+import { setupSecurity } from './config/security.js';
 
 export interface AppConfig {
   port: number;
@@ -16,25 +16,31 @@ export interface AppConfig {
   enableSwagger: boolean;
 }
 
-export async function createApp(config?: Partial<AppConfig>): Promise<{ app: FastifyInstance; config: AppConfig }> {
+export async function createApp(
+  config?: Partial<AppConfig>,
+): Promise<{ app: FastifyInstance; config: AppConfig }> {
   const defaultConfig: AppConfig = {
-    port: parseInt(process.env['PORT'] || '3001'),
+    port: parseInt(process.env['PORT'] || '3001', 10),
     host: process.env['HOST'] || '0.0.0.0',
     nodeEnv: process.env['NODE_ENV'] || 'development',
     corsOrigins: process.env['CORS_ORIGINS']?.split(',') || ['http://localhost:3000'],
     logLevel: process.env['LOG_LEVEL'] || 'info',
-    enableSwagger: process.env['ENABLE_SWAGGER'] === 'true' || process.env['NODE_ENV'] === 'development'
+    enableSwagger:
+      process.env['ENABLE_SWAGGER'] === 'true' || process.env['NODE_ENV'] === 'development',
   };
 
   const appConfig = { ...defaultConfig, ...config };
-  
+
   const app = fastify({
-    logger: appConfig.nodeEnv !== 'test' ? {
-      level: appConfig.logLevel
-    } : false,
+    logger:
+      appConfig.nodeEnv !== 'test'
+        ? {
+            level: appConfig.logLevel,
+          }
+        : false,
     trustProxy: true,
     bodyLimit: 10 * 1024 * 1024, // 10MB
-    requestIdHeader: 'x-request-id'
+    requestIdHeader: 'x-request-id',
   });
 
   // Setup middleware and plugins
@@ -47,7 +53,7 @@ export async function createApp(config?: Partial<AppConfig>): Promise<{ app: Fas
   await registerRoutes(app);
 
   // Root endpoint
-  app.get('/', async (request, reply) => {
+  app.get('/', async (_request, _reply) => {
     return {
       name: 'Claude Code Analytics API',
       version: '1.0.0',
@@ -57,8 +63,8 @@ export async function createApp(config?: Partial<AppConfig>): Promise<{ app: Fas
         health: '/api/health',
         analytics: '/api/analytics',
         sync: '/api/sync',
-        retention: '/api/retention'
-      }
+        retention: '/api/retention',
+      },
     };
   });
 
@@ -72,12 +78,12 @@ export async function startServer(config?: Partial<AppConfig>) {
   try {
     const dbConfig = DatabaseConnection.getDefaultConfig();
     const db = DatabaseConnection.getInstance(dbConfig);
-    
+
     const isHealthy = await db.testConnection();
     if (!isHealthy) {
       throw new Error('Database connection failed');
     }
-    
+
     console.log('✅ Database connection established');
   } catch (error) {
     console.error('❌ Failed to connect to database:', error);
@@ -89,13 +95,13 @@ export async function startServer(config?: Partial<AppConfig>) {
   try {
     const address = await app.listen({
       port: appConfig.port,
-      host: appConfig.host
+      host: appConfig.host,
     });
-    
+
     console.log(`🌐 Server running at ${address}`);
     console.log(`📝 Environment: ${appConfig.nodeEnv}`);
     console.log(`🏥 Health check: ${address}/api/health`);
-    
+
     if (appConfig.nodeEnv === 'development') {
       console.log('\n📋 Available endpoints:');
       console.log('  GET  /api/health           - Health check');
@@ -115,15 +121,15 @@ export async function startServer(config?: Partial<AppConfig>) {
   // Graceful shutdown
   const gracefulShutdown = async (signal: string) => {
     console.log(`\n📋 Received ${signal}, shutting down gracefully...`);
-    
+
     try {
       await app.close();
       console.log('🔌 HTTP server closed');
-      
+
       const db = DatabaseConnection.getInstance();
       await db.close();
       console.log('🔌 Database connections closed');
-      
+
       console.log('👋 Server shutdown complete');
       process.exit(0);
     } catch (error) {

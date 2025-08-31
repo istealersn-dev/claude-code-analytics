@@ -48,44 +48,44 @@ export class DataRetentionManager {
   constructor(db?: DatabaseConnection) {
     this.db = db || DatabaseConnection.getInstance();
     this.defaultConfig = {
-      sessionRetentionDays: parseInt(process.env['RETENTION_DAYS'] || '90'),
-      messageRetentionDays: parseInt(process.env['MESSAGE_RETENTION_DAYS'] || '90'),
-      metricsRetentionDays: parseInt(process.env['METRICS_RETENTION_DAYS'] || '90'),
-      syncMetadataRetentionDays: parseInt(process.env['SYNC_RETENTION_DAYS'] || '30'),
-      batchSize: parseInt(process.env['RETENTION_BATCH_SIZE'] || '1000'),
-      dryRun: false
+      sessionRetentionDays: parseInt(process.env['RETENTION_DAYS'] || '90', 10),
+      messageRetentionDays: parseInt(process.env['MESSAGE_RETENTION_DAYS'] || '90', 10),
+      metricsRetentionDays: parseInt(process.env['METRICS_RETENTION_DAYS'] || '90', 10),
+      syncMetadataRetentionDays: parseInt(process.env['SYNC_RETENTION_DAYS'] || '30', 10),
+      batchSize: parseInt(process.env['RETENTION_BATCH_SIZE'] || '1000', 10),
+      dryRun: false,
     };
   }
 
   async getRetentionStats(config: Partial<RetentionConfig> = {}): Promise<RetentionStats> {
     const fullConfig = { ...this.defaultConfig, ...config };
-    
+
     const tables = [
       {
         name: 'sessions',
         retentionDays: fullConfig.sessionRetentionDays,
-        dateColumn: 'started_at'
+        dateColumn: 'started_at',
       },
       {
         name: 'raw_messages',
         retentionDays: fullConfig.messageRetentionDays,
-        dateColumn: 'timestamp'
+        dateColumn: 'timestamp',
       },
       {
         name: 'session_metrics',
         retentionDays: fullConfig.metricsRetentionDays,
-        dateColumn: 'created_at'
+        dateColumn: 'created_at',
       },
       {
         name: 'sync_metadata',
         retentionDays: fullConfig.syncMetadataRetentionDays,
-        dateColumn: 'created_at'
-      }
+        dateColumn: 'created_at',
+      },
     ];
 
     const stats: RetentionStats = {
       tables: [],
-      totalEligibleRecords: 0
+      totalEligibleRecords: 0,
     };
 
     for (const table of tables) {
@@ -116,13 +116,23 @@ export class DataRetentionManager {
         const result = await this.db.query(query, [cutoffDate]);
         const row = result.rows[0];
 
+        if (!row) {
+          stats.tables.push({
+            table: table.name,
+            totalRecords: 0,
+            eligibleForDeletion: 0,
+          });
+          continue;
+        }
+
+        const rowData = row as any;
         const tableStats = {
           table: table.name,
-          totalRecords: parseInt(row.total_records),
-          eligibleForDeletion: parseInt(row.eligible_for_deletion),
-          oldestRecord: row.oldest_record,
-          newestRecord: row.newest_record,
-          sizeOnDisk: row.size_on_disk
+          totalRecords: parseInt(String(rowData['total_records'] || 0), 10),
+          eligibleForDeletion: parseInt(String(rowData['eligible_for_deletion'] || 0), 10),
+          oldestRecord: rowData['oldest_record'] ? new Date(rowData['oldest_record']) : undefined,
+          newestRecord: rowData['newest_record'] ? new Date(rowData['newest_record']) : undefined,
+          sizeOnDisk: String(rowData['size_on_disk'] || '0 bytes'),
         };
 
         stats.tables.push(tableStats);
@@ -132,7 +142,7 @@ export class DataRetentionManager {
         stats.tables.push({
           table: table.name,
           totalRecords: 0,
-          eligibleForDeletion: 0
+          eligibleForDeletion: 0,
         });
       }
     }
@@ -149,7 +159,7 @@ export class DataRetentionManager {
     console.log(`💬 Message retention: ${fullConfig.messageRetentionDays} days`);
     console.log(`📊 Metrics retention: ${fullConfig.metricsRetentionDays} days`);
     console.log(`🔄 Sync metadata retention: ${fullConfig.syncMetadataRetentionDays} days`);
-    
+
     if (fullConfig.dryRun) {
       console.log('🧪 Running in DRY RUN mode - no data will be deleted');
     }
@@ -160,14 +170,14 @@ export class DataRetentionManager {
         sessions: 0,
         messages: 0,
         metrics: 0,
-        syncMetadata: 0
+        syncMetadata: 0,
       },
       errors: [],
       timing: {
         startTime,
         endTime: new Date(),
-        durationMs: 0
-      }
+        durationMs: 0,
+      },
     };
 
     try {
@@ -177,7 +187,7 @@ export class DataRetentionManager {
         'timestamp',
         fullConfig.messageRetentionDays,
         fullConfig.batchSize,
-        fullConfig.dryRun
+        fullConfig.dryRun,
       );
       result.deleted.messages = messagesDeleted;
 
@@ -187,7 +197,7 @@ export class DataRetentionManager {
         'created_at',
         fullConfig.metricsRetentionDays,
         fullConfig.batchSize,
-        fullConfig.dryRun
+        fullConfig.dryRun,
       );
       result.deleted.metrics = metricsDeleted;
 
@@ -197,7 +207,7 @@ export class DataRetentionManager {
         'started_at',
         fullConfig.sessionRetentionDays,
         fullConfig.batchSize,
-        fullConfig.dryRun
+        fullConfig.dryRun,
       );
       result.deleted.sessions = sessionsDeleted;
 
@@ -207,17 +217,18 @@ export class DataRetentionManager {
         'created_at',
         fullConfig.syncMetadataRetentionDays,
         fullConfig.batchSize,
-        fullConfig.dryRun
+        fullConfig.dryRun,
       );
       result.deleted.syncMetadata = syncDeleted;
 
       // Run VACUUM ANALYZE to reclaim space and update statistics
-      if (!fullConfig.dryRun && (
-        result.deleted.sessions > 0 ||
-        result.deleted.messages > 0 ||
-        result.deleted.metrics > 0 ||
-        result.deleted.syncMetadata > 0
-      )) {
+      if (
+        !fullConfig.dryRun &&
+        (result.deleted.sessions > 0 ||
+          result.deleted.messages > 0 ||
+          result.deleted.metrics > 0 ||
+          result.deleted.syncMetadata > 0)
+      ) {
         console.log('🔧 Running VACUUM ANALYZE to reclaim space...');
         await this.db.query('VACUUM ANALYZE');
         console.log('✅ Database optimization complete');
@@ -226,18 +237,17 @@ export class DataRetentionManager {
       result.success = result.errors.length === 0;
 
       const totalDeleted = Object.values(result.deleted).reduce((sum, count) => sum + count, 0);
-      
+
       if (fullConfig.dryRun) {
         console.log(`🧪 DRY RUN: Would delete ${totalDeleted} records`);
       } else {
         console.log(`✅ Cleanup complete: Deleted ${totalDeleted} records`);
       }
-
     } catch (error) {
       console.error('💥 Cleanup failed:', error);
       result.errors.push({
         table: 'general',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
 
@@ -245,7 +255,7 @@ export class DataRetentionManager {
     result.timing.durationMs = result.timing.endTime.getTime() - startTime.getTime();
 
     console.log(`⏱️ Cleanup completed in ${result.timing.durationMs}ms`);
-    
+
     return result;
   }
 
@@ -254,12 +264,14 @@ export class DataRetentionManager {
     dateColumn: string,
     retentionDays: number,
     batchSize: number,
-    dryRun: boolean
+    dryRun: boolean,
   ): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-    console.log(`🗑️ Cleaning up ${tableName} (older than ${cutoffDate.toISOString().split('T')[0]})`);
+    console.log(
+      `🗑️ Cleaning up ${tableName} (older than ${cutoffDate.toISOString().split('T')[0]})`,
+    );
 
     // First, count how many records would be deleted
     const countQuery = `
@@ -269,7 +281,12 @@ export class DataRetentionManager {
     `;
 
     const countResult = await this.db.query(countQuery, [cutoffDate]);
-    const totalToDelete = parseInt(countResult.rows[0].count);
+    const row = countResult.rows[0];
+    if (!row) {
+      console.log(`  ✨ No records found in ${tableName}`);
+      return 0;
+    }
+    const totalToDelete = parseInt(String((row as any)['count'] || 0), 10);
 
     if (totalToDelete === 0) {
       console.log(`  ✨ No old records found in ${tableName}`);
@@ -298,7 +315,7 @@ export class DataRetentionManager {
 
       const deleteResult = await this.db.query(deleteQuery, [cutoffDate, batchSize]);
       const deletedInBatch = deleteResult.rowCount || 0;
-      
+
       if (deletedInBatch === 0) {
         break; // No more records to delete
       }
@@ -306,11 +323,13 @@ export class DataRetentionManager {
       totalDeleted += deletedInBatch;
       batchCount++;
 
-      console.log(`  📦 Batch ${batchCount}: Deleted ${deletedInBatch} records from ${tableName} (${totalDeleted}/${totalToDelete})`);
+      console.log(
+        `  📦 Batch ${batchCount}: Deleted ${deletedInBatch} records from ${tableName} (${totalDeleted}/${totalToDelete})`,
+      );
 
       // Small delay to prevent overwhelming the database
       if (batchCount % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
@@ -325,12 +344,14 @@ export class DataRetentionManager {
     console.log('⚠️ Automatic scheduling not yet implemented - run manually via API');
   }
 
-  async getOldestRecords(limit: number = 10): Promise<Array<{
-    table: string;
-    id: string;
-    date: Date;
-    age_days: number;
-  }>> {
+  async getOldestRecords(limit: number = 10): Promise<
+    Array<{
+      table: string;
+      id: string;
+      date: Date;
+      age_days: number;
+    }>
+  > {
     const query = `
       SELECT 'sessions' as table, session_id as id, started_at as date, 
              EXTRACT(days FROM NOW() - started_at) as age_days
@@ -359,7 +380,7 @@ export class DataRetentionManager {
     `;
 
     const result = await this.db.query(query, [limit]);
-    return result.rows;
+    return result.rows as Array<{ table: string; id: string; date: Date; age_days: number }>;
   }
 
   async validateRetentionPolicy(): Promise<{
@@ -376,7 +397,9 @@ export class DataRetentionManager {
     }
 
     if (this.defaultConfig.messageRetentionDays < this.defaultConfig.sessionRetentionDays) {
-      warnings.push('Message retention is shorter than session retention - orphaned sessions may occur');
+      warnings.push(
+        'Message retention is shorter than session retention - orphaned sessions may occur',
+      );
     }
 
     // Check database size
@@ -384,17 +407,21 @@ export class DataRetentionManager {
     const totalEligible = stats.totalEligibleRecords;
 
     if (totalEligible > 10000) {
-      recommendations.push('Large number of records eligible for deletion - consider running cleanup in smaller batches');
+      recommendations.push(
+        'Large number of records eligible for deletion - consider running cleanup in smaller batches',
+      );
     }
 
     if (totalEligible === 0) {
-      recommendations.push('No records eligible for deletion - retention policy may be too generous');
+      recommendations.push(
+        'No records eligible for deletion - retention policy may be too generous',
+      );
     }
 
     return {
       isValid: warnings.length === 0,
       warnings,
-      recommendations
+      recommendations,
     };
   }
 }

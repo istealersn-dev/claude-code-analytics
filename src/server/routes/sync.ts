@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { DataSyncService } from '../../services/data-sync.js';
 
 // TypeScript interfaces for request bodies
@@ -18,20 +18,20 @@ interface SyncFilesBody {
 export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   const syncService = new DataSyncService();
   // Get sync status
-  app.get('/status', async (request, reply) => {
+  app.get('/status', async (_request, reply) => {
     const status = await syncService.getSyncStatus();
-    
+
     return reply.send({
       success: true,
       data: status,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 
   // Preview incremental sync (dry run)
-  app.get('/preview', async (request, reply) => {
+  app.get('/preview', async (_request, reply) => {
     const preview = await syncService.previewIncrementalSync();
-    
+
     return reply.send({
       success: true,
       data: {
@@ -39,19 +39,23 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
         updatedFiles: preview.updatedFiles.length,
         estimatedSessions: preview.estimatedSessions,
         files: {
-          new: preview.newFiles.map(file => ({
-            path: file.path.split('/').pop(), // Just filename for privacy
-            size: file.size,
-            modifiedTime: file.modified_time
-          })).slice(0, 10), // Limit for response size
-          updated: preview.updatedFiles.map(file => ({
-            path: file.path.split('/').pop(),
-            size: file.size,
-            modifiedTime: file.modified_time
-          })).slice(0, 10)
-        }
+          new: preview.newFiles
+            .map((file) => ({
+              path: file.path.split('/').pop(), // Just filename for privacy
+              size: file.size,
+              modifiedTime: file.modified_time,
+            }))
+            .slice(0, 10), // Limit for response size
+          updated: preview.updatedFiles
+            .map((file) => ({
+              path: file.path.split('/').pop(),
+              size: file.size,
+              modifiedTime: file.modified_time,
+            }))
+            .slice(0, 10),
+        },
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 
@@ -62,22 +66,24 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
       dryRun = false,
       maxFiles,
       skipExisting = false,
-      forceFullSync = false
+      forceFullSync = false,
     } = request.body;
 
     // Validate parameters
     if (typeof incremental !== 'boolean') {
       return reply.status(400).send(app.httpErrors.badRequest('incremental must be a boolean'));
     }
-    
+
     if (typeof dryRun !== 'boolean') {
       return reply.status(400).send(app.httpErrors.badRequest('dryRun must be a boolean'));
     }
 
     if (maxFiles !== undefined) {
-      const maxFilesNum = parseInt(maxFiles as string);
-      if (isNaN(maxFilesNum) || maxFilesNum < 1 || maxFilesNum > 1000) {
-        return reply.status(400).send(app.httpErrors.badRequest('maxFiles must be a number between 1 and 1000'));
+      const maxFilesNum = parseInt(maxFiles as string, 10);
+      if (Number.isNaN(maxFilesNum) || maxFilesNum < 1 || maxFilesNum > 1000) {
+        return reply
+          .status(400)
+          .send(app.httpErrors.badRequest('maxFiles must be a number between 1 and 1000'));
       }
     }
 
@@ -86,13 +92,13 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     const result = await syncService.syncAllData({
       incremental,
       dryRun,
-      maxFiles: maxFiles ? parseInt(maxFiles as string) : undefined,
+      maxFiles: maxFiles ? parseInt(maxFiles as string, 10) : undefined,
       skipExisting,
-      forceFullSync
+      forceFullSync,
     });
 
     const statusCode = result.success ? 200 : 207; // 207 Multi-Status for partial success
-    
+
     return reply.status(statusCode).send({
       success: result.success,
       data: {
@@ -101,14 +107,17 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
           startTime: result.timing.startTime,
           endTime: result.timing.endTime,
           durationMs: result.timing.durationMs,
-          durationHuman: `${(result.timing.durationMs / 1000).toFixed(2)}s`
+          durationHuman: `${(result.timing.durationMs / 1000).toFixed(2)}s`,
         },
-        errors: result.details.insertionErrors.length > 0 ? {
-          count: result.details.insertionErrors.length,
-          details: result.details.insertionErrors.slice(0, 10) // Limit error details
-        } : undefined
+        errors:
+          result.details.insertionErrors.length > 0
+            ? {
+                count: result.details.insertionErrors.length,
+                details: result.details.insertionErrors.slice(0, 10), // Limit error details
+              }
+            : undefined,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 
@@ -117,25 +126,28 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     const { filePaths, dryRun = false } = request.body;
 
     if (!Array.isArray(filePaths) || filePaths.length === 0) {
-      return reply.status(400).send(app.httpErrors.badRequest('filePaths must be a non-empty array'));
+      return reply
+        .status(400)
+        .send(app.httpErrors.badRequest('filePaths must be a non-empty array'));
     }
 
     if (filePaths.length > 100) {
-      return reply.status(400).send(app.httpErrors.badRequest('Cannot process more than 100 files at once'));
+      return reply
+        .status(400)
+        .send(app.httpErrors.badRequest('Cannot process more than 100 files at once'));
     }
 
     // Validate file paths
-    const invalidPaths = filePaths.filter(path => 
-      typeof path !== 'string' || 
-      !path.endsWith('.jsonl') ||
-      path.includes('..') // Basic security check
+    const invalidPaths = filePaths.filter(
+      (path) => typeof path !== 'string' || !path.endsWith('.jsonl') || path.includes('..'), // Basic security check
     );
 
     if (invalidPaths.length > 0) {
-      return reply.status(400).send(app.httpErrors.badRequest(
-        'Invalid file paths detected',
-        { invalidPaths: invalidPaths.slice(0, 5) }
-      ));
+      return reply.status(400).send(
+        app.httpErrors.badRequest('Invalid file paths detected', {
+          invalidPaths: invalidPaths.slice(0, 5),
+        }),
+      );
     }
 
     console.log(`🎯 Syncing ${filePaths.length} specific files via API...`);
@@ -143,7 +155,7 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     const result = await syncService.syncSpecificFiles(filePaths, { dryRun });
 
     const statusCode = result.success ? 200 : 207;
-    
+
     return reply.status(statusCode).send({
       success: result.success,
       data: {
@@ -152,39 +164,42 @@ export const syncRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
           startTime: result.timing.startTime,
           endTime: result.timing.endTime,
           durationMs: result.timing.durationMs,
-          durationHuman: `${(result.timing.durationMs / 1000).toFixed(2)}s`
+          durationHuman: `${(result.timing.durationMs / 1000).toFixed(2)}s`,
         },
         processedFiles: filePaths.length,
-        errors: result.details.insertionErrors.length > 0 ? {
-          count: result.details.insertionErrors.length,
-          details: result.details.insertionErrors.slice(0, 10)
-        } : undefined
+        errors:
+          result.details.insertionErrors.length > 0
+            ? {
+                count: result.details.insertionErrors.length,
+                details: result.details.insertionErrors.slice(0, 10),
+              }
+            : undefined,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 
   // Reset sync metadata (force next sync to be full)
-  app.post('/reset', async (request, reply) => {
+  app.post('/reset', async (_request, reply) => {
     console.log('🔄 Resetting sync metadata via API...');
-    
+
     await syncService.forceSyncMetadataReset();
-    
+
     return reply.send({
       success: true,
       message: 'Sync metadata reset successfully. Next sync will be a full sync.',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 
   // Get data statistics
-  app.get('/stats', async (request, reply) => {
+  app.get('/stats', async (_request, reply) => {
     const stats = await syncService.getDataStats();
-    
+
     return reply.send({
       success: true,
       data: stats,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 };

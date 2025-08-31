@@ -1,7 +1,7 @@
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
-import { FileInfo } from '../types/index.js';
+import { promises as fs } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import type { FileInfo } from '../types/index.js';
 
 export class FileDiscoveryService {
   private claudeDataDir: string;
@@ -45,34 +45,32 @@ export class FileDiscoveryService {
       return {
         newFiles: allFiles,
         updatedFiles: [],
-        allFiles
+        allFiles,
       };
     }
 
-    const newFiles = allFiles.filter(file => 
-      file.modified_time > lastSyncTimestamp
-    );
+    const newFiles = allFiles.filter((file) => file.modified_time > lastSyncTimestamp);
 
-    const updatedFiles = allFiles.filter(file => {
+    const updatedFiles = allFiles.filter((file) => {
       const isModifiedAfterSync = file.modified_time > lastSyncTimestamp;
       const isNotNew = file.modified_time <= lastSyncTimestamp;
       return isModifiedAfterSync && isNotNew;
     });
 
-    newFiles.forEach(file => file.is_new = true);
-    updatedFiles.forEach(file => file.is_updated = true);
+    newFiles.forEach((file) => (file.is_new = true));
+    updatedFiles.forEach((file) => (file.is_updated = true));
 
     return {
       newFiles,
       updatedFiles,
-      allFiles
+      allFiles,
     };
   }
 
   async getFileInfo(filePath: string): Promise<FileInfo | null> {
     try {
       const stats = await fs.stat(filePath);
-      
+
       if (!stats.isFile() || !filePath.endsWith('.jsonl')) {
         return null;
       }
@@ -82,9 +80,9 @@ export class FileDiscoveryService {
         modified_time: stats.mtime,
         size: stats.size,
         is_new: false,
-        is_updated: false
+        is_updated: false,
       };
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -110,9 +108,7 @@ export class FileDiscoveryService {
   private async getDirectories(path: string): Promise<string[]> {
     try {
       const entries = await fs.readdir(path, { withFileTypes: true });
-      return entries
-        .filter(entry => entry.isDirectory())
-        .map(entry => entry.name);
+      return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
     } catch {
       return [];
     }
@@ -152,36 +148,38 @@ export class FileDiscoveryService {
     directories: string[];
   }> {
     const files = await this.findClaudeCodeFiles();
-    
+
     if (files.length === 0) {
       return {
         totalFiles: 0,
         totalSize: 0,
         oldestFile: null,
         newestFile: null,
-        directories: []
+        directories: [],
       };
     }
 
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    const modifiedTimes = files.map(file => file.modified_time.getTime());
+    const modifiedTimes = files.map((file) => file.modified_time.getTime());
     const oldestFile = new Date(Math.min(...modifiedTimes));
     const newestFile = new Date(Math.max(...modifiedTimes));
 
-    const directories = [...new Set(
-      files.map(file => {
-        const relativePath = file.path.replace(this.claudeDataDir, '');
-        const parts = relativePath.split('/').filter(Boolean);
-        return parts[0] || '';
-      })
-    )].filter(Boolean);
+    const directories = [
+      ...new Set(
+        files.map((file) => {
+          const relativePath = file.path.replace(this.claudeDataDir, '');
+          const parts = relativePath.split('/').filter(Boolean);
+          return parts[0] || '';
+        }),
+      ),
+    ].filter(Boolean);
 
     return {
       totalFiles: files.length,
       totalSize,
       oldestFile,
       newestFile,
-      directories
+      directories,
     };
   }
 }

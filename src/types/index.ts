@@ -24,13 +24,13 @@ export interface ClaudeCodeMessage {
 
 export interface ToolCall {
   name: string;
-  input: any;
+  input: Record<string, unknown>;
   id?: string;
 }
 
 export interface ToolResult {
   tool_call_id?: string;
-  content: any;
+  content: string | Record<string, unknown>;
   error?: string;
 }
 
