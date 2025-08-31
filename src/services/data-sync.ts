@@ -165,6 +165,7 @@ export class DataSyncService {
         // Track insertion errors
         for (const error of insertionResult.errors) {
           result.details.insertionErrors.push({
+            // biome-ignore lint/suspicious/noExplicitAny: error.data structure is dynamic from external source
             sessionId: (error.data as any)?.['session_id'] || 'unknown',
             error: error.error,
           });
@@ -414,6 +415,7 @@ export class DataSyncService {
 
         for (const error of insertionResult.errors) {
           result.details.insertionErrors.push({
+            // biome-ignore lint/suspicious/noExplicitAny: error.data structure is dynamic from external source
             sessionId: (error.data as any)?.['session_id'] || 'unknown',
             error: error.error,
           });

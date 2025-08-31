@@ -121,6 +121,7 @@ export class JSONLParser {
   private parseMessage(data: unknown, _lineNumber: number): ClaudeCodeMessage | null {
     if (!data || typeof data !== 'object') return null;
 
+    // biome-ignore lint/suspicious/noExplicitAny: Parsing dynamic JSON data with unknown structure
     const obj = data as any;
 
     const message: ClaudeCodeMessage = {
