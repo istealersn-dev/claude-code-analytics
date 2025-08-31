@@ -1,5 +1,8 @@
 const API_BASE_URL = '/api'
 
+// Define parameter type for analytics endpoints
+type AnalyticsParams = Record<string, string | number | boolean | undefined>;
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message)
@@ -44,16 +47,16 @@ export const api = {
   
   // Analytics endpoints
   analytics: {
-    summary: (params?: Record<string, any>) => 
-      apiRequest(`/analytics/summary${params ? '?' + new URLSearchParams(params) : ''}`),
-    usage: (params?: Record<string, any>) => 
-      apiRequest(`/analytics${params ? '?' + new URLSearchParams(params) : ''}`),
-    costs: (params?: Record<string, any>) => 
-      apiRequest(`/analytics/costs${params ? '?' + new URLSearchParams(params) : ''}`),
-    tokens: (params?: Record<string, any>) => 
-      apiRequest(`/analytics/tokens${params ? '?' + new URLSearchParams(params) : ''}`),
-    sessions: (params?: Record<string, any>) => 
-      apiRequest(`/analytics/sessions${params ? '?' + new URLSearchParams(params) : ''}`),
+    summary: (params?: AnalyticsParams) => 
+      apiRequest(`/analytics/summary${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
+    usage: (params?: AnalyticsParams) => 
+      apiRequest(`/analytics${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
+    costs: (params?: AnalyticsParams) => 
+      apiRequest(`/analytics/costs${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
+    tokens: (params?: AnalyticsParams) => 
+      apiRequest(`/analytics/tokens${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
+    sessions: (params?: AnalyticsParams) => 
+      apiRequest(`/analytics/sessions${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
   },
   
   // Sync endpoints

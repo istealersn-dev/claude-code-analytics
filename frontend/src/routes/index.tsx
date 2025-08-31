@@ -20,11 +20,6 @@ function Dashboard() {
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useOverviewMetrics();
   const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis();
 
-  // Calculate cache hit rate
-  const cacheHitRate = overview ? 
-    ((overview.totalInputTokens + overview.totalOutputTokens) > 0 ? 
-      (overview.totalInputTokens / (overview.totalInputTokens + overview.totalOutputTokens) * 100) : 0) 
-    : 0;
 
   if (overviewError) {
     return (
@@ -37,6 +32,7 @@ function Dashboard() {
             Unable to connect to the analytics API. Make sure the backend server is running on port 3001.
           </p>
           <button 
+            type="button"
             onClick={() => window.location.reload()}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
@@ -142,7 +138,7 @@ function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {overview?.topModels?.slice(0, 5).map((model, index) => (
+                {overview?.topModels?.slice(0, 5).map((model) => (
                   <div key={model.model}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-white">{model.model}</span>
@@ -174,7 +170,7 @@ function Dashboard() {
             <p className="text-gray-400 mb-6">
               Your dashboard is ready! Connect your Claude Code data to start tracking your usage patterns and insights.
             </p>
-            <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+            <button type="button" className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
               Sync Data
             </button>
           </CardContent>

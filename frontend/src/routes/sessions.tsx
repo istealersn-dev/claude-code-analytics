@@ -19,10 +19,10 @@ function Sessions() {
         <h2 className="text-lg font-semibold text-white mb-4">Filters</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label htmlFor="date-range" className="block text-sm font-medium text-gray-400 mb-2">
               Date Range
             </label>
-            <select className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select id="date-range" className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
               <option>Last 30 days</option>
               <option>Last 7 days</option>
               <option>Last 24 hours</option>
@@ -30,23 +30,23 @@ function Sessions() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label htmlFor="project" className="block text-sm font-medium text-gray-400 mb-2">
               Project
             </label>
-            <select className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select id="project" className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
               <option>All projects</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label htmlFor="model" className="block text-sm font-medium text-gray-400 mb-2">
               Model
             </label>
-            <select className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select id="model" className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
               <option>All models</option>
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button type="button" className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               Apply Filters
             </button>
           </div>
@@ -66,7 +66,7 @@ function Sessions() {
           <p className="text-gray-400 mb-6">
             Sync your Claude Code data to start viewing your conversation sessions
           </p>
-          <button className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+          <button type="button" className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
             Sync Data
           </button>
         </div>
