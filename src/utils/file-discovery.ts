@@ -57,8 +57,12 @@ export class FileDiscoveryService {
       return isModifiedAfterSync && isNotNew;
     });
 
-    newFiles.forEach((file) => (file.is_new = true));
-    updatedFiles.forEach((file) => (file.is_updated = true));
+    newFiles.forEach((file) => {
+      file.is_new = true;
+    });
+    updatedFiles.forEach((file) => {
+      file.is_updated = true;
+    });
 
     return {
       newFiles,
