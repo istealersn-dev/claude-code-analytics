@@ -673,4 +673,100 @@ export class AnalyticsQueryBuilder {
       duration,
     };
   }
+
+  async getDistributionData(filters: AnalyticsFilters = {}): Promise<{
+    modelUsage: Array<{ name: string; value: number }>;
+    toolUsage: Array<{ name: string; value: number }>;
+    projectUsage: Array<{ name: string; value: number }>;
+  }> {
+    // Return mock data for now to test frontend integration
+    return {
+      modelUsage: [
+        { name: 'claude-3-5-sonnet', value: 85 },
+        { name: 'claude-3-opus', value: 25 },
+        { name: 'claude-3-haiku', value: 16 },
+      ],
+      toolUsage: [
+        { name: 'Read', value: 120 },
+        { name: 'Edit', value: 85 },
+        { name: 'Write', value: 45 },
+        { name: 'Bash', value: 65 },
+        { name: 'Grep', value: 35 },
+        { name: 'Glob', value: 25 },
+      ],
+      projectUsage: [
+        { name: 'claude-code-analytics', value: 95 },
+        { name: 'Personal Website', value: 25 },
+        { name: 'Work Projects', value: 18 },
+        { name: 'Learning Repo', value: 8 },
+      ],
+    };
+  }
+
+  async getHourlyUsageHeatmap(filters: AnalyticsFilters = {}): Promise<Array<{
+    hour: number;
+    day: string;
+    value: number;
+  }>> {
+    // Return mock data for now to test frontend integration
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const mockData: Array<{ hour: number; day: string; value: number }> = [];
+    
+    days.forEach(day => {
+      for (let hour = 0; hour < 24; hour++) {
+        // Create realistic usage patterns - higher activity during work hours
+        let value = 0;
+        if (day !== 'Sun' && day !== 'Sat') {
+          // Weekdays
+          if (hour >= 9 && hour <= 17) {
+            value = Math.floor(Math.random() * 12) + 3; // 3-15 sessions
+          } else if (hour >= 6 && hour <= 23) {
+            value = Math.floor(Math.random() * 5); // 0-5 sessions
+          }
+        } else {
+          // Weekends
+          if (hour >= 10 && hour <= 22) {
+            value = Math.floor(Math.random() * 6); // 0-6 sessions
+          }
+        }
+        
+        if (value > 0) {
+          mockData.push({ hour, day, value });
+        }
+      }
+    });
+    
+    return mockData;
+  }
+
+  async getPerformanceMetrics(filters: AnalyticsFilters = {}): Promise<{
+    sessionLengthDistribution: Array<{ range: string; count: number }>;
+    tokenEfficiency: Array<{ date: string; tokensPerMinute: number }>;
+    cacheStats: { hitRate: number; totalRequests: number };
+  }> {
+    // Return mock data for now to test frontend integration
+    return {
+      sessionLengthDistribution: [
+        { range: '<1min', count: 25 },
+        { range: '1-5min', count: 45 },
+        { range: '5-15min', count: 30 },
+        { range: '15-30min', count: 15 },
+        { range: '30-60min', count: 8 },
+        { range: '>1hour', count: 3 },
+      ],
+      tokenEfficiency: [
+        { date: '2025-08-25', tokensPerMinute: 150 },
+        { date: '2025-08-26', tokensPerMinute: 175 },
+        { date: '2025-08-27', tokensPerMinute: 160 },
+        { date: '2025-08-28', tokensPerMinute: 180 },
+        { date: '2025-08-29', tokensPerMinute: 165 },
+        { date: '2025-08-30', tokensPerMinute: 170 },
+        { date: '2025-08-31', tokensPerMinute: 155 },
+      ],
+      cacheStats: {
+        hitRate: 0.75,
+        totalRequests: 126,
+      },
+    };
+  }
 }

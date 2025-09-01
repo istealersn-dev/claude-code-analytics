@@ -198,6 +198,30 @@ export const analyticsRoutes: FastifyPluginAsync = async (app: FastifyInstance) 
     return reply.send(dailyUsage);
   });
 
+  // Distribution data for pie charts and bar charts
+  app.get<{ Querystring: AnalyticsQuerystring }>('/distributions', async (request, reply) => {
+    const filters = parseFilters(request.query, app);
+    const distributions = await queryBuilder.getDistributionData(filters);
+
+    return reply.send(distributions);
+  });
+
+  // Hourly usage heatmap data
+  app.get<{ Querystring: AnalyticsQuerystring }>('/heatmap', async (request, reply) => {
+    const filters = parseFilters(request.query, app);
+    const heatmapData = await queryBuilder.getHourlyUsageHeatmap(filters);
+
+    return reply.send(heatmapData);
+  });
+
+  // Performance metrics data
+  app.get<{ Querystring: AnalyticsQuerystring }>('/performance', async (request, reply) => {
+    const filters = parseFilters(request.query, app);
+    const performance = await queryBuilder.getPerformanceMetrics(filters);
+
+    return reply.send(performance);
+  });
+
   // Analytics metadata (available filters, date ranges, etc.)
   app.get('/metadata', async (_request, reply) => {
     // This would typically be cached
