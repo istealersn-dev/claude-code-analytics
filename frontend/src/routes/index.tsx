@@ -3,12 +3,15 @@ import {
   useOverviewMetrics, 
   useCostAnalysis, 
   useDailyUsageTimeSeries,
+  useDistributionData,
+  useHeatmapData,
+  usePerformanceMetrics,
   formatCurrency, 
   formatNumber, 
   formatDuration 
 } from '../hooks/useAnalytics';
 import { StatsCard } from '../components/analytics/StatsCard';
-import { AreaChart, LineChart } from '../components/charts';
+import { AreaChart, LineChart, PieChart, BarChart, HeatmapChart } from '../components/charts';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { 
   BarChart3, 
@@ -19,7 +22,11 @@ import {
   Calendar,
   Activity,
   Clock,
-  Hash
+  Hash,
+  PieChart as PieChartIcon,
+  BarChart2,
+  Thermometer,
+  Gauge
 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
@@ -30,6 +37,9 @@ function Dashboard() {
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useOverviewMetrics();
   const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis();
   const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries();
+  const { data: distributions, isLoading: distributionsLoading } = useDistributionData();
+  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData();
+  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics();
 
 
   if (overviewError) {
@@ -255,6 +265,165 @@ function Dashboard() {
                     'Duration'
                   ]}
                 />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Phase 3.2: Distribution Charts */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-6">Usage Distributions</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Model Usage Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChartIcon className="w-5 h-5 text-primary-500" />
+                Model Usage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {distributionsLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <PieChart 
+                  data={distributions?.modelUsage || []}
+                  height={250}
+                  showLabels={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Tool Usage Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-primary-500" />
+                Tool Usage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {distributionsLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <BarChart 
+                  data={distributions?.toolUsage || []}
+                  height={250}
+                  color="#10B981"
+                  showTooltip={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Project Usage Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChartIcon className="w-5 h-5 text-primary-500" />
+                Project Usage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {distributionsLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <PieChart 
+                  data={distributions?.projectUsage || []}
+                  height={250}
+                  showLabels={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Phase 3.3: Performance Metrics */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-6">Performance Insights</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Usage Heatmap */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Thermometer className="w-5 h-5 text-primary-500" />
+                Usage Heatmap (Hour of Day)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {heatmapLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <HeatmapChart 
+                  data={heatmapData || []}
+                  height={300}
+                  formatValue={(value) => value.toString()}
+                  showLabels={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Performance Metrics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gauge className="w-5 h-5 text-primary-500" />
+                Performance Stats
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {performanceLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : performance ? (
+                <div className="space-y-6">
+                  {/* Session Length Distribution */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-300 mb-3">Session Length Distribution</h4>
+                    <div className="space-y-2">
+                      {performance.sessionLengthDistribution?.slice(0, 5).map((range) => (
+                        <div key={range.range} className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">{range.range}</span>
+                          <span className="text-sm text-white font-medium">{range.count} sessions</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Cache Stats */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-300 mb-3">Cache Performance</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-2xl font-bold text-primary-400">
+                          {performance.cacheStats?.hitRate ? `${Math.round(performance.cacheStats.hitRate * 100)}%` : 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-400">Hit Rate</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-white">
+                          {performance.cacheStats?.totalRequests || 0}
+                        </p>
+                        <p className="text-xs text-gray-400">Total Requests</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-8">No performance data available</p>
               )}
             </CardContent>
           </Card>

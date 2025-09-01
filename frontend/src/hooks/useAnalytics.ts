@@ -37,6 +37,24 @@ export interface DailyUsageTimeSeries {
   duration: Array<{ date: string; value: number; count: number }>;
 }
 
+export interface DistributionData {
+  modelUsage: Array<{ name: string; value: number }>;
+  toolUsage: Array<{ name: string; value: number }>;
+  projectUsage: Array<{ name: string; value: number }>;
+}
+
+export interface HeatmapData {
+  hour: number;
+  day: string;
+  value: number;
+}
+
+export interface PerformanceMetrics {
+  sessionLengthDistribution: Array<{ range: string; count: number }>;
+  tokenEfficiency: Array<{ date: string; tokensPerMinute: number }>;
+  cacheStats: { hitRate: number; totalRequests: number };
+}
+
 const API_BASE = 'http://localhost:3001/api';
 
 // Fetch functions
@@ -64,6 +82,30 @@ async function fetchDailyUsageTimeSeries(): Promise<DailyUsageTimeSeries> {
   return response.json();
 }
 
+async function fetchDistributionData(): Promise<DistributionData> {
+  const response = await fetch(`${API_BASE}/analytics/distributions`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch distribution data');
+  }
+  return response.json();
+}
+
+async function fetchHeatmapData(): Promise<HeatmapData[]> {
+  const response = await fetch(`${API_BASE}/analytics/heatmap`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch heatmap data');
+  }
+  return response.json();
+}
+
+async function fetchPerformanceMetrics(): Promise<PerformanceMetrics> {
+  const response = await fetch(`${API_BASE}/analytics/performance`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch performance metrics');
+  }
+  return response.json();
+}
+
 // React Query hooks
 export function useOverviewMetrics() {
   return useQuery({
@@ -87,6 +129,33 @@ export function useDailyUsageTimeSeries() {
   return useQuery({
     queryKey: ['analytics', 'daily-usage'],
     queryFn: fetchDailyUsageTimeSeries,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useDistributionData() {
+  return useQuery({
+    queryKey: ['analytics', 'distributions'],
+    queryFn: fetchDistributionData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useHeatmapData() {
+  return useQuery({
+    queryKey: ['analytics', 'heatmap'],
+    queryFn: fetchHeatmapData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function usePerformanceMetrics() {
+  return useQuery({
+    queryKey: ['analytics', 'performance'],
+    queryFn: fetchPerformanceMetrics,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
