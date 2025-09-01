@@ -23,7 +23,7 @@ export async function createApp(
     port: parseInt(process.env['PORT'] || '3001', 10),
     host: process.env['HOST'] || '0.0.0.0',
     nodeEnv: process.env['NODE_ENV'] || 'development',
-    corsOrigins: process.env['CORS_ORIGINS']?.split(',') || ['http://localhost:3000'],
+    corsOrigins: process.env['CORS_ORIGINS']?.split(',') || ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
     logLevel: process.env['LOG_LEVEL'] || 'info',
     enableSwagger:
       process.env['ENABLE_SWAGGER'] === 'true' || process.env['NODE_ENV'] === 'development',
