@@ -31,6 +31,12 @@ export interface CostAnalysis {
   }>;
 }
 
+export interface DailyUsageTimeSeries {
+  sessions: Array<{ date: string; value: number; count: number }>;
+  tokens: Array<{ date: string; value: number; count: number }>;
+  duration: Array<{ date: string; value: number; count: number }>;
+}
+
 const API_BASE = 'http://localhost:3001/api';
 
 // Fetch functions
@@ -50,6 +56,14 @@ async function fetchCostAnalysis(): Promise<CostAnalysis> {
   return response.json();
 }
 
+async function fetchDailyUsageTimeSeries(): Promise<DailyUsageTimeSeries> {
+  const response = await fetch(`${API_BASE}/analytics/daily-usage`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch daily usage time series');
+  }
+  return response.json();
+}
+
 // React Query hooks
 export function useOverviewMetrics() {
   return useQuery({
@@ -64,6 +78,15 @@ export function useCostAnalysis() {
   return useQuery({
     queryKey: ['analytics', 'costs'],
     queryFn: fetchCostAnalysis,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useDailyUsageTimeSeries() {
+  return useQuery({
+    queryKey: ['analytics', 'daily-usage'],
+    queryFn: fetchDailyUsageTimeSeries,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
@@ -88,4 +111,15 @@ export function formatNumber(value: number): string {
     return `${(value / 1000).toFixed(1)}K`;
   }
   return value.toLocaleString();
+}
+
+// Utility function to format duration in seconds
+export function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.round(seconds)}s`;
+  }
+  if (seconds < 3600) {
+    return `${Math.round(seconds / 60)}m`;
+  }
+  return `${Math.round(seconds / 3600)}h`;
 }

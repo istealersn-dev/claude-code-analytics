@@ -1,7 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useOverviewMetrics, useCostAnalysis, formatCurrency, formatNumber } from '../hooks/useAnalytics';
+import { 
+  useOverviewMetrics, 
+  useCostAnalysis, 
+  useDailyUsageTimeSeries,
+  formatCurrency, 
+  formatNumber, 
+  formatDuration 
+} from '../hooks/useAnalytics';
 import { StatsCard } from '../components/analytics/StatsCard';
-import { AreaChart } from '../components/charts/AreaChart';
+import { AreaChart, LineChart } from '../components/charts';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { 
   BarChart3, 
@@ -9,7 +16,10 @@ import {
   Zap, 
   Target,
   TrendingUp,
-  Calendar
+  Calendar,
+  Activity,
+  Clock,
+  Hash
 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
@@ -19,6 +29,7 @@ export const Route = createFileRoute('/')({
 function Dashboard() {
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useOverviewMetrics();
   const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis();
+  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries();
 
 
   if (overviewError) {
@@ -158,6 +169,96 @@ function Dashboard() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Phase 3: Time-Series Charts */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-6">Usage Trends</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Daily Sessions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary-500" />
+                Daily Sessions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {usageLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <LineChart 
+                  data={dailyUsage?.sessions?.slice(-30) || []}
+                  height={250}
+                  color="#3B82F6"
+                  formatValue={formatNumber}
+                  formatTooltip={(value, count) => [
+                    `${formatNumber(value)} sessions`, 
+                    'Sessions'
+                  ]}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Daily Token Usage */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Hash className="w-5 h-5 text-primary-500" />
+                Token Usage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {usageLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <LineChart 
+                  data={dailyUsage?.tokens?.slice(-30) || []}
+                  height={250}
+                  color="#10B981"
+                  formatValue={formatNumber}
+                  formatTooltip={(value, count) => [
+                    `${formatNumber(value)} tokens`, 
+                    'Tokens'
+                  ]}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Average Session Duration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary-500" />
+                Avg Session Duration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {usageLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : (
+                <LineChart 
+                  data={dailyUsage?.duration?.slice(-30) || []}
+                  height={250}
+                  color="#8B5CF6"
+                  formatValue={formatDuration}
+                  formatTooltip={(value, count) => [
+                    `${formatDuration(value)} avg`, 
+                    'Duration'
+                  ]}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
       
       {/* Welcome Message or Data Summary */}
