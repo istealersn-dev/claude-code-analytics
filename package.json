@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/server/index.js",
-    "dev:server": "npx tsx src/server/index.ts",
-    "dev": "npm run build && npm start",
+    "dev": "npx tsx src/server/index.ts",
     "build": "npx tsc",
+    "build:start": "npm run build && npm start",
     "test": "npx ts-node test/test-parser.ts",
     "test:parser": "npx ts-node test/test-parser.ts",
     "test:db": "npx ts-node test/test-database-insertion.ts",

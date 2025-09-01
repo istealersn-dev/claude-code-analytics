@@ -83,6 +83,14 @@ function parseFilters(query: any, app: FastifyInstance): AnalyticsFilters {
 export const analyticsRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   const queryBuilder = new AnalyticsQueryBuilder();
 
+  // Overview metrics (used by frontend dashboard)
+  app.get<{ Querystring: AnalyticsQuerystring }>('/overview', async (request, reply) => {
+    const filters = parseFilters(request.query, app);
+    const overview = await queryBuilder.getUsageMetrics(filters);
+
+    return reply.send(overview);
+  });
+
   // Dashboard summary - overview metrics
   app.get<{ Querystring: AnalyticsQuerystring }>('/summary', async (request, reply) => {
     const filters = parseFilters(request.query, app);
@@ -113,12 +121,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (app: FastifyInstance) 
     const filters = parseFilters(request.query, app);
     const costAnalysis = await queryBuilder.getCostAnalysis(filters);
 
-    return reply.send({
-      success: true,
-      data: costAnalysis,
-      filters,
-      timestamp: new Date().toISOString(),
-    });
+    return reply.send(costAnalysis);
   });
 
   // Token analysis
@@ -185,6 +188,14 @@ export const analyticsRoutes: FastifyPluginAsync = async (app: FastifyInstance) 
       data: session,
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Daily usage time-series data
+  app.get<{ Querystring: AnalyticsQuerystring }>('/daily-usage', async (request, reply) => {
+    const filters = parseFilters(request.query, app);
+    const dailyUsage = await queryBuilder.getDailyUsageTimeSeries(filters);
+
+    return reply.send(dailyUsage);
   });
 
   // Analytics metadata (available filters, date ranges, etc.)

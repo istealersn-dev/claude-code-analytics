@@ -139,7 +139,7 @@ export class AnalyticsQueryBuilder {
           COUNT(*) as count,
           ROUND(COUNT(*)::numeric / SUM(COUNT(*)) OVER() * 100, 2) as percentage
         FROM sessions s
-        ${whereClause} AND s.project_name IS NOT NULL
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} s.project_name IS NOT NULL
         GROUP BY s.project_name
         ORDER BY count DESC
         LIMIT 10
@@ -240,7 +240,7 @@ export class AnalyticsQueryBuilder {
           COALESCE(SUM(s.total_cost_usd), 0) as cost,
           ROUND(SUM(s.total_cost_usd) / NULLIF(SUM(SUM(s.total_cost_usd)) OVER(), 0) * 100, 2) as percentage
         FROM sessions s
-        ${whereClause} AND s.project_name IS NOT NULL
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} s.project_name IS NOT NULL
         GROUP BY s.project_name
         ORDER BY cost DESC
         LIMIT 10
@@ -608,6 +608,69 @@ export class AnalyticsQueryBuilder {
       totalTokens: summary.total_tokens || 0,
       averageCostPerSession: parseFloat(summary.avg_cost_per_session || '0'),
       recentSessions: Array.isArray(recentSessions) ? recentSessions : [],
+    };
+  }
+
+  async getDailyUsageTimeSeries(filters: AnalyticsFilters = {}): Promise<{
+    sessions: TimeSeriesPoint[];
+    tokens: TimeSeriesPoint[];
+    duration: TimeSeriesPoint[];
+  }> {
+    const { whereClause, params } = this.buildWhereClause(filters);
+
+    const usageQuery = `
+      WITH daily_stats AS (
+        SELECT 
+          DATE(started_at) as date,
+          COUNT(*) as session_count,
+          SUM(total_input_tokens + total_output_tokens) as total_tokens,
+          AVG(duration_seconds) as avg_duration_seconds
+        FROM sessions s
+        ${whereClause}
+        GROUP BY DATE(started_at)
+        ORDER BY date ASC
+      )
+      SELECT 
+        date::TEXT as date,
+        session_count,
+        total_tokens,
+        COALESCE(avg_duration_seconds, 0) as avg_duration_seconds
+      FROM daily_stats
+      ORDER BY date ASC
+    `;
+
+    const result = await this.db.query(usageQuery, params);
+    
+    const sessions: TimeSeriesPoint[] = [];
+    const tokens: TimeSeriesPoint[] = [];
+    const duration: TimeSeriesPoint[] = [];
+
+    result.rows.forEach((row) => {
+      const date = row['date'] as string;
+      
+      sessions.push({
+        date,
+        value: parseInt(row['session_count'] as string, 10),
+        count: parseInt(row['session_count'] as string, 10),
+      });
+      
+      tokens.push({
+        date,
+        value: parseInt(row['total_tokens'] as string, 10) || 0,
+        count: parseInt(row['session_count'] as string, 10),
+      });
+      
+      duration.push({
+        date,
+        value: parseFloat(row['avg_duration_seconds'] as string) || 0,
+        count: parseInt(row['session_count'] as string, 10),
+      });
+    });
+
+    return {
+      sessions,
+      tokens,
+      duration,
     };
   }
 }
