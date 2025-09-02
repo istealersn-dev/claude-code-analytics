@@ -679,27 +679,75 @@ export class AnalyticsQueryBuilder {
     toolUsage: Array<{ name: string; value: number }>;
     projectUsage: Array<{ name: string; value: number }>;
   }> {
-    // Return mock data for now to test frontend integration
+    const { whereClause, params } = this.buildWhereClause(filters);
+
+    const distributionQuery = `
+      WITH model_distribution AS (
+        SELECT 
+          COALESCE(s.model_name, 'Unknown') as name,
+          COUNT(*) as value
+        FROM sessions s
+        ${whereClause}
+        GROUP BY s.model_name
+        ORDER BY value DESC
+        LIMIT 10
+      ),
+      tool_distribution AS (
+        SELECT 
+          unnest(s.tools_used) as name,
+          COUNT(*) as value
+        FROM sessions s
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} s.tools_used IS NOT NULL AND array_length(s.tools_used, 1) > 0
+        GROUP BY unnest(s.tools_used)
+        ORDER BY value DESC
+        LIMIT 10
+      ),
+      project_distribution AS (
+        SELECT 
+          COALESCE(s.project_name, 'Unknown') as name,
+          COUNT(*) as value
+        FROM sessions s
+        ${whereClause}
+        GROUP BY s.project_name
+        ORDER BY value DESC
+        LIMIT 10
+      )
+      SELECT 
+        (SELECT json_agg(model_distribution ORDER BY value DESC) FROM model_distribution) as model_usage,
+        (SELECT json_agg(tool_distribution ORDER BY value DESC) FROM tool_distribution) as tool_usage,
+        (SELECT json_agg(project_distribution ORDER BY value DESC) FROM project_distribution) as project_usage
+    `;
+
+    const result = await this.db.query(distributionQuery, params);
+    const row = result.rows[0];
+
+    if (!row) {
+      throw new Error('No data found for distribution query');
+    }
+
+    const modelUsage = (row as any)['model_usage'] || [];
+    const toolUsage = (row as any)['tool_usage'] || [];
+    const projectUsage = (row as any)['project_usage'] || [];
+
     return {
-      modelUsage: [
-        { name: 'claude-3-5-sonnet', value: 85 },
-        { name: 'claude-3-opus', value: 25 },
-        { name: 'claude-3-haiku', value: 16 },
-      ],
-      toolUsage: [
-        { name: 'Read', value: 120 },
-        { name: 'Edit', value: 85 },
-        { name: 'Write', value: 45 },
-        { name: 'Bash', value: 65 },
-        { name: 'Grep', value: 35 },
-        { name: 'Glob', value: 25 },
-      ],
-      projectUsage: [
-        { name: 'claude-code-analytics', value: 95 },
-        { name: 'Personal Website', value: 25 },
-        { name: 'Work Projects', value: 18 },
-        { name: 'Learning Repo', value: 8 },
-      ],
+      modelUsage: Array.isArray(modelUsage) 
+        ? modelUsage.map((item: any) => ({
+            name: item.name,
+            value: parseInt(item.value, 10),
+          })) 
+        : [],
+      toolUsage: Array.isArray(toolUsage)
+        ? toolUsage.map((item: any) => ({
+            name: item.name,
+            value: parseInt(item.value, 10),
+          }))
+        : [],
+      projectUsage: Array.isArray(projectUsage)
+        ? projectUsage.map((item: any) => ({
+            name: item.name,
+            value: parseInt(item.value, 10),
+          }))
+        : [],
     };
   }
 
@@ -708,35 +756,34 @@ export class AnalyticsQueryBuilder {
     day: string;
     value: number;
   }>> {
-    // Return mock data for now to test frontend integration
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const mockData: Array<{ hour: number; day: string; value: number }> = [];
+    const { whereClause, params } = this.buildWhereClause(filters);
+
+    const heatmapQuery = `
+      SELECT 
+        EXTRACT(hour FROM started_at) as hour,
+        CASE EXTRACT(dow FROM started_at)
+          WHEN 0 THEN 'Sun'
+          WHEN 1 THEN 'Mon'
+          WHEN 2 THEN 'Tue'
+          WHEN 3 THEN 'Wed'
+          WHEN 4 THEN 'Thu'
+          WHEN 5 THEN 'Fri'
+          WHEN 6 THEN 'Sat'
+        END as day,
+        COUNT(*) as value
+      FROM sessions s
+      ${whereClause}
+      GROUP BY EXTRACT(hour FROM started_at), EXTRACT(dow FROM started_at)
+      ORDER BY EXTRACT(dow FROM started_at), EXTRACT(hour FROM started_at)
+    `;
+
+    const result = await this.db.query(heatmapQuery, params);
     
-    days.forEach(day => {
-      for (let hour = 0; hour < 24; hour++) {
-        // Create realistic usage patterns - higher activity during work hours
-        let value = 0;
-        if (day !== 'Sun' && day !== 'Sat') {
-          // Weekdays
-          if (hour >= 9 && hour <= 17) {
-            value = Math.floor(Math.random() * 12) + 3; // 3-15 sessions
-          } else if (hour >= 6 && hour <= 23) {
-            value = Math.floor(Math.random() * 5); // 0-5 sessions
-          }
-        } else {
-          // Weekends
-          if (hour >= 10 && hour <= 22) {
-            value = Math.floor(Math.random() * 6); // 0-6 sessions
-          }
-        }
-        
-        if (value > 0) {
-          mockData.push({ hour, day, value });
-        }
-      }
-    });
-    
-    return mockData;
+    return result.rows.map((row) => ({
+      hour: parseInt(row['hour'] as string, 10),
+      day: row['day'] as string,
+      value: parseInt(row['value'] as string, 10),
+    }));
   }
 
   async getPerformanceMetrics(filters: AnalyticsFilters = {}): Promise<{
@@ -744,28 +791,83 @@ export class AnalyticsQueryBuilder {
     tokenEfficiency: Array<{ date: string; tokensPerMinute: number }>;
     cacheStats: { hitRate: number; totalRequests: number };
   }> {
-    // Return mock data for now to test frontend integration
+    const { whereClause, params } = this.buildWhereClause(filters);
+
+    const performanceQuery = `
+      WITH session_length_buckets AS (
+        SELECT 
+          CASE 
+            WHEN s.duration_seconds < 60 THEN '<1min'
+            WHEN s.duration_seconds < 300 THEN '1-5min'
+            WHEN s.duration_seconds < 900 THEN '5-15min'
+            WHEN s.duration_seconds < 1800 THEN '15-30min'
+            WHEN s.duration_seconds < 3600 THEN '30-60min'
+            ELSE '>1hour'
+          END as range,
+          COUNT(*) as count
+        FROM sessions s
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} s.duration_seconds IS NOT NULL
+        GROUP BY 
+          CASE 
+            WHEN s.duration_seconds < 60 THEN '<1min'
+            WHEN s.duration_seconds < 300 THEN '1-5min'
+            WHEN s.duration_seconds < 900 THEN '5-15min'
+            WHEN s.duration_seconds < 1800 THEN '15-30min'
+            WHEN s.duration_seconds < 3600 THEN '30-60min'
+            ELSE '>1hour'
+          END
+        ORDER BY count DESC
+      ),
+      token_efficiency AS (
+        SELECT 
+          DATE(s.started_at) as date,
+          AVG((s.total_input_tokens + s.total_output_tokens)::float / GREATEST(s.duration_seconds / 60, 0.1)) as tokens_per_minute
+        FROM sessions s
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} s.duration_seconds > 0 AND (s.total_input_tokens + s.total_output_tokens) > 0
+        GROUP BY DATE(s.started_at)
+        ORDER BY date DESC
+        LIMIT 30
+      ),
+      cache_stats AS (
+        SELECT 
+          AVG(CASE WHEN s.cache_hit_count > 0 THEN 1.0 ELSE 0.0 END) as hit_rate,
+          COUNT(*) as total_requests
+        FROM sessions s
+        ${whereClause}
+      )
+      SELECT 
+        (SELECT json_agg(session_length_buckets ORDER BY range) FROM session_length_buckets) as session_length_distribution,
+        (SELECT json_agg(token_efficiency ORDER BY date) FROM token_efficiency) as token_efficiency,
+        (SELECT row_to_json(cache_stats) FROM cache_stats) as cache_stats
+    `;
+
+    const result = await this.db.query(performanceQuery, params);
+    const row = result.rows[0];
+
+    if (!row) {
+      throw new Error('No data found for performance metrics query');
+    }
+
+    const sessionLengthDistribution = (row as any)['session_length_distribution'] || [];
+    const tokenEfficiency = (row as any)['token_efficiency'] || [];
+    const cacheStats = (row as any)['cache_stats'] || { hit_rate: 0, total_requests: 0 };
+
     return {
-      sessionLengthDistribution: [
-        { range: '<1min', count: 25 },
-        { range: '1-5min', count: 45 },
-        { range: '5-15min', count: 30 },
-        { range: '15-30min', count: 15 },
-        { range: '30-60min', count: 8 },
-        { range: '>1hour', count: 3 },
-      ],
-      tokenEfficiency: [
-        { date: '2025-08-25', tokensPerMinute: 150 },
-        { date: '2025-08-26', tokensPerMinute: 175 },
-        { date: '2025-08-27', tokensPerMinute: 160 },
-        { date: '2025-08-28', tokensPerMinute: 180 },
-        { date: '2025-08-29', tokensPerMinute: 165 },
-        { date: '2025-08-30', tokensPerMinute: 170 },
-        { date: '2025-08-31', tokensPerMinute: 155 },
-      ],
+      sessionLengthDistribution: Array.isArray(sessionLengthDistribution) 
+        ? sessionLengthDistribution.map((item: any) => ({
+            range: item.range,
+            count: parseInt(item.count, 10),
+          })) 
+        : [],
+      tokenEfficiency: Array.isArray(tokenEfficiency)
+        ? tokenEfficiency.map((item: any) => ({
+            date: item.date,
+            tokensPerMinute: parseFloat(item.tokens_per_minute) || 0,
+          }))
+        : [],
       cacheStats: {
-        hitRate: 0.75,
-        totalRequests: 126,
+        hitRate: parseFloat(cacheStats.hit_rate) || 0,
+        totalRequests: parseInt(cacheStats.total_requests, 10) || 0,
       },
     };
   }

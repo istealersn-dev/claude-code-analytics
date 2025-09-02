@@ -125,16 +125,41 @@ export class JSONLParser {
     const obj = data as any;
 
     const message: ClaudeCodeMessage = {
-      role: obj.role || 'assistant',
-      content: obj.content || obj.text || '',
+      role: obj.message?.role || obj.role || (obj.type === 'user' ? 'user' : 'assistant'),
+      content: obj.message?.content || obj.content || obj.text || '',
       timestamp: obj.timestamp || obj.created_at || new Date().toISOString(),
       tokens: {
-        input: obj.tokens?.input || obj.input_tokens || 0,
-        output: obj.tokens?.output || obj.output_tokens || 0,
+        input: obj.message?.usage?.input_tokens || obj.usage?.input_tokens || obj.tokens?.input || obj.input_tokens || 0,
+        output: obj.message?.usage?.output_tokens || obj.usage?.output_tokens || obj.tokens?.output || obj.output_tokens || 0,
       },
       processing_time_ms: obj.processing_time_ms || obj.duration_ms,
     };
 
+    // Handle tool calls from Claude Code format (in message.content array)
+    if (obj.message?.content && Array.isArray(obj.message.content)) {
+      const toolUses = obj.message.content.filter((item: any) => item.type === 'tool_use');
+      if (toolUses.length > 0) {
+        message.tool_calls = toolUses.map((tool: any) => ({
+          name: tool.name,
+          input: tool.input,
+          id: tool.id,
+        }));
+      }
+    }
+
+    // Handle tool results from user messages (in message.content array)
+    if (obj.message?.content && Array.isArray(obj.message.content)) {
+      const toolResults = obj.message.content.filter((item: any) => item.type === 'tool_result');
+      if (toolResults.length > 0) {
+        message.tool_results = toolResults.map((result: any) => ({
+          content: result.content,
+          tool_use_id: result.tool_use_id,
+          is_error: result.is_error,
+        }));
+      }
+    }
+
+    // Fallback for older format
     if (obj.tool_calls) {
       message.tool_calls = Array.isArray(obj.tool_calls) ? obj.tool_calls : [obj.tool_calls];
     }
@@ -145,11 +170,16 @@ export class JSONLParser {
         : [obj.tool_results];
     }
 
-    if (obj.cache_stats || obj.cache) {
-      const cacheData = obj.cache_stats || obj.cache;
+    if (obj.message?.usage || obj.usage || obj.cache_stats || obj.cache) {
+      const cacheData = obj.cache_stats || obj.cache || {};
+      const usageData = obj.message?.usage || obj.usage || {};
       message.cache_stats = {
-        cache_creation_input_tokens: cacheData.cache_creation_input_tokens || 0,
-        cache_read_input_tokens: cacheData.cache_read_input_tokens || 0,
+        cache_creation_input_tokens: 
+          usageData.cache_creation_input_tokens || 
+          cacheData.cache_creation_input_tokens || 0,
+        cache_read_input_tokens: 
+          usageData.cache_read_input_tokens || 
+          cacheData.cache_read_input_tokens || 0,
         cache_hits: cacheData.cache_hits || 0,
         cache_misses: cacheData.cache_misses || 0,
       };
