@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { z } from 'zod';
 import { 
   useOverviewMetrics, 
   useCostAnalysis, 
@@ -13,6 +14,7 @@ import {
 import { StatsCard } from '../components/analytics/StatsCard';
 import { AreaChart, LineChart, PieChart, BarChart, HeatmapChart } from '../components/charts';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { 
   BarChart3, 
   DollarSign, 
@@ -29,17 +31,49 @@ import {
   Gauge
 } from 'lucide-react';
 
+const dashboardSearchSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
 export const Route = createFileRoute('/')({
   component: Dashboard,
+  validateSearch: dashboardSearchSchema,
 })
 
 function Dashboard() {
-  const { data: overview, isLoading: overviewLoading, error: overviewError } = useOverviewMetrics();
-  const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis();
-  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries();
-  const { data: distributions, isLoading: distributionsLoading } = useDistributionData();
-  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData();
-  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics();
+  const { startDate, endDate } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const dateRange = startDate && endDate ? { start: startDate, end: endDate } : undefined;
+
+  // Handler for chart clicks - navigate to sessions with date filter
+  const handleChartClick = (dataPoint: { date: string }) => {
+    navigate({ 
+      to: '/sessions',
+      search: { 
+        dateFrom: dataPoint.date,
+        dateTo: dataPoint.date 
+      }
+    });
+  };
+
+  const { data: overview, isLoading: overviewLoading, error: overviewError } = useOverviewMetrics(dateRange);
+  const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis(dateRange);
+  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries(dateRange);
+  const { data: distributions, isLoading: distributionsLoading } = useDistributionData(dateRange);
+  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange);
+  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange);
+
+  const handleDateRangeChange = (range: { start: string; end: string } | undefined) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        startDate: range?.start,
+        endDate: range?.end,
+      }),
+    });
+  };
 
 
   if (overviewError) {
@@ -67,12 +101,21 @@ function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Claude Code Analytics Dashboard
-        </h1>
-        <p className="text-gray-400">
-          Track your Claude Code usage patterns, costs, and productivity metrics
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Claude Code Analytics Dashboard
+            </h1>
+            <p className="text-gray-400">
+              Track your Claude Code usage patterns, costs, and productivity metrics
+            </p>
+          </div>
+          <DateRangePicker
+            value={dateRange}
+            onChange={handleDateRangeChange}
+            className="sm:ml-4"
+          />
+        </div>
       </div>
       
       {/* Stats Grid */}
@@ -204,6 +247,7 @@ function Dashboard() {
                   height={250}
                   color="#3B82F6"
                   formatValue={formatNumber}
+                  onDataPointClick={handleChartClick}
                   formatTooltip={(value, count) => [
                     `${formatNumber(value)} sessions`, 
                     'Sessions'
@@ -232,6 +276,7 @@ function Dashboard() {
                   height={250}
                   color="#10B981"
                   formatValue={formatNumber}
+                  onDataPointClick={handleChartClick}
                   formatTooltip={(value, count) => [
                     `${formatNumber(value)} tokens`, 
                     'Tokens'
@@ -260,6 +305,7 @@ function Dashboard() {
                   height={250}
                   color="#8B5CF6"
                   formatValue={formatDuration}
+                  onDataPointClick={handleChartClick}
                   formatTooltip={(value, count) => [
                     `${formatDuration(value)} avg`, 
                     'Duration'

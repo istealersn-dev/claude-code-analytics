@@ -13,6 +13,7 @@ interface AreaChartProps {
   height?: number;
   formatValue?: (value: number) => string;
   formatTooltip?: (value: number, name: string) => [string, string];
+  onDataPointClick?: (data: DataPoint) => void;
 }
 
 export function AreaChart({ 
@@ -21,7 +22,8 @@ export function AreaChart({
   color = '#FF6B35', 
   height = 300,
   formatValue,
-  formatTooltip 
+  formatTooltip,
+  onDataPointClick
 }: AreaChartProps) {
   const defaultFormatValue = (value: number) => value.toLocaleString();
   const valueFormatter = formatValue || defaultFormatValue;
@@ -38,7 +40,16 @@ export function AreaChart({
         <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
       )}
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsAreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <RechartsAreaChart 
+          data={data} 
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          onClick={onDataPointClick ? (data) => {
+            if (data && data.activePayload && data.activePayload.length > 0) {
+              onDataPointClick(data.activePayload[0].payload);
+            }
+          } : undefined}
+          style={onDataPointClick ? { cursor: 'pointer' } : undefined}
+        >
           <defs>
             <linearGradient id={`area-gradient-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.3} />

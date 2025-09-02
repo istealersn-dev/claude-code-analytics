@@ -7,6 +7,7 @@ interface LineChartProps {
   formatValue?: (value: number) => string;
   formatTooltip?: (value: number, count?: number) => [string, string];
   showGrid?: boolean;
+  onDataPointClick?: (data: { date: string; value: number; count?: number }) => void;
 }
 
 export function LineChart({
@@ -16,6 +17,7 @@ export function LineChart({
   formatValue = (value) => value.toString(),
   formatTooltip = (value, count) => [formatValue?.(value) || value.toString(), 'Value'],
   showGrid = true,
+  onDataPointClick,
 }: LineChartProps) {
   if (!data || data.length === 0) {
     return (
@@ -31,7 +33,16 @@ export function LineChart({
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsLineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <RechartsLineChart 
+          data={data} 
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          onClick={onDataPointClick ? (data) => {
+            if (data && data.activePayload && data.activePayload.length > 0) {
+              onDataPointClick(data.activePayload[0].payload);
+            }
+          } : undefined}
+          style={onDataPointClick ? { cursor: 'pointer' } : undefined}
+        >
           {showGrid && (
             <CartesianGrid 
               strokeDasharray="3 3" 
