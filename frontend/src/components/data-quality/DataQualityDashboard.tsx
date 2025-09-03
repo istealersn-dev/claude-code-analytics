@@ -313,7 +313,11 @@ export function DataQualityDashboard() {
             {metrics.duplicateSessions > 0 && (
               <button
                 type="button"
-                onClick={() => duplicateCleanupMutation.mutate()}
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to remove ${metrics.duplicateSessions} duplicate sessions? This action cannot be undone.`)) {
+                    duplicateCleanupMutation.mutate();
+                  }
+                }}
                 disabled={duplicateCleanupMutation.isPending}
                 className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-medium transition-colors"
               >
@@ -329,7 +333,11 @@ export function DataQualityDashboard() {
             {metrics.orphanedMetrics > 0 && (
               <button
                 type="button"
-                onClick={() => orphanedCleanupMutation.mutate()}
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to remove ${metrics.orphanedMetrics} orphaned metric records? This action cannot be undone.`)) {
+                    orphanedCleanupMutation.mutate();
+                  }
+                }}
                 disabled={orphanedCleanupMutation.isPending}
                 className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded font-medium transition-colors"
               >
