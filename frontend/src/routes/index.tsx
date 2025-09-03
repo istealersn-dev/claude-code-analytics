@@ -13,6 +13,7 @@ import {
 } from '../hooks/useAnalytics';
 import { StatsCard } from '../components/analytics/StatsCard';
 import { AreaChart, LineChart, PieChart, BarChart, HeatmapChart } from '../components/charts';
+import { getProjectDisplayName } from '../utils/projectNames';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
 import { 
@@ -72,6 +73,13 @@ function Dashboard() {
   const { data: distributions, isLoading: distributionsLoading } = useDistributionData(dateRange);
   const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange);
   const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange);
+
+  // Process project data with cleaned names for better display  
+  const processedProjectUsage = overview?.topProjects?.map(project => ({
+    name: getProjectDisplayName(project.project_name || 'Unknown', 'legend'),
+    value: project.count || 0,
+    tooltip: getProjectDisplayName(project.project_name || 'Unknown', 'tooltip'),
+  })) || [];
 
   const handleDateRangeChange = (range: { start: string; end: string } | undefined) => {
     navigate({
@@ -406,9 +414,13 @@ function Dashboard() {
                 </div>
               ) : (
                 <PieChart 
-                  data={distributions?.projectUsage || []}
+                  data={processedProjectUsage}
                   height={250}
                   showLabels={true}
+                  formatTooltip={(value, name, percentage) => [
+                    `${value} sessions (${percentage.toFixed(1)}%)`,
+                    processedProjectUsage.find(p => p.name === name)?.tooltip || name
+                  ]}
                 />
               )}
             </CardContent>

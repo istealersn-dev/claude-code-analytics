@@ -100,13 +100,25 @@ export function PieChart({
           {showLegend && (
             <Legend 
               verticalAlign="bottom" 
-              height={36}
+              height={60}
               wrapperStyle={{
                 paddingTop: '20px',
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#9CA3AF',
+                lineHeight: '1.2',
               }}
               iconType="circle"
+              formatter={(value) => (
+                <span style={{ 
+                  fontSize: '12px',
+                  wordBreak: 'break-word',
+                  display: 'inline-block',
+                  maxWidth: '150px',
+                  lineHeight: '1.3',
+                }}>
+                  {value}
+                </span>
+              )}
             />
           )}
         </RechartsPieChart>

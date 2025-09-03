@@ -34,6 +34,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 ## 🎯 Features
 
 ### Data Analytics & Visualization
+
 - **Session Tracking**: Monitor Claude Code conversation sessions with detailed metrics
 - **Cost Analysis**: Track spending patterns and daily burn rates
 - **Token Analytics**: Input/output token consumption with efficiency metrics
@@ -42,6 +43,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 - **Performance Metrics**: Cache hit rates, response times, and tool usage statistics
 
 ### Interactive Dashboard
+
 - **Real-time Data**: Live updates with TanStack Query caching
 - **Date Range Filtering**: Flexible time-based analysis (7d, 30d, 90d, custom)
 - **Chart Interactions**: Click-through from charts to detailed session views
@@ -49,6 +51,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 - **Responsive Layout**: Mobile-optimized grid system
 
 ### Advanced Sync Management
+
 - **Progress Tracking**: Real-time sync progress with file-level indicators
 - **Error Handling**: Comprehensive error reporting with retry mechanisms
 - **Preview Mode**: See pending changes before sync execution
@@ -58,6 +61,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Frontend**: Vite + React + TypeScript + Tailwind CSS
 - **Routing**: TanStack Router (type-safe with search params)
 - **State Management**: TanStack Query for server state
@@ -67,6 +71,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 - **Data Processing**: Custom JSONL parser for Claude Code files
 
 ### Design Philosophy
+
 - **Privacy First**: All data processing happens locally
 - **Type Safety**: End-to-end TypeScript with proper interfaces
 - **Performance**: Intelligent caching and query optimization  
@@ -76,25 +81,29 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 ## 🛠️ Installation
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - PostgreSQL 14+
 - Claude Code CLI (for data source)
 
 ### Quick Start
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/your-username/claude-code-analytics.git
 cd claude-code-analytics
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 cd frontend && npm install && cd ..
 ```
 
 3. **Set up the database**
+
 ```bash
 # Create database
 createdb claude_code_analytics
@@ -104,12 +113,14 @@ psql -d claude_code_analytics -f schema.sql
 ```
 
 4. **Configure environment**
+
 ```bash
 cp .env.example .env
 # Edit .env with your database credentials
 ```
 
 5. **Start the application**
+
 ```bash
 # Terminal 1: Start backend
 npm run dev
@@ -119,8 +130,9 @@ cd frontend && npm run dev
 ```
 
 6. **Access the dashboard**
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3001
+
+- Frontend: <http://localhost:5173>
+- Backend API: <http://localhost:3001>
 
 ### Environment Configuration
 
@@ -162,17 +174,20 @@ DATA_RETENTION_DAYS=90
 ### Interactive Features
 
 #### Chart Navigation
+
 - Click any data point on time-series charts to filter sessions by date
 - Use the date range picker for custom time periods
 - Navigate from dashboard charts directly to filtered session lists
 
 #### Session Analysis
+
 - Filter sessions by date range, project, or model
 - View detailed message-level analytics
 - Track token usage and costs per session
 - Monitor tool usage and cache performance
 
 #### Data Management
+
 - Real-time sync with progress tracking
 - Preview pending changes before processing
 - Comprehensive error reporting and resolution
@@ -226,7 +241,7 @@ npm run db:connect          # Connect to PostgreSQL
 
 - **TypeScript**: Strict mode enabled with comprehensive type checking
 - **Linting**: Biome for consistent code formatting
-- **Conventions**: 
+- **Conventions**:
   - camelCase for variables/functions
   - PascalCase for components/types
   - kebab-case for files/CSS classes
@@ -276,6 +291,7 @@ POST /api/sync/reset         # Reset sync metadata
 ### Request/Response Examples
 
 #### Get Overview Analytics
+
 ```json
 GET /api/analytics/overview
 
@@ -292,6 +308,7 @@ GET /api/analytics/overview
 ```
 
 #### Start Data Sync
+
 ```json
 POST /api/sync/run
 Content-Type: application/json

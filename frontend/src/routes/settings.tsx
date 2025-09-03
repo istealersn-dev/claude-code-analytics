@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, RefreshCw, AlertCircle, CheckCircle, Database, RotateCw, TrendingUp, Activity } from 'lucide-react';
+import { DataQualityDashboard } from '../components/data-quality/DataQualityDashboard';
 
 const API_BASE = 'http://localhost:3001/api';
 
@@ -479,6 +480,9 @@ function Settings() {
           </div>
         </div>
       </div>
+      
+      {/* Data Quality Dashboard */}
+      <DataQualityDashboard />
       
       {/* Display Settings */}
       <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-6 mb-6">
