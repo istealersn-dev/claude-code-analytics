@@ -61,6 +61,51 @@ export interface TokenAnalysis {
   }>;
 }
 
+export interface DataQualityMetrics {
+  totalSessions: number;
+  completeSessions: number;
+  incompleteSessions: number;
+  duplicateSessions: number;
+  orphanedMetrics: number;
+  missingData: {
+    sessionsWithoutEndTime: number;
+    sessionsWithoutDuration: number;
+    sessionsWithoutTokens: number;
+    sessionsWithoutCost: number;
+    metricsWithoutMessages: number;
+  };
+  dataIntegrity: {
+    negativeTokens: number;
+    negativeCosts: number;
+    invalidDurations: number;
+    futureTimestamps: number;
+    inconsistentAggregates: number;
+  };
+  dataCompleteness: {
+    completenessScore: number;
+    missingFields: string[];
+    qualityGrade: 'A' | 'B' | 'C' | 'D' | 'F';
+  };
+  duplicateAnalysis: Array<{
+    sessionId: string;
+    duplicateCount: number;
+    firstSeen: string;
+    lastSeen: string;
+  }>;
+  recommendations: Array<{
+    type: 'warning' | 'error' | 'info';
+    title: string;
+    description: string;
+    affectedRecords: number;
+    action?: string;
+  }>;
+}
+
+export interface CleanupResult {
+  deletedRecords: number;
+  message: string;
+}
+
 export class AnalyticsQueryBuilder {
   private db: DatabaseConnection;
 
@@ -870,5 +915,238 @@ export class AnalyticsQueryBuilder {
         totalRequests: parseInt(cacheStats.total_requests, 10) || 0,
       },
     };
+  }
+
+  // Data Quality Methods
+
+  async getDataQualityMetrics(): Promise<DataQualityMetrics> {
+    const query = `
+      WITH quality_analysis AS (
+        SELECT 
+          COUNT(*) as total_sessions,
+          COUNT(*) FILTER (WHERE ended_at IS NOT NULL AND duration_seconds IS NOT NULL AND duration_seconds > 0) as complete_sessions,
+          COUNT(*) FILTER (WHERE ended_at IS NULL) as sessions_without_end_time,
+          COUNT(*) FILTER (WHERE duration_seconds IS NULL OR duration_seconds <= 0) as sessions_without_duration,
+          COUNT(*) FILTER (WHERE total_input_tokens = 0 AND total_output_tokens = 0) as sessions_without_tokens,
+          COUNT(*) FILTER (WHERE total_cost_usd = 0) as sessions_without_cost,
+          COUNT(*) FILTER (WHERE total_input_tokens < 0 OR total_output_tokens < 0) as negative_tokens,
+          COUNT(*) FILTER (WHERE total_cost_usd < 0) as negative_costs,
+          COUNT(*) FILTER (WHERE duration_seconds < 0) as invalid_durations,
+          COUNT(*) FILTER (WHERE started_at > NOW() OR ended_at > NOW()) as future_timestamps,
+          COUNT(*) FILTER (WHERE ended_at < started_at) as inconsistent_timestamps
+        FROM sessions
+      ),
+      duplicate_sessions AS (
+        SELECT session_id, COUNT(*) as duplicate_count,
+               MIN(created_at) as first_seen,
+               MAX(created_at) as last_seen
+        FROM sessions 
+        GROUP BY session_id 
+        HAVING COUNT(*) > 1
+        ORDER BY duplicate_count DESC
+        LIMIT 50
+      ),
+      orphaned_metrics AS (
+        SELECT COUNT(*) as count
+        FROM session_metrics sm
+        LEFT JOIN sessions s ON sm.session_id = s.id
+        WHERE s.id IS NULL
+      ),
+      metrics_without_messages AS (
+        SELECT COUNT(*) as count
+        FROM session_metrics sm
+        WHERE sm.message_count = 0
+          AND EXISTS (SELECT 1 FROM sessions s WHERE s.id = sm.session_id)
+      )
+      SELECT 
+        qa.*,
+        (SELECT COUNT(*) FROM duplicate_sessions) as duplicate_count,
+        (SELECT count FROM orphaned_metrics) as orphaned_metrics,
+        (SELECT count FROM metrics_without_messages) as metrics_without_messages,
+        (SELECT json_agg(duplicate_sessions) FROM duplicate_sessions) as duplicates_list
+      FROM quality_analysis qa
+    `;
+
+    const result = await this.db.query(query);
+    const row = result.rows[0];
+
+    if (!row) {
+      throw new Error('Failed to fetch data quality metrics');
+    }
+
+    const totalSessions = parseInt(row.total_sessions) || 0;
+    const completeSessions = parseInt(row.complete_sessions) || 0;
+    const duplicateCount = parseInt(row.duplicate_count) || 0;
+    
+    const missing = {
+      sessionsWithoutEndTime: parseInt(row.sessions_without_end_time) || 0,
+      sessionsWithoutDuration: parseInt(row.sessions_without_duration) || 0,
+      sessionsWithoutTokens: parseInt(row.sessions_without_tokens) || 0,
+      sessionsWithoutCost: parseInt(row.sessions_without_cost) || 0,
+      metricsWithoutMessages: parseInt(row.metrics_without_messages) || 0,
+    };
+
+    const integrity = {
+      negativeTokens: parseInt(row.negative_tokens) || 0,
+      negativeCosts: parseInt(row.negative_costs) || 0,
+      invalidDurations: parseInt(row.invalid_durations) || 0,
+      futureTimestamps: parseInt(row.future_timestamps) || 0,
+      inconsistentAggregates: parseInt(row.inconsistent_timestamps) || 0,
+    };
+
+    // Calculate completeness score
+    const totalIssues = Object.values(missing).reduce((sum, val) => sum + val, 0) +
+                       Object.values(integrity).reduce((sum, val) => sum + val, 0);
+    const completenessScore = totalSessions > 0 ? Math.max(0, Math.round((1 - totalIssues / totalSessions) * 100)) : 100;
+    
+    // Determine quality grade
+    let qualityGrade: 'A' | 'B' | 'C' | 'D' | 'F';
+    if (completenessScore >= 95) qualityGrade = 'A';
+    else if (completenessScore >= 85) qualityGrade = 'B';
+    else if (completenessScore >= 75) qualityGrade = 'C';
+    else if (completenessScore >= 60) qualityGrade = 'D';
+    else qualityGrade = 'F';
+
+    // Generate recommendations
+    const recommendations: Array<{
+      type: 'warning' | 'error' | 'info';
+      title: string;
+      description: string;
+      affectedRecords: number;
+      action?: string;
+    }> = [];
+
+    if (duplicateCount > 0) {
+      recommendations.push({
+        type: 'error',
+        title: 'Duplicate Sessions Detected',
+        description: `Found ${duplicateCount} session IDs with multiple records. This may cause incorrect analytics.`,
+        affectedRecords: duplicateCount,
+        action: 'Review and merge duplicate sessions'
+      });
+    }
+
+    if (missing.sessionsWithoutEndTime > 0) {
+      recommendations.push({
+        type: 'warning',
+        title: 'Incomplete Sessions',
+        description: `${missing.sessionsWithoutEndTime} sessions are missing end times, indicating incomplete data.`,
+        affectedRecords: missing.sessionsWithoutEndTime,
+        action: 'Re-sync recent sessions'
+      });
+    }
+
+    if (integrity.negativeTokens > 0 || integrity.negativeCosts > 0) {
+      recommendations.push({
+        type: 'error',
+        title: 'Invalid Data Values',
+        description: 'Found negative values in token counts or costs. This indicates data corruption.',
+        affectedRecords: integrity.negativeTokens + integrity.negativeCosts,
+        action: 'Investigate and correct invalid records'
+      });
+    }
+
+    if (totalSessions > 1000 && duplicateCount === 0 && totalIssues < 10) {
+      recommendations.push({
+        type: 'info',
+        title: 'Excellent Data Quality',
+        description: 'Your data quality is excellent with minimal issues detected.',
+        affectedRecords: 0
+      });
+    }
+
+    const duplicatesList = Array.isArray(row.duplicates_list) ? row.duplicates_list : [];
+
+    return {
+      totalSessions,
+      completeSessions,
+      incompleteSessions: totalSessions - completeSessions,
+      duplicateSessions: duplicateCount,
+      orphanedMetrics: parseInt(row.orphaned_metrics) || 0,
+      missingData: missing,
+      dataIntegrity: integrity,
+      dataCompleteness: {
+        completenessScore,
+        missingFields: [],
+        qualityGrade,
+      },
+      duplicateAnalysis: duplicatesList.map((item: any) => ({
+        sessionId: item.session_id,
+        duplicateCount: parseInt(item.duplicate_count),
+        firstSeen: item.first_seen,
+        lastSeen: item.last_seen,
+      })),
+      recommendations,
+    };
+  }
+
+  async cleanupDuplicateSessions(): Promise<CleanupResult> {
+    const cleanupQuery = `
+      WITH duplicates AS (
+        SELECT id, session_id,
+               ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY created_at DESC) as rn
+        FROM sessions
+      ),
+      deleted AS (
+        DELETE FROM sessions 
+        WHERE id IN (
+          SELECT id FROM duplicates WHERE rn > 1
+        )
+        RETURNING session_id
+      )
+      SELECT COUNT(*) as deleted_count FROM deleted
+    `;
+
+    const result = await this.db.query(cleanupQuery);
+    const deletedCount = parseInt(result.rows[0]?.deleted_count) || 0;
+
+    return {
+      deletedRecords: deletedCount,
+      message: `Successfully removed ${deletedCount} duplicate sessions`
+    };
+  }
+
+  async cleanupOrphanedMetrics(): Promise<CleanupResult> {
+    const cleanupQuery = `
+      WITH orphaned AS (
+        DELETE FROM session_metrics 
+        WHERE session_id NOT IN (SELECT id FROM sessions)
+        RETURNING id
+      )
+      SELECT COUNT(*) as deleted_count FROM orphaned
+    `;
+
+    const result = await this.db.query(cleanupQuery);
+    const deletedCount = parseInt(result.rows[0]?.deleted_count) || 0;
+
+    return {
+      deletedRecords: deletedCount,
+      message: `Successfully removed ${deletedCount} orphaned metric records`
+    };
+  }
+
+  async validateDataIntegrity(): Promise<any[]> {
+    const validationQuery = `
+      SELECT 
+        'sessions' as table_name,
+        COUNT(*) as total_records,
+        COUNT(*) FILTER (WHERE session_id IS NULL OR session_id = '') as invalid_session_ids,
+        COUNT(*) FILTER (WHERE started_at IS NULL) as missing_start_times,
+        COUNT(*) FILTER (WHERE model_name IS NULL OR model_name = '') as missing_models
+      FROM sessions
+      
+      UNION ALL
+      
+      SELECT 
+        'session_metrics' as table_name,
+        COUNT(*) as total_records,
+        COUNT(*) FILTER (WHERE session_id IS NULL) as invalid_session_refs,
+        COUNT(*) FILTER (WHERE date_bucket IS NULL) as missing_dates,
+        COUNT(*) FILTER (WHERE input_tokens < 0 OR output_tokens < 0) as negative_tokens
+      FROM session_metrics
+    `;
+
+    const result = await this.db.query(validationQuery);
+    return result.rows;
   }
 }
