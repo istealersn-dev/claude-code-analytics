@@ -132,3 +132,8 @@ dist/
 # Temporary files
 temp/
 tmp/
+
+# Development planning documents
+TODOs.md
+Phase-summary.md
+Issues.md
