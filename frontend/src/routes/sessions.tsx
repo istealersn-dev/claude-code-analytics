@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { ArrowLeft, Clock, DollarSign, Hash, Zap, Wrench, ChevronRight } from 'lucide-react';
 import { formatCurrency, formatNumber, formatDuration } from '../hooks/useAnalytics';
 
@@ -29,25 +30,50 @@ interface SessionsResponse {
   };
 }
 
-async function fetchSessions(): Promise<SessionsResponse> {
-  const response = await fetch(`${API_BASE}/analytics/sessions?limit=20&offset=0`);
+const sessionsSearchSchema = z.object({
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  project: z.string().optional(),
+  model: z.string().optional(),
+});
+
+async function fetchSessions(params?: { dateFrom?: string; dateTo?: string }): Promise<SessionsResponse> {
+  const queryParams = new URLSearchParams();
+  queryParams.append('limit', '20');
+  queryParams.append('offset', '0');
+  
+  if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
+  if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
+  
+  const url = `${API_BASE}/analytics/sessions?${queryParams.toString()}`;
+  console.log('Fetching sessions from URL:', url);
+  
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch sessions');
   }
   const result = await response.json();
+  console.log('Sessions API response:', result);
   return result.data;
 }
 
 export const Route = createFileRoute('/sessions')({
   component: Sessions,
+  validateSearch: sessionsSearchSchema,
 })
 
 function Sessions() {
+  const { dateFrom, dateTo, project, model } = Route.useSearch();
+  
+  console.log('Sessions component - Search params:', { dateFrom, dateTo, project, model });
+  
   const { data, isLoading, error } = useQuery({
-    queryKey: ['sessions'],
-    queryFn: fetchSessions,
+    queryKey: ['sessions', { dateFrom, dateTo, project, model }],
+    queryFn: () => fetchSessions({ dateFrom, dateTo }),
     staleTime: 5 * 60 * 1000,
   });
+
+  console.log('Sessions component - Query result:', { data, isLoading, error });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -63,9 +89,24 @@ function Sessions() {
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Sessions</h1>
-        <p className="text-gray-400">
-          Browse and analyze your Claude Code conversation sessions
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-gray-400">
+            Browse and analyze your Claude Code conversation sessions
+          </p>
+          {(dateFrom || dateTo) && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm bg-orange-900/30 text-orange-300 px-3 py-1 rounded-full">
+                📅 Filtered by: {
+                  dateFrom && dateTo && dateFrom.startsWith(dateTo.split('T')[0]) 
+                    ? new Date(dateFrom).toLocaleDateString()
+                    : dateFrom === dateTo 
+                      ? dateFrom 
+                      : `${dateFrom} to ${dateTo}`
+                }
+              </span>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Filters */}

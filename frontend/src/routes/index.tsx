@@ -49,11 +49,19 @@ function Dashboard() {
 
   // Handler for chart clicks - navigate to sessions with date filter
   const handleChartClick = (dataPoint: { date: string }) => {
+    console.log('Chart clicked with data:', dataPoint);
+    
+    // Convert YYYY-MM-DD to full UTC day range to capture all sessions for that date
+    const startOfDay = `${dataPoint.date}T00:00:00.000Z`;
+    const endOfDay = `${dataPoint.date}T23:59:59.999Z`;
+    
+    console.log('Navigating to sessions with dateFrom:', startOfDay, 'dateTo:', endOfDay);
+    
     navigate({ 
       to: '/sessions',
       search: { 
-        dateFrom: dataPoint.date,
-        dateTo: dataPoint.date 
+        dateFrom: startOfDay,
+        dateTo: endOfDay 
       }
     });
   };
@@ -231,9 +239,14 @@ function Dashboard() {
           {/* Daily Sessions */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-primary-500" />
-                Daily Sessions
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary-500" />
+                  Daily Sessions
+                </div>
+                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
+                  Click to filter sessions
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -260,9 +273,14 @@ function Dashboard() {
           {/* Daily Token Usage */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Hash className="w-5 h-5 text-primary-500" />
-                Token Usage
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Hash className="w-5 h-5 text-primary-500" />
+                  Token Usage
+                </div>
+                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
+                  Click to filter sessions
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -289,9 +307,14 @@ function Dashboard() {
           {/* Average Session Duration */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary-500" />
-                Avg Session Duration
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary-500" />
+                  Avg Session Duration
+                </div>
+                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
+                  Click to filter sessions
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
