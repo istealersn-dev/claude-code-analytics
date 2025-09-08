@@ -174,17 +174,17 @@
 
 ### Advanced Analytics
 
-- [ ] **5.1** Trend analysis
-  - [ ] Week-over-week comparisons
-  - [ ] Month-over-month growth metrics
-  - [ ] Seasonal pattern detection
-  - [ ] Anomaly detection for usage spikes
+- [x] **5.1** Trend analysis ✅ **(MERGED TO MAIN)**
+  - [x] Week-over-week comparisons
+  - [x] Month-over-month growth metrics
+  - [x] Seasonal pattern detection
+  - [x] Anomaly detection for usage spikes
 
-- [ ] **5.2** Cost optimization insights
-  - [ ] Most expensive sessions identification
-  - [ ] Cost-per-outcome analysis
-  - [ ] Model efficiency recommendations
-  - [ ] Budget tracking and alerts
+- [x] **5.2** Cost optimization insights ✅ **(MERGED TO MAIN)**
+  - [x] Most expensive sessions identification
+  - [x] Cost-per-outcome analysis
+  - [x] Model efficiency recommendations
+  - [x] Budget tracking and alerts
 
 ### Automation & Integrations
 
@@ -248,6 +248,34 @@
 
 ---
 
+## 🐳 Docker & Local Environment
+
+### Containerization
+
+- [x] Backend API Dockerfile (Node 20, multi-stage build)
+- [x] Frontend Dockerfile (Vite build) + Nginx static server
+- [x] Nginx config proxying `/api` -> `api:3001`
+- [x] `docker-compose.yml` with services: `db` (Postgres 15), `api`, `web`
+- [x] Postgres init via `schema.sql` on first run (initdb mount)
+- [x] Healthchecks: `pg_isready` for DB; API depends_on healthy
+- [x] Frontend calls `/api` (no browser CORS; proxied by Nginx)
+
+### Usage & DX
+
+- [ ] Document `docker compose up --build` flow and ports (web: 8080, api: 3001)
+- [ ] Add npm scripts: `docker:up`, `docker:down`, `docker:logs`
+- [ ] Provide `.env.example` with Docker defaults (DB_HOST=db, DB_USER=postgres, etc.)
+- [ ] Optional: seed data volume/migration scripts for sample data
+- [ ] Optional: add pgAdmin service to compose for DB inspection
+
+### Production Prep
+
+- [ ] Build versioned images and push to registry
+- [ ] CI workflow: build/push images on main branch
+- [ ] Compose override for prod (resource limits, fewer exposed ports)
+- [ ] Harden images (non-root user) and Nginx security headers
+- [ ] Add readiness checks using health endpoints
+
 ## 🎯 Immediate Next Steps (Current Priority)
 
 1. **✅ Complete Phase 1** - Foundation & Data Pipeline (DONE)
@@ -256,7 +284,8 @@
 4. **✅ Complete Phase 4.2** - Data validation & cleanup system (MERGED TO MAIN)
 5. **✅ Complete Phase 4.5** - Performance optimizations (COMPLETED)
 6. **✅ Complete Phase 4.6** - Responsive design improvements (COMPLETED)
-7. **🚀 Next Priority**: Begin Phase 5 - Advanced Features & Automation
+7. **✅ Phase 5.1 & 5.2 Complete**: Advanced Analytics (Trend Analysis & Cost Optimization) - MERGED TO MAIN
+8. **🚀 Next Priority**: Complete remaining Phase 5 features (5.3-5.6) - Automation & Custom Dashboards
 
 ---
 
@@ -268,10 +297,10 @@
   - **Phase 2.2**: Analytics Widgets & Charts - **100%** ✅
 - **Phase 3**: Advanced Analytics - **85%** ✅ 3.1 Complete ✅, 3.2 Complete ✅, 3.3 Complete ✅, 3.4 Complete ✅, 3.5 Complete ✅
 - **Phase 4**: Enhanced Features - **100%** ✅ 4.1 Complete ✅, 4.2 Complete ✅, 4.5 Complete ✅, 4.6 Complete ✅
-- **Phase 5**: Advanced Features - **0%** 🔄 Pending
+- **Phase 5**: Advanced Features - **33%** 🚀 5.1 Complete ✅, 5.2 Complete ✅, 5.3-5.6 Pending
 - **Phase 6**: Production Ready - **0%** 🔄 Pending
 
-**Overall Progress**: **75%** Complete
+**Overall Progress**: **80%** Complete
 
 ---
 
@@ -350,4 +379,4 @@
 
 *Last updated: September 8, 2025*
 *Next review: After Phase 5 completion*
-*Recent: Completed Phase 4 with comprehensive performance optimizations and responsive design improvements. Implemented query result caching, virtual scrolling, chart optimization with React.memo, bundle size optimization with lazy loading, and full mobile/tablet responsiveness.*
+*Recent: Completed Phase 5.1 & 5.2 with advanced analytics including trend analysis (week/month-over-month, seasonal patterns, anomaly detection) and cost optimization insights (model efficiency recommendations, budget tracking). Successfully addressed all Greptile code review feedback and merged PR #7 to main. Project now at 80% completion.*
