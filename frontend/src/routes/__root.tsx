@@ -29,13 +29,6 @@ export const Route = createRootRoute({
                   Sessions
                 </Link>
                 <Link 
-                  to="/trends" 
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-                  activeProps={{ className: "bg-gray-700 text-white" }}
-                >
-                  Trends
-                </Link>
-                <Link 
                   to="/settings" 
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
                   activeProps={{ className: "bg-gray-700 text-white" }}
