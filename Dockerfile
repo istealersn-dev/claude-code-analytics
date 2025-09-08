@@ -25,6 +25,15 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/schema.sql ./schema.sql
 
+# Install minimal tools for healthcheck
+RUN apk add --no-cache curl
+
+# Use non-root user for runtime
+RUN addgroup -S app && adduser -S app -G app && chown -R app:app /app
+USER app
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:3001/api/health >/dev/null || exit 1
+
 EXPOSE 3001
 
 # Default environment variables (can be overridden)
