@@ -1,5 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import type { AnalyticsFilters } from '../../../src/database/query-builder';
+
+// Frontend-specific type definitions to avoid cross-boundary imports
+interface AnalyticsFilters {
+  dateFrom?: Date;
+  dateTo?: Date;
+  projectName?: string;
+  modelName?: string;
+  sessionIds?: string[];
+  limit?: number;
+  offset?: number;
+}
+
+interface SessionWithEfficiency {
+  session_id: string;
+  project_name?: string;
+  started_at: Date;
+  duration_seconds?: number;
+  total_cost_usd: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  model_name?: string;
+  tools_used: string[];
+  efficiency: number;
+}
 
 interface TrendAnalysis {
   weekOverWeekGrowth: {
@@ -28,7 +51,7 @@ interface TrendAnalysis {
 }
 
 interface CostOptimizationInsights {
-  mostExpensiveSessions: Array<any>;
+  mostExpensiveSessions: SessionWithEfficiency[];
   costPerOutcomeAnalysis: Array<{
     model: string;
     avgCostPerSession: number;
@@ -44,6 +67,7 @@ interface CostOptimizationInsights {
   budgetTracking: {
     currentMonthSpend: number;
     projectedMonthSpend: number;
+    budgetLimit: number;
     budgetUtilization: number;
     daysRemaining: number;
   };

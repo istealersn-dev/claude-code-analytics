@@ -61,17 +61,12 @@ export function ModelEfficiencyChart({ data }: ModelEfficiencyChartProps) {
                 borderRadius: '8px',
                 color: '#F9FAFB',
               }}
-              formatter={(value: number, name: string, props: any) => {
-                const { payload } = props;
-                return [
-                  [
-                    `Efficiency: ${value.toFixed(0)} tokens/$`,
-                    `Avg Cost/Session: $${payload.avgCostPerSession.toFixed(2)}`,
-                    `Avg Tokens/Session: ${payload.avgTokensPerSession.toFixed(0)}`,
-                  ].join('\n'),
-                  payload.model
-                ];
-              }}
+              formatter={(value: number, name: string, props: any) => [
+                `${value.toFixed(0)} tokens/$`,
+                'Efficiency'
+              ]}
+              labelFormatter={(label: string) => `Model: ${label}`}
+              itemStyle={{ color: '#F9FAFB' }}
             />
             <Bar 
               dataKey="efficiency" 
