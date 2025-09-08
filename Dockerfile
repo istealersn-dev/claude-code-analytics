@@ -17,9 +17,11 @@ FROM node:20-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy production artifacts
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+# Install only production dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copy built artifacts
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/schema.sql ./schema.sql
 
@@ -37,4 +39,3 @@ ENV HOST=0.0.0.0 \
     NODE_ENV=production
 
 CMD ["node", "dist/server/index.js"]
-
