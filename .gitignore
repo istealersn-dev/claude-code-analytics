@@ -133,7 +133,6 @@ dist/
 temp/
 tmp/
 
-# Development planning documents
-TODOs.md
-Phase-summary.md
-Issues.md
+# Development planning documents (keep current versions)
+# TODOs.md - keeping current version
+# phase-summary.md - keeping current version

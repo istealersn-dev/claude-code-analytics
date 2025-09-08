@@ -10,12 +10,13 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 
 ## Architecture Decisions
 - **Database**: PostgreSQL with hybrid normalized approach
-- **Frontend**: Vite + React + TypeScript + Tailwind v4
+- **Frontend**: Vite + React + TypeScript + Tailwind CSS v3 (reverted from v4 for stability)
+- **Backend**: Fastify server with comprehensive API endpoints
 - **Routing**: TanStack Router for type-safe navigation and search params
 - **Data Fetching**: TanStack Query for server state management and caching
 - **Charts**: Recharts with curved styling for engaging visualizations
 - **Data Retention**: 90 days (configurable)
-- **Update Strategy**: Manual sync with incremental data processing
+- **Update Strategy**: Manual sync with incremental data processing and real-time sync interface
 
 ## TanStack Technologies
 
@@ -63,10 +64,12 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - **Layout**: Grid-based dashboard with responsive design
 
 ## Key Metrics Tracked
-- **Cost Analytics**: Total spend, daily burn rate, cost per session
-- **Usage Patterns**: Sessions, tokens (input/output), model distribution
-- **Performance**: Session duration, tools used, cache hit rates
-- **Trends**: Daily/weekly usage patterns, historical comparisons
+- **Cost Analytics**: Total spend, daily burn rate, cost per session with comprehensive visualizations
+- **Usage Patterns**: Sessions, tokens (input/output), model distribution with interactive pie charts
+- **Performance**: Session duration, tools used, cache hit rates with time-series analysis
+- **Trends**: Daily/weekly usage patterns, historical comparisons with date range filtering
+- **Data Quality**: Duplicate detection, missing data identification, integrity scoring
+- **Interactive Features**: Chart drill-down navigation, URL-persisted filters, real-time sync status
 
 ## Error Handling Philosophy
 - **Fail Fast**: Stop execution with clear error messages when critical issues occur
@@ -76,9 +79,11 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 
 ## Development Workflow
 - **Commits**: Conventional commit patterns (feat:, fix:, refactor:, chore:)
-- **Iteration**: Build MVP first, enhance progressively
-- **No Testing**: Focus on functionality for MVP, add tests later
-- **Documentation**: Update this file as architecture evolves
+- **Code Review**: Greptile integration for automated code review and production readiness
+- **Quality Assurance**: TypeScript strict mode, Biome linting, comprehensive error boundaries
+- **Architecture**: Query builder abstraction, proper type safety, user confirmation dialogs
+- **Iteration**: MVP-first approach with progressive enhancement and architectural improvements
+- **Documentation**: Comprehensive phase tracking, session summaries, and architectural decisions
 
 ## Database Schema Strategy
 - **sessions**: Core session metadata and timing
@@ -87,27 +92,47 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - **Hybrid Approach**: Balance between query performance and data integrity
 
 ## Current Development Status
-- **Current Phase**: Phase 1 - Foundation & Data Pipeline (25% complete)
-- **Overall Progress**: 4% complete
-- **Next Priority**: Phase 1.1 - Create Claude Code JSONL parser
+- **Current Phase**: Phase 4 - Enhanced Features & Polish (50% complete)
+- **Overall Progress**: 66% complete
+- **Next Priority**: Complete remaining Phase 4 features (Performance optimizations & Responsive design) or advance to Phase 5
 
 ### Development Phases
-1. **Phase 1**: Foundation & Data Pipeline (Database ✅, Parser ⏳)
-2. **Phase 2**: Frontend Foundation & Basic Dashboard  
-3. **Phase 3**: Advanced Analytics & Visualizations
-4. **Phase 4**: Enhanced Features & Polish
-5. **Phase 5**: Advanced Features & Automation
-6. **Phase 6**: Production & Deployment
+1. **Phase 1**: Foundation & Data Pipeline ✅ **100% Complete**
+2. **Phase 2**: Frontend Foundation & Basic Dashboard ✅ **100% Complete**
+3. **Phase 3**: Advanced Analytics & Visualizations ✅ **85% Complete**
+4. **Phase 4**: Enhanced Features & Polish 🚀 **50% Complete** (Data Sync ✅, Data Validation ✅)
+5. **Phase 5**: Advanced Features & Automation ⏳ **0% Complete**
+6. **Phase 6**: Production & Deployment ⏳ **0% Complete**
+
+### Recent Major Achievements
+- ✅ **Data Validation & Cleanup System**: Complete data quality dashboard with automated cleanup
+- ✅ **Production Architecture**: Addressed all Greptile code review feedback for production readiness
+- ✅ **Advanced Analytics**: Interactive charts with date filtering and drill-down capabilities
+- ✅ **Data Sync Interface**: Manual sync with progress indicators and error reporting
+- ✅ **TypeScript & Quality**: Full type safety across entire codebase with comprehensive error handling
 
 ### Immediate Next Steps
-1. Create Claude Code JSONL parser with validation
-2. Set up TypeScript interfaces for data models  
-3. Implement basic data ingestion pipeline
-4. Create sample data for development and testing
+1. Complete Phase 4 remaining features (Performance optimizations & Responsive design)
+2. Begin Phase 5 - Advanced Features & Automation
+3. Implement trend analysis and cost optimization insights
+4. Consider production deployment preparation
 
 ## Future Considerations
-- Export capabilities (CSV, JSON)
-- Advanced filtering and search
-- Comparison views (week-over-week, month-over-month)
-- Alerting for usage spikes or budget limits
-- Integration with other Claude Code workflows
+
+- Performance optimizations (query caching, virtual scrolling, bundle optimization)
+- Mobile and tablet responsive design improvements
+- Advanced trend analysis (week-over-week, seasonal patterns, anomaly detection)
+- Cost optimization insights and budget tracking
+- Automated reporting and external integrations (Slack, email)
+- Custom dashboard creation and user-configurable widgets
+- Production deployment with Docker containerization
+- Comprehensive testing suite (unit, integration, E2E)
+- Advanced filtering by project/model and search functionality
+
+## Technical Architecture Achievements
+
+- **AnalyticsQueryBuilder**: Centralized database abstraction with comprehensive data quality methods
+- **Data Validation System**: Complete data integrity checking with automated cleanup capabilities
+- **Interactive Dashboard**: Advanced chart interactions with date filtering and drill-down navigation
+- **Type Safety**: Full TypeScript coverage with strict mode and proper error handling
+- **Production Ready**: Addressed all automated code review feedback for architectural best practices

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
+import { useMemo, useCallback } from 'react';
 import { 
   useOverviewMetrics, 
   useCostAnalysis, 
@@ -11,8 +12,9 @@ import {
   formatNumber, 
   formatDuration 
 } from '../hooks/useAnalytics';
+import { useScreenSize, getChartHeight } from '../hooks/useScreenSize';
 import { StatsCard } from '../components/analytics/StatsCard';
-import { AreaChart, LineChart, PieChart, BarChart, HeatmapChart } from '../components/charts';
+import { AreaChart, LineChart, PieChart, BarChart, HeatmapChart } from '../components/charts/LazyCharts';
 import { getProjectDisplayName } from '../utils/projectNames';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
@@ -45,11 +47,12 @@ export const Route = createFileRoute('/')({
 function Dashboard() {
   const { startDate, endDate } = Route.useSearch();
   const navigate = Route.useNavigate();
+  const screenSize = useScreenSize();
 
   const dateRange = startDate && endDate ? { start: startDate, end: endDate } : undefined;
 
-  // Handler for chart clicks - navigate to sessions with date filter
-  const handleChartClick = (dataPoint: { date: string }) => {
+  // Memoized handler for chart clicks - navigate to sessions with date filter
+  const handleChartClick = useCallback((dataPoint: { date: string }) => {
     console.log('Chart clicked with data:', dataPoint);
     
     // Convert YYYY-MM-DD to full UTC day range to capture all sessions for that date
@@ -65,7 +68,7 @@ function Dashboard() {
         dateTo: endOfDay 
       }
     });
-  };
+  }, [navigate]);
 
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useOverviewMetrics(dateRange);
   const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis(dateRange);
@@ -74,14 +77,25 @@ function Dashboard() {
   const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange);
   const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange);
 
-  // Process project data with cleaned names for better display  
-  const processedProjectUsage = overview?.topProjects?.map(project => ({
-    name: getProjectDisplayName(project.project_name || 'Unknown', 'legend'),
-    value: project.count || 0,
-    tooltip: getProjectDisplayName(project.project_name || 'Unknown', 'tooltip'),
-  })) || [];
+  // Memoized processed project data to prevent unnecessary recalculations
+  const processedProjectUsage = useMemo(() => 
+    overview?.topProjects?.map(project => ({
+      name: getProjectDisplayName(project.project_name || 'Unknown', 'legend'),
+      value: project.count || 0,
+      tooltip: getProjectDisplayName(project.project_name || 'Unknown', 'tooltip'),
+    })) || [], 
+    [overview?.topProjects]
+  );
 
-  const handleDateRangeChange = (range: { start: string; end: string } | undefined) => {
+  // Memoized chart data to prevent unnecessary array operations
+  const chartData = useMemo(() => ({
+    dailyCosts: costAnalysis?.dailyCosts?.slice(-30) || [],
+    dailySessions: dailyUsage?.sessions?.slice(-30) || [],
+    dailyTokens: dailyUsage?.tokens?.slice(-30) || [],
+    sessionDuration: dailyUsage?.duration?.slice(-30) || [],
+  }), [costAnalysis?.dailyCosts, dailyUsage?.sessions, dailyUsage?.tokens, dailyUsage?.duration]);
+
+  const handleDateRangeChange = useCallback((range: { start: string; end: string } | undefined) => {
     navigate({
       search: (prev) => ({
         ...prev,
@@ -89,7 +103,7 @@ function Dashboard() {
         endDate: range?.end,
       }),
     });
-  };
+  }, [navigate]);
 
 
   if (overviewError) {
@@ -115,27 +129,31 @@ function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Claude Code Analytics Dashboard
-            </h1>
-            <p className="text-gray-400">
-              Track your Claude Code usage patterns, costs, and productivity metrics
-            </p>
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Claude Code Analytics
+              </h1>
+              <p className="text-sm sm:text-base text-gray-400">
+                Track your Claude Code usage patterns, costs, and productivity metrics
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <DateRangePicker
+                value={dateRange}
+                onChange={handleDateRangeChange}
+                className="w-full sm:w-auto"
+              />
+            </div>
           </div>
-          <DateRangePicker
-            value={dateRange}
-            onChange={handleDateRangeChange}
-            className="sm:ml-4"
-          />
         </div>
       </div>
       
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <StatsCard
           title="Total Sessions"
           value={overview?.totalSessions || 0}
@@ -167,7 +185,7 @@ function Dashboard() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* Daily Cost Trend */}
         <Card>
           <CardHeader>
@@ -183,8 +201,8 @@ function Dashboard() {
               </div>
             ) : (
               <AreaChart 
-                data={costAnalysis?.dailyCosts?.slice(-30) || []}
-                height={250}
+                data={chartData.dailyCosts}
+                height={getChartHeight(screenSize)}
                 color="#FF6B35"
                 formatValue={formatCurrency}
                 formatTooltip={(value) => [formatCurrency(value), 'Cost']}
@@ -241,9 +259,9 @@ function Dashboard() {
       </div>
 
       {/* Phase 3: Time-Series Charts */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-6">Usage Trends</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Usage Trends</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Daily Sessions */}
           <Card>
             <CardHeader>
@@ -264,8 +282,8 @@ function Dashboard() {
                 </div>
               ) : (
                 <LineChart 
-                  data={dailyUsage?.sessions?.slice(-30) || []}
-                  height={250}
+                  data={chartData.dailySessions}
+                  height={getChartHeight(screenSize)}
                   color="#3B82F6"
                   formatValue={formatNumber}
                   onDataPointClick={handleChartClick}
@@ -298,7 +316,7 @@ function Dashboard() {
                 </div>
               ) : (
                 <LineChart 
-                  data={dailyUsage?.tokens?.slice(-30) || []}
+                  data={chartData.dailyTokens}
                   height={250}
                   color="#10B981"
                   formatValue={formatNumber}
@@ -332,7 +350,7 @@ function Dashboard() {
                 </div>
               ) : (
                 <LineChart 
-                  data={dailyUsage?.duration?.slice(-30) || []}
+                  data={chartData.sessionDuration}
                   height={250}
                   color="#8B5CF6"
                   formatValue={formatDuration}
@@ -349,9 +367,9 @@ function Dashboard() {
       </div>
 
       {/* Phase 3.2: Distribution Charts */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-6">Usage Distributions</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Usage Distributions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Model Usage Distribution */}
           <Card>
             <CardHeader>
@@ -429,9 +447,9 @@ function Dashboard() {
       </div>
 
       {/* Phase 3.3: Performance Metrics */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-6">Performance Insights</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Performance Insights</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Usage Heatmap */}
           <Card>
             <CardHeader>

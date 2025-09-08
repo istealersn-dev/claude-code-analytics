@@ -1,4 +1,5 @@
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { memo, useMemo } from 'react';
 
 interface PieChartProps {
   data: Array<{ name: string; value: number; color?: string }>;
@@ -26,7 +27,7 @@ const DEFAULT_COLORS = [
   '#FDCB6E', // Orange
 ];
 
-export function PieChart({
+export const PieChart = memo(function PieChart({
   data,
   height = 300,
   showLegend = true,
@@ -38,6 +39,22 @@ export function PieChart({
   ],
   colors = DEFAULT_COLORS,
 }: PieChartProps) {
+  // Memoize expensive computations
+  const processedData = useMemo(() => {
+    if (!data || data.length === 0) return { dataWithColors: [], total: 0 };
+    
+    // Ensure each data item has a color
+    const dataWithColors = data.map((item, index) => ({
+      ...item,
+      color: item.color || colors[index % colors.length],
+    }));
+
+    // Calculate total for percentage calculation
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    
+    return { dataWithColors, total };
+  }, [data, colors]);
+
   if (!data || data.length === 0) {
     return (
       <div 
@@ -49,21 +66,12 @@ export function PieChart({
     );
   }
 
-  // Ensure each data item has a color
-  const dataWithColors = data.map((item, index) => ({
-    ...item,
-    color: item.color || colors[index % colors.length],
-  }));
-
-  // Calculate total for percentage calculation
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <RechartsPieChart>
           <Pie
-            data={dataWithColors}
+            data={processedData.dataWithColors}
             cx="50%"
             cy="50%"
             innerRadius={showLegend ? 60 : 40}
@@ -72,7 +80,7 @@ export function PieChart({
             dataKey="value"
             stroke="none"
           >
-            {dataWithColors.map((entry, index) => (
+            {processedData.dataWithColors.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
                 fill={entry.color}
@@ -91,7 +99,7 @@ export function PieChart({
                 color: '#F9FAFB',
               }}
               formatter={(value: number, name: string) => {
-                const percentage = (value / total) * 100;
+                const percentage = (value / processedData.total) * 100;
                 return formatTooltip(value, name, percentage);
               }}
             />
@@ -125,4 +133,4 @@ export function PieChart({
       </ResponsiveContainer>
     </div>
   );
-}
+});

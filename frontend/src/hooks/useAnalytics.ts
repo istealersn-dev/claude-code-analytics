@@ -124,12 +124,13 @@ async function fetchPerformanceMetrics(dateRange?: DateRange): Promise<Performan
   return response.json();
 }
 
-// React Query hooks
+// React Query hooks with optimized caching
 export function useOverviewMetrics(dateRange?: DateRange) {
   return useQuery({
     queryKey: ['analytics', 'overview', dateRange],
     queryFn: () => fetchOverviewMetrics(dateRange),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes - overview data changes less frequently
+    gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,
   });
 }
@@ -138,7 +139,8 @@ export function useCostAnalysis(dateRange?: DateRange) {
   return useQuery({
     queryKey: ['analytics', 'costs', dateRange],
     queryFn: () => fetchCostAnalysis(dateRange),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
   });
 }
@@ -147,7 +149,8 @@ export function useDailyUsageTimeSeries(dateRange?: DateRange) {
   return useQuery({
     queryKey: ['analytics', 'daily-usage', dateRange],
     queryFn: () => fetchDailyUsageTimeSeries(dateRange),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
   });
 }
@@ -156,7 +159,8 @@ export function useDistributionData(dateRange?: DateRange) {
   return useQuery({
     queryKey: ['analytics', 'distributions', dateRange],
     queryFn: () => fetchDistributionData(dateRange),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes - distribution data is more stable
+    gcTime: 45 * 60 * 1000, // 45 minutes
     refetchOnWindowFocus: false,
   });
 }
@@ -165,7 +169,8 @@ export function useHeatmapData(dateRange?: DateRange) {
   return useQuery({
     queryKey: ['analytics', 'heatmap', dateRange],
     queryFn: () => fetchHeatmapData(dateRange),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 20 * 60 * 1000, // 20 minutes - heatmap data changes least frequently
+    gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,
   });
 }
@@ -174,7 +179,8 @@ export function usePerformanceMetrics(dateRange?: DateRange) {
   return useQuery({
     queryKey: ['analytics', 'performance', dateRange],
     queryFn: () => fetchPerformanceMetrics(dateRange),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 45 * 60 * 1000, // 45 minutes
     refetchOnWindowFocus: false,
   });
 }

@@ -1,4 +1,5 @@
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { memo, useMemo, useCallback } from 'react';
 
 interface LineChartProps {
   data: Array<{ date: string; value: number; count?: number }>;
@@ -10,7 +11,7 @@ interface LineChartProps {
   onDataPointClick?: (data: { date: string; value: number; count?: number }) => void;
 }
 
-export function LineChart({
+export const LineChart = memo(function LineChart({
   data,
   height = 300,
   color = '#FF6B35',
@@ -19,6 +20,38 @@ export function LineChart({
   showGrid = true,
   onDataPointClick,
 }: LineChartProps) {
+  // Memoize expensive computations
+  const chartMargin = useMemo(() => ({ top: 5, right: 30, left: 20, bottom: 5 }), []);
+  
+  const handleOverlayClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (!onDataPointClick || !data || data.length === 0) return;
+    
+    console.log('Chart overlay clicked - processing click...');
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Calculate which data point is closest to the click position
+    const rect = event.currentTarget.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const chartWidth = rect.width - 40 - 30; // Account for margins (left: 20, right: 30)
+    const dataPointIndex = Math.round((clickX - 20) / chartWidth * (data.length - 1));
+    const clampedIndex = Math.max(0, Math.min(data.length - 1, dataPointIndex));
+    
+    const selectedDataPoint = data[clampedIndex];
+    console.log('Selected data point:', selectedDataPoint);
+    
+    onDataPointClick(selectedDataPoint);
+  }, [onDataPointClick, data]);
+
+  const handleChartClick = useCallback((clickData: any) => {
+    if (!onDataPointClick) return;
+    console.log('LineChart onClick triggered:', clickData);
+    if (clickData && clickData.activePayload && clickData.activePayload.length > 0) {
+      console.log('Calling onDataPointClick with:', clickData.activePayload[0].payload);
+      onDataPointClick(clickData.activePayload[0].payload);
+    }
+  }, [onDataPointClick]);
+
   if (!data || data.length === 0) {
     return (
       <div 
@@ -49,32 +82,7 @@ export function LineChart({
             backgroundColor: 'rgba(255, 107, 53, 0.05)', // Very subtle orange tint to show clickable area
             border: '1px solid rgba(255, 107, 53, 0.2)', // Subtle border to show boundaries
           }}
-          onClick={(event) => {
-            console.log('Chart overlay clicked - processing click...');
-            event.preventDefault();
-            event.stopPropagation();
-            
-            if (data && data.length > 0) {
-              // Calculate which data point is closest to the click position
-              const rect = event.currentTarget.getBoundingClientRect();
-              const clickX = event.clientX - rect.left;
-              const chartWidth = rect.width - 40 - 30; // Account for margins (left: 20, right: 30)
-              const dataPointIndex = Math.round((clickX - 20) / chartWidth * (data.length - 1));
-              const clampedIndex = Math.max(0, Math.min(data.length - 1, dataPointIndex));
-              
-              const selectedDataPoint = data[clampedIndex];
-              console.log('Click details:');
-              console.log('- Click position:', clickX);
-              console.log('- Chart width:', chartWidth);
-              console.log('- Data points available:', data.length);
-              console.log('- Calculated index:', clampedIndex);
-              console.log('- Selected data point:', selectedDataPoint);
-              
-              onDataPointClick(selectedDataPoint);
-            } else {
-              console.log('No data available for chart click');
-            }
-          }}
+          onClick={handleOverlayClick}
           title="Click anywhere on the chart to view sessions for that time period"
         />
       )}
@@ -82,14 +90,8 @@ export function LineChart({
       <ResponsiveContainer width="100%" height="100%">
         <RechartsLineChart 
           data={data} 
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          onClick={onDataPointClick ? (data) => {
-            console.log('LineChart onClick triggered:', data);
-            if (data && data.activePayload && data.activePayload.length > 0) {
-              console.log('Calling onDataPointClick with:', data.activePayload[0].payload);
-              onDataPointClick(data.activePayload[0].payload);
-            }
-          } : undefined}
+          margin={chartMargin}
+          onClick={onDataPointClick ? handleChartClick : undefined}
         >
           {showGrid && (
             <CartesianGrid 
@@ -172,4 +174,4 @@ export function LineChart({
       </ResponsiveContainer>
     </div>
   );
-}
+});
