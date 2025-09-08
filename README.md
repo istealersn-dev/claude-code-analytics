@@ -3,7 +3,7 @@
 A comprehensive personal analytics dashboard for Claude Code CLI usage tracking with beautiful visualizations and detailed insights.
 
 ![Claude Code Analytics](https://img.shields.io/badge/Claude%20Code-Analytics-orange?style=for-the-badge)
-![Progress](https://img.shields.io/badge/Progress-63%25-green?style=for-the-badge)
+![Progress](https://img.shields.io/badge/Progress-75%25-green?style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
@@ -220,22 +220,45 @@ claude-code-analytics/
 #### Available Scripts
 
 ```bash
-# Backend
-npm run dev                  # Start backend in development mode
-npm run build               # Build TypeScript to JavaScript
-npm run start               # Run built application
-npm test                    # Run parser tests
+# Quick Development (Recommended)
+npm run dev:all             # 🚀 Start both backend & frontend concurrently
+npm run dev:server          # Start backend server only
+npm run dev:frontend        # Start frontend only
 
-# Frontend  
-cd frontend
-npm run dev                 # Start Vite development server
-npm run build               # Build for production
-npm run preview             # Preview production build
+# Development
+npm run dev                 # Start backend in development mode (alias for dev:server)
+npm run build               # Build TypeScript to JavaScript
+npm run build:frontend      # Build frontend for production
+npm run build:all           # Build both backend and frontend
+npm run start               # Run built application
+
+# Testing
+npm run test                # Run parser tests
+npm run test:parser         # Run parser tests (explicit)
+npm run test:db             # Run database insertion tests
 
 # Database
 npm run db:reset            # Reset database schema
 npm run db:connect          # Connect to PostgreSQL
+npm run db:test             # Test database connection
 ```
+
+#### ⚡ Quick Start for Development
+
+1. **Start everything at once:**
+   ```bash
+   npm run dev:all
+   ```
+   This starts both the backend API server (http://localhost:3001) and frontend dev server (http://localhost:5173) with colored output logs.
+
+2. **Or run separately:**
+   ```bash
+   # Terminal 1: Backend
+   npm run dev:server
+   
+   # Terminal 2: Frontend  
+   npm run dev:frontend
+   ```
 
 #### Code Style & Quality
 

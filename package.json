@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node dist/server/index.js",
     "dev": "npx tsx src/server/index.ts",
+    "dev:server": "npx tsx src/server/index.ts",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:all": "concurrently \"npm run dev:server\" \"npm run dev:frontend\" --names \"SERVER,FRONTEND\" --prefix-colors \"blue,green\"",
     "build": "npx tsc",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build && npm run build:frontend",
     "build:start": "npm run build && npm start",
     "test": "npx ts-node test/test-parser.ts",
     "test:parser": "npx ts-node test/test-parser.ts",
@@ -39,6 +44,7 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
+    "concurrently": "^9.2.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
