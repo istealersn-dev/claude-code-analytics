@@ -27,11 +27,6 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
     );
   }
 
-  // Group anomalies by type for better visualization
-  const sessionAnomalies = data.filter(d => d.type === 'sessions');
-  const costAnomalies = data.filter(d => d.type === 'cost');
-  const tokenAnomalies = data.filter(d => d.type === 'tokens');
-
   const getColorByType = (type: string) => {
     switch (type) {
       case 'sessions': return '#FF6B35';

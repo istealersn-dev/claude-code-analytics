@@ -4,6 +4,7 @@ import { Card } from '../ui/card';
 interface BudgetData {
   currentMonthSpend: number;
   projectedMonthSpend: number;
+  budgetLimit: number;
   budgetUtilization: number;
   daysRemaining: number;
 }
@@ -15,7 +16,9 @@ interface BudgetTrackingCardProps {
 export function BudgetTrackingCard({ budgetData }: BudgetTrackingCardProps) {
   const utilizationPercentage = Math.min(budgetData.budgetUtilization, 100);
   const isOverBudget = budgetData.budgetUtilization > 100;
-  const isNearBudget = budgetData.budgetUtilization > 80;
+  // Use configurable threshold based on budget limit
+  const BUDGET_WARNING_THRESHOLD = 80;
+  const isNearBudget = budgetData.budgetUtilization > BUDGET_WARNING_THRESHOLD;
 
   const getUtilizationColor = () => {
     if (isOverBudget) return 'from-red-600 to-red-400';
@@ -44,11 +47,17 @@ export function BudgetTrackingCard({ budgetData }: BudgetTrackingCardProps) {
 
       <div className="space-y-6">
         {/* Current vs Projected */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-xs text-gray-400 mb-1">Current Spend</div>
             <div className="text-2xl font-bold text-white">
               ${budgetData.currentMonthSpend.toFixed(2)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-gray-400 mb-1">Budget Limit</div>
+            <div className="text-2xl font-bold text-white">
+              ${budgetData.budgetLimit.toFixed(2)}
             </div>
           </div>
           <div className="text-center">
@@ -85,7 +94,7 @@ export function BudgetTrackingCard({ budgetData }: BudgetTrackingCardProps) {
           
           {isOverBudget && (
             <div className="mt-1 text-xs text-red-400">
-              Over by ${(budgetData.currentMonthSpend - (budgetData.projectedMonthSpend * 0.8)).toFixed(2)}
+              Over budget by ${(budgetData.currentMonthSpend - budgetData.budgetLimit).toFixed(2)}
             </div>
           )}
         </div>

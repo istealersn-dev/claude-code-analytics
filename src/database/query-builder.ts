@@ -104,6 +104,7 @@ export interface CostOptimizationInsights {
   budgetTracking: {
     currentMonthSpend: number;
     projectedMonthSpend: number;
+    budgetLimit: number;
     budgetUtilization: number;
     daysRemaining: number;
   };
@@ -1165,6 +1166,10 @@ export class AnalyticsQueryBuilder {
       ? (parseFloat(budgetInfo.current_spend) / budgetInfo.days_elapsed) * budgetInfo.days_in_month
       : 0;
 
+    // Set a reasonable default monthly budget - can be made configurable later
+    const monthlyBudgetLimit = parseFloat(process.env['MONTHLY_BUDGET_LIMIT'] || '100');
+    const currentSpend = parseFloat(budgetInfo.current_spend) || 0;
+
     const recommendations = [];
     if (Array.isArray(modelEfficiency) && modelEfficiency.length > 1) {
       const mostEfficient = modelEfficiency[0];
@@ -1190,9 +1195,10 @@ export class AnalyticsQueryBuilder {
       })) : [],
       modelEfficiencyRecommendations: recommendations,
       budgetTracking: {
-        currentMonthSpend: parseFloat(budgetInfo.current_spend) || 0,
+        currentMonthSpend: currentSpend,
         projectedMonthSpend: projectedSpend,
-        budgetUtilization: projectedSpend > 0 ? (parseFloat(budgetInfo.current_spend) / projectedSpend) * 100 : 0,
+        budgetLimit: monthlyBudgetLimit,
+        budgetUtilization: monthlyBudgetLimit > 0 ? (currentSpend / monthlyBudgetLimit) * 100 : 0,
         daysRemaining: Math.max(0, budgetInfo.days_in_month - budgetInfo.days_elapsed),
       },
     };

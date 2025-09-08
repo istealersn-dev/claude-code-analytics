@@ -87,7 +87,10 @@ export function OptimizationRecommendations({ recommendations }: OptimizationRec
               
               {/* Action Button */}
               <div className="mt-3 pt-3 border-t border-gray-700">
-                <button className="text-xs text-orange-400 hover:text-orange-300 transition-colors duration-200">
+                <button 
+                  onClick={() => window.open(`https://docs.anthropic.com/claude/docs/models-overview`, '_blank')}
+                  className="text-xs text-orange-400 hover:text-orange-300 transition-colors duration-200"
+                >
                   Learn more about {rec.recommendedModel} →
                 </button>
               </div>
