@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card } from '../ui/card';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -15,6 +15,18 @@ interface AnomalyDetectionChartProps {
 }
 
 export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
+  const mostCommonAnomalyType = useMemo(() => {
+    if (!data || data.length === 0) return 'None';
+    
+    const counts = data.reduce((acc, curr) => {
+      acc[curr.type] = (acc[curr.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(counts)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'None';
+  }, [data]);
+
   if (!data || data.length === 0) {
     return (
       <Card className="p-6 bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700">
@@ -132,16 +144,7 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
           <div>
             <div className="text-xs text-gray-400">Most Common</div>
             <div className="text-sm font-medium text-white">
-              {data.length > 0 
-                ? (() => {
-                    const counts = data.reduce((acc, curr) => {
-                      acc[curr.type] = (acc[curr.type] || 0) + 1;
-                      return acc;
-                    }, {} as Record<string, number>);
-                    return Object.entries(counts).sort(([,a], [,b]) => b - a)[0]?.[0] || 'None';
-                  })()
-                : 'None'
-              }
+              {mostCommonAnomalyType}
             </div>
           </div>
           <div>

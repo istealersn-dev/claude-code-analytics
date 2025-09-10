@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 // Frontend-specific type definitions to avoid cross-boundary imports
-interface AnalyticsFilters {
+export interface AnalyticsFilters {
   dateFrom?: Date;
   dateTo?: Date;
   projectName?: string;
@@ -14,7 +14,7 @@ interface AnalyticsFilters {
 interface SessionWithEfficiency {
   session_id: string;
   project_name?: string;
-  started_at: Date;
+  started_at: string;
   duration_seconds?: number;
   total_cost_usd: number;
   total_input_tokens: number;

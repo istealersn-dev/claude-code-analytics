@@ -1,10 +1,9 @@
-import React from 'react';
 import { Card } from '../ui/card';
 import { useCostOptimizationInsights } from '../../hooks/useTrends';
 import { ModelEfficiencyChart } from './ModelEfficiencyChart';
 import { BudgetTrackingCard } from './BudgetTrackingCard';
 import { OptimizationRecommendations } from './OptimizationRecommendations';
-import type { AnalyticsFilters } from '../../../../src/database/query-builder';
+import type { AnalyticsFilters } from '../../hooks/useTrends';
 
 interface CostOptimizationDashboardProps {
   filters?: AnalyticsFilters;
@@ -18,7 +17,7 @@ export function CostOptimizationDashboard({ filters = {} }: CostOptimizationDash
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="p-6">
+            <Card key={`loading-${i}`} className="p-6">
               <div className="animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
                 <div className="h-32 bg-gray-200 rounded mb-4"></div>
@@ -36,7 +35,9 @@ export function CostOptimizationDashboard({ filters = {} }: CostOptimizationDash
       <Card className="p-6">
         <div className="text-center text-red-600">
           <p className="text-lg font-medium mb-2">Error loading cost optimization insights</p>
-          <p className="text-sm text-gray-500">{(error as Error).message}</p>
+          <p className="text-sm text-gray-500">
+            {error instanceof Error ? error.message : 'An unexpected error occurred'}
+          </p>
         </div>
       </Card>
     );

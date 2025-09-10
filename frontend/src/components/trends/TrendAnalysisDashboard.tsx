@@ -1,10 +1,9 @@
-import React from 'react';
 import { Card } from '../ui/card';
 import { useTrendAnalysis } from '../../hooks/useTrends';
 import { TrendGrowthCard } from './TrendGrowthCard';
 import { SeasonalPatternsChart } from './SeasonalPatternsChart';
 import { AnomalyDetectionChart } from './AnomalyDetectionChart';
-import type { AnalyticsFilters } from '../../../../src/database/query-builder';
+import type { AnalyticsFilters } from '../../hooks/useTrends';
 
 interface TrendAnalysisDashboardProps {
   filters?: AnalyticsFilters;
@@ -18,7 +17,7 @@ export function TrendAnalysisDashboard({ filters = {} }: TrendAnalysisDashboardP
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="p-6">
+            <Card key={`loading-${i}`} className="p-6">
               <div className="animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                 <div className="h-8 bg-gray-200 rounded w-1/2 mb-1"></div>
@@ -36,7 +35,9 @@ export function TrendAnalysisDashboard({ filters = {} }: TrendAnalysisDashboardP
       <Card className="p-6">
         <div className="text-center text-red-600">
           <p className="text-lg font-medium mb-2">Error loading trend analysis</p>
-          <p className="text-sm text-gray-500">{(error as Error).message}</p>
+          <p className="text-sm text-gray-500">
+            {error instanceof Error ? error.message : 'An unexpected error occurred'}
+          </p>
         </div>
       </Card>
     );

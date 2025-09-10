@@ -1167,7 +1167,9 @@ export class AnalyticsQueryBuilder {
       : 0;
 
     // Set a reasonable default monthly budget - can be made configurable later
-    const monthlyBudgetLimit = parseFloat(process.env['MONTHLY_BUDGET_LIMIT'] || '100');
+    const monthlyBudgetLimit = parseFloat(
+      process.env['MONTHLY_BUDGET_LIMIT'] ?? '100'
+    );
     const currentSpend = parseFloat(budgetInfo.current_spend) || 0;
 
     const recommendations = [];
