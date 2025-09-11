@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrendsRouteImport } from './routes/trends'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionsRouteImport } from './routes/sessions'
+import { Route as DebugRouteImport } from './routes/debug'
 import { Route as DashboardBuilderRouteImport } from './routes/dashboard-builder'
 import { Route as ChartsRouteImport } from './routes/charts'
 import { Route as IndexRouteImport } from './routes/index'
@@ -30,6 +31,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SessionsRoute = SessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebugRoute = DebugRouteImport.update({
+  id: '/debug',
+  path: '/debug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardBuilderRoute = DashboardBuilderRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/charts': typeof ChartsRoute
   '/dashboard-builder': typeof DashboardBuilderRoute
+  '/debug': typeof DebugRoute
   '/sessions': typeof SessionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/trends': typeof TrendsRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/charts': typeof ChartsRoute
   '/dashboard-builder': typeof DashboardBuilderRoute
+  '/debug': typeof DebugRoute
   '/sessions': typeof SessionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/trends': typeof TrendsRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/charts': typeof ChartsRoute
   '/dashboard-builder': typeof DashboardBuilderRoute
+  '/debug': typeof DebugRoute
   '/sessions': typeof SessionsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/trends': typeof TrendsRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/charts'
     | '/dashboard-builder'
+    | '/debug'
     | '/sessions'
     | '/settings'
     | '/trends'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/charts'
     | '/dashboard-builder'
+    | '/debug'
     | '/sessions'
     | '/settings'
     | '/trends'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/charts'
     | '/dashboard-builder'
+    | '/debug'
     | '/sessions'
     | '/settings'
     | '/trends'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChartsRoute: typeof ChartsRoute
   DashboardBuilderRoute: typeof DashboardBuilderRoute
+  DebugRoute: typeof DebugRoute
   SessionsRoute: typeof SessionsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   TrendsRoute: typeof TrendsRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/sessions'
       fullPath: '/sessions'
       preLoaderRoute: typeof SessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debug': {
+      id: '/debug'
+      path: '/debug'
+      fullPath: '/debug'
+      preLoaderRoute: typeof DebugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard-builder': {
@@ -190,6 +210,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChartsRoute: ChartsRoute,
   DashboardBuilderRoute: DashboardBuilderRoute,
+  DebugRoute: DebugRoute,
   SessionsRoute: SessionsRouteWithChildren,
   SettingsRoute: SettingsRoute,
   TrendsRoute: TrendsRoute,

@@ -1,5 +1,5 @@
 import { memo, useState, useCallback, useMemo } from 'react';
-import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import { Responsive, WidthProvider, Layout as GridLayout } from 'react-grid-layout';
 import { 
   Plus, Save, Download, RotateCcw, Settings, 
   BarChart3, PieChart, TrendingUp, Activity,
@@ -7,43 +7,9 @@ import {
 } from 'lucide-react';
 import { LineChart, PieChart as PieChartComponent, BarChart } from '../charts/LazyCharts';
 import { useOverviewMetrics, useDailyUsageTimeSeries, useDistributionData } from '../../hooks/useAnalytics';
+import { DashboardWidget, DashboardTemplate } from './DashboardTemplates';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
-
-export interface DashboardWidget {
-  id: string;
-  type: 'line-chart' | 'pie-chart' | 'bar-chart' | 'metric-card' | 'table';
-  title: string;
-  config: {
-    dataSource?: string;
-    metric?: string;
-    aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min';
-    color?: string;
-    showLegend?: boolean;
-    height?: number;
-    filters?: Array<{
-      field: string;
-      operator: string;
-      value: string;
-    }>;
-  };
-  layout: {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  };
-}
-
-export interface DashboardTemplate {
-  id: string;
-  name: string;
-  description: string;
-  widgets: DashboardWidget[];
-  layout: Layout[];
-  created: Date;
-  updated: Date;
-}
 
 interface DashboardBuilderProps {
   initialTemplate?: DashboardTemplate;
@@ -203,7 +169,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
     }));
   }, []);
 
-  const handleLayoutChange = useCallback((layout: Layout[]) => {
+  const handleLayoutChange = useCallback((layout: GridLayout[]) => {
     if (!isEditMode) return;
 
     setTemplate(prev => ({

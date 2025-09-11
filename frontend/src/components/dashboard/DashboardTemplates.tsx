@@ -1,9 +1,44 @@
 import { memo, useState, useCallback } from 'react';
 import { 
   Plus, Search, Calendar, Eye, Edit3, Trash2, 
-  Copy, Download, Upload, Star, Grid, Layout
+  Copy, Download, Upload, Star, Grid, Layout as LayoutIcon
 } from 'lucide-react';
-import { DashboardTemplate } from './DashboardBuilder';
+
+// Define the types locally to avoid circular import issues
+export interface DashboardWidget {
+  id: string;
+  type: 'line-chart' | 'pie-chart' | 'bar-chart' | 'metric-card' | 'table';
+  title: string;
+  config: {
+    dataSource?: string;
+    metric?: string;
+    aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min';
+    color?: string;
+    showLegend?: boolean;
+    height?: number;
+    filters?: Array<{
+      field: string;
+      operator: string;
+      value: string;
+    }>;
+  };
+  layout: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
+}
+
+export interface DashboardTemplate {
+  id: string;
+  name: string;
+  description: string;
+  widgets: DashboardWidget[];
+  layout: any[]; // Grid layout format
+  created: Date;
+  updated: Date;
+}
 
 interface DashboardTemplatesProps {
   templates: DashboardTemplate[];
@@ -271,9 +306,9 @@ export const DashboardTemplates = memo(function DashboardTemplates({
                       gridRow: `span ${Math.min(widget.layout.h / 2, 2)}`,
                     }}
                   >
-                    {widget.type === 'line-chart' && <Layout size={8} />}
+                    {widget.type === 'line-chart' && <LayoutIcon size={8} />}
                     {widget.type === 'pie-chart' && <Grid size={8} />}
-                    {widget.type === 'bar-chart' && <Layout size={8} />}
+                    {widget.type === 'bar-chart' && <LayoutIcon size={8} />}
                     {widget.type === 'metric-card' && <Star size={8} />}
                   </div>
                 ))}

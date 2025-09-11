@@ -29,11 +29,18 @@ export const Route = createRootRoute({
                   Sessions
                 </Link>
                 <Link 
-                  to="/trends" 
+                  to="/charts" 
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
                   activeProps={{ className: "bg-gray-700 text-white" }}
                 >
-                  Trends
+                  Interactive Charts
+                </Link>
+                <Link 
+                  to="/dashboard-builder" 
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                  activeProps={{ className: "bg-gray-700 text-white" }}
+                >
+                  Dashboard Builder
                 </Link>
                 <Link 
                   to="/settings" 
@@ -41,6 +48,13 @@ export const Route = createRootRoute({
                   activeProps={{ className: "bg-gray-700 text-white" }}
                 >
                   Settings
+                </Link>
+                <Link 
+                  to="/debug" 
+                  className="px-3 py-2 rounded-md text-sm font-medium text-orange-300 hover:text-orange-200 hover:bg-gray-700 transition-colors"
+                  activeProps={{ className: "bg-gray-700 text-orange-200" }}
+                >
+                  Debug
                 </Link>
               </div>
             </div>

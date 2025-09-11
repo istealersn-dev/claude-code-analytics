@@ -314,7 +314,7 @@ export const ChartBuilder = memo(function ChartBuilder({
               ))}
             </Pie>
             <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} />
-            {config.showLegend && <Legend />}
+            {/* Legend component would go here */}
           </PieChart>
         );
 
