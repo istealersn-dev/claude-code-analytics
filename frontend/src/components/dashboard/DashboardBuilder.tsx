@@ -6,7 +6,7 @@ import {
   Grid, Eye, Edit3, Trash2, Copy
 } from 'lucide-react';
 import { LineChart, PieChart as PieChartComponent, BarChart } from '../charts/LazyCharts';
-import { useAnalytics } from '../../hooks/useAnalytics';
+import { useOverviewMetrics, useDailyUsageTimeSeries, useDistributionData } from '../../hooks/useAnalytics';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -104,7 +104,9 @@ export const DashboardBuilder = memo(function DashboardBuilder({
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
   const [showWidgetPanel, setShowWidgetPanel] = useState(true);
   
-  const { data: analytics } = useAnalytics();
+  const { data: overviewMetrics } = useOverviewMetrics();
+  const { data: dailyUsage } = useDailyUsageTimeSeries();
+  const { data: distributions } = useDistributionData();
 
   // Convert widgets to grid layout format
   const layoutItems = useMemo(() => 
@@ -228,10 +230,10 @@ export const DashboardBuilder = memo(function DashboardBuilder({
     const isSelected = selectedWidget === widget.id;
     
     // Sample data for demonstration
-    const sampleData = analytics?.dailyUsage?.slice(0, 30).map(item => ({
+    const sampleData = dailyUsage?.sessions?.slice(0, 30).map(item => ({
       date: item.date,
-      value: item.total_cost || 0,
-      count: item.session_count || 0,
+      value: item.value * 0.1 || 0, // Mock cost data
+      count: item.count || 0,
     })) || [];
 
     const renderWidgetContent = () => {
@@ -247,9 +249,9 @@ export const DashboardBuilder = memo(function DashboardBuilder({
           );
         
         case 'pie-chart':
-          const pieData = analytics?.modelUsage?.slice(0, 5).map(item => ({
-            name: item.model_name,
-            value: item.session_count,
+          const pieData = distributions?.modelUsage?.slice(0, 5).map(item => ({
+            name: item.name,
+            value: item.value,
           })) || [];
           
           return (
@@ -270,7 +272,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
           );
           
         case 'metric-card':
-          const totalCost = analytics?.summary?.totalCost || 0;
+          const totalCost = overviewMetrics?.totalCost || 0;
           return (
             <div className="flex flex-col items-center justify-center h-full">
               <div className="text-3xl font-bold text-white">
@@ -337,7 +339,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
         </div>
       </div>
     );
-  }, [selectedWidget, isEditMode, analytics, duplicateWidget, removeWidget]);
+  }, [selectedWidget, isEditMode, overviewMetrics, dailyUsage, distributions, duplicateWidget, removeWidget]);
 
   const renderWidgetPanel = () => (
     <div className="w-64 bg-gray-800 border-r border-gray-700 p-4 overflow-y-auto">

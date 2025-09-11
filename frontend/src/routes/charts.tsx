@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { InteractiveLineChart, ChartComparison, ChartBuilder } from '../components/charts/LazyCharts';
-import { useAnalytics } from '../hooks/useAnalytics';
+import { useOverviewMetrics, useDailyUsageTimeSeries, useDistributionData } from '../hooks/useAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { BarChart3, TrendingUp, Sparkles, Settings } from 'lucide-react';
 
@@ -18,49 +18,51 @@ export const Route = createFileRoute('/charts')({
 });
 
 function ChartsDemo() {
-  const { data: analytics } = useAnalytics();
+  const { data: overviewMetrics } = useOverviewMetrics();
+  const { data: dailyUsage } = useDailyUsageTimeSeries();
+  const { data: distributions } = useDistributionData();
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([]);
 
   // Sample data for demonstrations
   const sampleData = useMemo(() => {
-    if (!analytics?.dailyUsage) return [];
+    if (!dailyUsage?.sessions) return [];
     
-    return analytics.dailyUsage.map(item => ({
+    return dailyUsage.sessions.map(item => ({
       date: item.date,
-      value: item.total_cost || 0,
-      count: item.session_count || 0,
+      value: item.value || 0,
+      count: item.count || 0,
     }));
-  }, [analytics?.dailyUsage]);
+  }, [dailyUsage?.sessions]);
 
   const costData = useMemo(() => {
-    if (!analytics?.dailyUsage) return [];
+    if (!dailyUsage?.sessions) return [];
     
-    return analytics.dailyUsage.map(item => ({
+    return dailyUsage.sessions.map(item => ({
       date: item.date,
-      value: item.total_cost || 0,
-      count: item.session_count || 0,
+      value: item.value * 0.1 || 0, // Mock cost data
+      count: item.count || 0,
     }));
-  }, [analytics?.dailyUsage]);
+  }, [dailyUsage?.sessions]);
 
   const sessionData = useMemo(() => {
-    if (!analytics?.dailyUsage) return [];
+    if (!dailyUsage?.sessions) return [];
     
-    return analytics.dailyUsage.map(item => ({
+    return dailyUsage.sessions.map(item => ({
       date: item.date,
-      value: item.session_count || 0,
-      count: item.session_count || 0,
+      value: item.count || 0,
+      count: item.count || 0,
     }));
-  }, [analytics?.dailyUsage]);
+  }, [dailyUsage?.sessions]);
 
   const tokenData = useMemo(() => {
-    if (!analytics?.dailyUsage) return [];
+    if (!dailyUsage?.tokens) return [];
     
-    return analytics.dailyUsage.map(item => ({
+    return dailyUsage.tokens.map(item => ({
       date: item.date,
-      value: (item.input_tokens || 0) + (item.output_tokens || 0),
-      count: item.session_count || 0,
+      value: item.value || 0,
+      count: item.count || 0,
     }));
-  }, [analytics?.dailyUsage]);
+  }, [dailyUsage?.tokens]);
 
   // Comparison datasets
   const comparisonData = [
