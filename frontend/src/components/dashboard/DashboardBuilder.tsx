@@ -196,7 +196,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
     const isSelected = selectedWidget === widget.id;
     
     // Sample data for demonstration
-    const sampleData = dailyUsage?.sessions?.slice(0, 30).map(item => ({
+    const sampleData = (dailyUsage?.sessions ?? []).slice(0, 30).map(item => ({
       date: item.date,
       value: item.value * 0.1 || 0, // Mock cost data
       count: item.count || 0,
@@ -215,7 +215,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
           );
         
         case 'pie-chart':
-          const pieData = distributions?.modelUsage?.slice(0, 5).map(item => ({
+          const pieData = (distributions?.modelUsage ?? []).slice(0, 5).map(item => ({
             name: item.name,
             value: item.value,
           })) || [];
