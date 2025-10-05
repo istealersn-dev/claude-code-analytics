@@ -46,7 +46,7 @@ interface DashboardTemplatesProps {
   onCreateNew: () => void;
   onDuplicateTemplate: (templateId: string) => void;
   onDeleteTemplate: (templateId: string) => void;
-  onExportTemplate: (templateId: string) => void;
+  onExportTemplate: (template: DashboardTemplate) => void;
   onImportTemplate: (template: DashboardTemplate) => void;
 }
 
@@ -342,7 +342,7 @@ export const DashboardTemplates = memo(function DashboardTemplates({
                     <Copy size={14} />
                   </button>
                   <button
-                    onClick={() => onExportTemplate(template.id)}
+                    onClick={() => onExportTemplate(template)}
                     className="p-1.5 hover:bg-gray-700 rounded"
                     title="Export"
                   >
