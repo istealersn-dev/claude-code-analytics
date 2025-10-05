@@ -7,6 +7,11 @@ const LazyAreaChart = lazy(() => import('./AreaChart').then(module => ({ default
 const LazyBarChart = lazy(() => import('./BarChart').then(module => ({ default: module.BarChart })));
 const LazyHeatmapChart = lazy(() => import('./HeatmapChart').then(module => ({ default: module.HeatmapChart })));
 
+// Phase 5.5: Interactive Chart Components
+const LazyInteractiveLineChart = lazy(() => import('./InteractiveLineChart').then(module => ({ default: module.InteractiveLineChart })));
+const LazyChartComparison = lazy(() => import('./ChartComparison').then(module => ({ default: module.ChartComparison })));
+const LazyChartBuilder = lazy(() => import('./ChartBuilder').then(module => ({ default: module.ChartBuilder })));
+
 // Loading component for charts
 function ChartLoader({ height = 250 }: { height?: number }) {
   return (
@@ -56,6 +61,31 @@ export function HeatmapChart(props: any) {
   return (
     <Suspense fallback={<ChartLoader height={props.height} />}>
       <LazyHeatmapChart {...props} />
+    </Suspense>
+  );
+}
+
+// Phase 5.5: Interactive Chart Components
+export function InteractiveLineChart(props: any) {
+  return (
+    <Suspense fallback={<ChartLoader height={props.height} />}>
+      <LazyInteractiveLineChart {...props} />
+    </Suspense>
+  );
+}
+
+export function ChartComparison(props: any) {
+  return (
+    <Suspense fallback={<ChartLoader height={props.height} />}>
+      <LazyChartComparison {...props} />
+    </Suspense>
+  );
+}
+
+export function ChartBuilder(props: any) {
+  return (
+    <Suspense fallback={<ChartLoader height={props.height} />}>
+      <LazyChartBuilder {...props} />
     </Suspense>
   );
 }
