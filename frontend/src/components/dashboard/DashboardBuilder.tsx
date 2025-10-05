@@ -1,13 +1,14 @@
-import { memo, useState, useCallback, useMemo } from 'react';
-import { Responsive, WidthProvider, Layout as GridLayout } from 'react-grid-layout';
+import { memo, useState, useCallback, useMemo, type ChangeEvent } from 'react';
+import { Responsive, WidthProvider, type Layout as GridLayout } from 'react-grid-layout';
 import { 
-  Plus, Save, Download, RotateCcw, Settings, 
+  Plus, Save, Download, RotateCcw,  
   BarChart3, PieChart, TrendingUp, Activity,
   Grid, Eye, Edit3, Trash2, Copy
 } from 'lucide-react';
+
 import { LineChart, PieChart as PieChartComponent, BarChart } from '../charts/LazyCharts';
 import { useOverviewMetrics, useDailyUsageTimeSeries, useDistributionData } from '../../hooks/useAnalytics';
-import { DashboardWidget, DashboardTemplate } from './DashboardTemplates';
+import type { DashboardWidget, DashboardTemplate } from './DashboardTemplates';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -59,11 +60,12 @@ const DEFAULT_TEMPLATE: DashboardTemplate = {
   updated: new Date(),
 };
 
+const formatCurrencyValue = (value: number) => `$${value.toFixed(2)}`;
+
 export const DashboardBuilder = memo(function DashboardBuilder({
   initialTemplate = DEFAULT_TEMPLATE,
   onSave,
   onExport,
-  availableTemplates = [],
 }: DashboardBuilderProps) {
   const [template, setTemplate] = useState<DashboardTemplate>(initialTemplate);
   const [isEditMode, setIsEditMode] = useState(true);
@@ -102,7 +104,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
 
     const newWidget: DashboardWidget = {
       id: `widget-${Date.now()}`,
-      type: type as any,
+      type: type as DashboardWidget['type'],
       title: `New ${widgetType.name}`,
       config: {
         dataSource: 'sessions',
@@ -210,7 +212,7 @@ export const DashboardBuilder = memo(function DashboardBuilder({
               data={sampleData}
               height={widget.config.height || 200}
               color={widget.config.color || '#FF6B35'}
-              formatValue={(value) => `$${value.toFixed(2)}`}
+              formatValue={formatCurrencyValue}
             />
           );
         
@@ -366,8 +368,8 @@ export const DashboardBuilder = memo(function DashboardBuilder({
                   <input
                     type="color"
                     value={widget.config.color || '#FF6B35'}
-                    onChange={(e) => updateWidget(widget.id, {
-                      config: { ...widget.config, color: e.target.value }
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => updateWidget(widget.id, {
+                      config: { ...widget.config, color: event.target.value }
                     })}
                     className="w-full h-8 bg-gray-700 border border-gray-600 rounded"
                   />
@@ -381,8 +383,8 @@ export const DashboardBuilder = memo(function DashboardBuilder({
                     <input
                       type="number"
                       value={widget.config.height || 300}
-                      onChange={(e) => updateWidget(widget.id, {
-                        config: { ...widget.config, height: Number(e.target.value) }
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => updateWidget(widget.id, {
+                        config: { ...widget.config, height: Number(event.target.value) }
                       })}
                       className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm"
                       min="150"

@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { DashboardBuilder } from '../components/dashboard/DashboardBuilder';
-import { DashboardTemplates, DashboardTemplate } from '../components/dashboard/DashboardTemplates';
-import { ArrowLeft, Layout as LayoutIcon } from 'lucide-react';
+import { DashboardTemplates } from '../components/dashboard/DashboardTemplates';
+import type { DashboardTemplate } from '../components/dashboard/DashboardTemplates';
+import { ArrowLeft } from 'lucide-react';
 
 export const Route = createFileRoute('/dashboard-builder')({
   component: DashboardBuilderPage,

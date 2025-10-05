@@ -1,4 +1,4 @@
-import { Card } from '../ui/card';
+import { Card } from '../ui/Card';
 import { useCostOptimizationInsights } from '../../hooks/useTrends';
 import { ModelEfficiencyChart } from './ModelEfficiencyChart';
 import { BudgetTrackingCard } from './BudgetTrackingCard';

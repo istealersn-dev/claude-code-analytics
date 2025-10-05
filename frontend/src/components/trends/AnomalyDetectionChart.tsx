@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Card } from '../ui/card';
+import { Card } from '../ui/Card';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface Anomaly {

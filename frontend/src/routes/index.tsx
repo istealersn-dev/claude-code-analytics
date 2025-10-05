@@ -236,8 +236,8 @@ function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {overview?.topModels?.slice(0, 5).map((model) => (
-                  <div key={model.model}>
+                {overview?.topModels?.slice(0, 5).map((model, index) => (
+                  <div key={`${model.model}-${index}`}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-white">{model.model}</span>
                       <span className="text-sm text-gray-400">{model.count} sessions</span>
@@ -493,8 +493,8 @@ function Dashboard() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-300 mb-3">Session Length Distribution</h4>
                     <div className="space-y-2">
-                      {performance.sessionLengthDistribution?.slice(0, 5).map((range) => (
-                        <div key={range.range} className="flex justify-between items-center">
+                      {performance.sessionLengthDistribution?.slice(0, 5).map((range, index) => (
+                        <div key={`${range.range}-${index}`} className="flex justify-between items-center">
                           <span className="text-sm text-gray-400">{range.range}</span>
                           <span className="text-sm text-white font-medium">{range.count} sessions</span>
                         </div>
