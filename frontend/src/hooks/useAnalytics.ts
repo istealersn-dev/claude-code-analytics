@@ -65,11 +65,11 @@ const API_BASE = 'http://localhost:3001/api';
 // Helper function to build query string with date filters
 function buildQueryString(dateRange?: DateRange): string {
   if (!dateRange) return '';
-  
+
   const params = new URLSearchParams();
   if (dateRange.start) params.append('dateFrom', dateRange.start);
   if (dateRange.end) params.append('dateTo', dateRange.end);
-  
+
   const queryString = params.toString();
   return queryString ? `?${queryString}` : '';
 }

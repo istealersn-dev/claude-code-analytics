@@ -1,6 +1,14 @@
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  Bar,
+  CartesianGrid,
+  BarChart as RechartsBarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-interface BarChartProps {
+export interface BarChartProps {
   data: Array<{ name: string; value: number; color?: string }>;
   height?: number;
   color?: string;
@@ -23,40 +31,29 @@ export function BarChart({
 }: BarChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div 
-        className="flex items-center justify-center text-gray-400"
-        style={{ height }}
-      >
+      <div className="flex items-center justify-center text-gray-400" style={{ height }}>
         No data available
       </div>
     );
   }
 
   // Limit the number of bars and sort by value (descending)
-  const displayData = data
-    .sort((a, b) => b.value - a.value)
-    .slice(0, maxBars);
+  const displayData = data.sort((a, b) => b.value - a.value).slice(0, maxBars);
 
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsBarChart 
-          data={displayData} 
+        <RechartsBarChart
+          data={displayData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           layout={orientation === 'horizontal' ? 'verseReverse' : 'horizontal'}
         >
-          {showGrid && (
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke="#374151" 
-              opacity={0.3} 
-            />
-          )}
-          
+          {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />}
+
           {orientation === 'vertical' ? (
             <>
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 stroke="#9CA3AF"
                 fontSize={12}
                 tickLine={false}
@@ -66,7 +63,7 @@ export function BarChart({
                 height={80}
                 interval={0}
               />
-              <YAxis 
+              <YAxis
                 stroke="#9CA3AF"
                 fontSize={12}
                 tickLine={false}
@@ -76,15 +73,15 @@ export function BarChart({
             </>
           ) : (
             <>
-              <XAxis 
+              <XAxis
                 stroke="#9CA3AF"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={formatValue}
               />
-              <YAxis 
-                dataKey="name" 
+              <YAxis
+                dataKey="name"
                 stroke="#9CA3AF"
                 fontSize={12}
                 tickLine={false}
@@ -94,7 +91,7 @@ export function BarChart({
               />
             </>
           )}
-          
+
           <Tooltip
             contentStyle={{
               backgroundColor: '#1F2937',
@@ -109,9 +106,9 @@ export function BarChart({
             }}
             labelStyle={{ color: '#F9FAFB' }}
           />
-          
-          <Bar 
-            dataKey="value" 
+
+          <Bar
+            dataKey="value"
             fill={color}
             radius={[4, 4, 0, 0]}
             style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}

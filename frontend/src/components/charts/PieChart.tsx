@@ -1,7 +1,14 @@
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { memo, useMemo } from 'react';
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart as RechartsPieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 
-interface PieChartProps {
+export interface PieChartProps {
   data: Array<{ name: string; value: number; color?: string }>;
   height?: number;
   showLegend?: boolean;
@@ -15,7 +22,7 @@ interface PieChartProps {
 const DEFAULT_COLORS = [
   '#FF6B35', // Primary orange
   '#4ECDC4', // Teal
-  '#45B7D1', // Blue  
+  '#45B7D1', // Blue
   '#96CEB4', // Green
   '#FFEAA7', // Yellow
   '#DDA0DD', // Purple
@@ -34,15 +41,15 @@ export const PieChart = memo(function PieChart({
   showTooltip = true,
   formatValue = (value) => value.toString(),
   formatTooltip = (value, name, percentage) => [
-    `${formatValue(value)} (${percentage.toFixed(1)}%)`, 
-    name
+    `${formatValue(value)} (${percentage.toFixed(1)}%)`,
+    name,
   ],
   colors = DEFAULT_COLORS,
 }: PieChartProps) {
   // Memoize expensive computations
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return { dataWithColors: [], total: 0 };
-    
+
     // Ensure each data item has a color
     const dataWithColors = data.map((item, index) => ({
       ...item,
@@ -51,16 +58,13 @@ export const PieChart = memo(function PieChart({
 
     // Calculate total for percentage calculation
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    
+
     return { dataWithColors, total };
   }, [data, colors]);
 
   if (!data || data.length === 0) {
     return (
-      <div 
-        className="flex items-center justify-center text-gray-400"
-        style={{ height }}
-      >
+      <div className="flex items-center justify-center text-gray-400" style={{ height }}>
         No data available
       </div>
     );
@@ -80,15 +84,15 @@ export const PieChart = memo(function PieChart({
             dataKey="value"
             stroke="none"
           >
-            {processedData.dataWithColors.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+            {processedData.dataWithColors.map((entry) => (
+              <Cell
+                key={entry.name}
                 fill={entry.color}
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
               />
             ))}
           </Pie>
-          
+
           {showTooltip && (
             <Tooltip
               contentStyle={{
@@ -104,10 +108,10 @@ export const PieChart = memo(function PieChart({
               }}
             />
           )}
-          
+
           {showLegend && (
-            <Legend 
-              verticalAlign="bottom" 
+            <Legend
+              verticalAlign="bottom"
               height={60}
               wrapperStyle={{
                 paddingTop: '20px',
@@ -117,13 +121,15 @@ export const PieChart = memo(function PieChart({
               }}
               iconType="circle"
               formatter={(value) => (
-                <span style={{ 
-                  fontSize: '12px',
-                  wordBreak: 'break-word',
-                  display: 'inline-block',
-                  maxWidth: '150px',
-                  lineHeight: '1.3',
-                }}>
+                <span
+                  style={{
+                    fontSize: '12px',
+                    wordBreak: 'break-word',
+                    display: 'inline-block',
+                    maxWidth: '150px',
+                    lineHeight: '1.3',
+                  }}
+                >
                   {value}
                 </span>
               )}

@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
 
 interface CardProps {
   className?: string;
@@ -8,11 +8,13 @@ interface CardProps {
 
 export function Card({ className, children }: CardProps) {
   return (
-    <div className={clsx(
-      'bg-background-secondary/50 border border-gray-700 rounded-lg',
-      'hover:border-primary-500/50 transition-colors',
-      className
-    )}>
+    <div
+      className={clsx(
+        'bg-background-secondary/50 border border-gray-700 rounded-lg',
+        'hover:border-primary-500/50 transition-colors',
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -24,11 +26,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ className, children }: CardHeaderProps) {
-  return (
-    <div className={clsx('p-6 pb-4', className)}>
-      {children}
-    </div>
-  );
+  return <div className={clsx('p-6 pb-4', className)}>{children}</div>;
 }
 
 interface CardContentProps {
@@ -37,11 +35,7 @@ interface CardContentProps {
 }
 
 export function CardContent({ className, children }: CardContentProps) {
-  return (
-    <div className={clsx('px-6 pb-6', className)}>
-      {children}
-    </div>
-  );
+  return <div className={clsx('px-6 pb-6', className)}>{children}</div>;
 }
 
 interface CardTitleProps {
@@ -50,11 +44,7 @@ interface CardTitleProps {
 }
 
 export function CardTitle({ className, children }: CardTitleProps) {
-  return (
-    <h3 className={clsx('text-lg font-semibold text-white', className)}>
-      {children}
-    </h3>
-  );
+  return <h3 className={clsx('text-lg font-semibold text-white', className)}>{children}</h3>;
 }
 
 interface CardDescriptionProps {
@@ -63,9 +53,5 @@ interface CardDescriptionProps {
 }
 
 export function CardDescription({ className, children }: CardDescriptionProps) {
-  return (
-    <p className={clsx('text-sm text-gray-400', className)}>
-      {children}
-    </p>
-  );
+  return <p className={clsx('text-sm text-gray-400', className)}>{children}</p>;
 }

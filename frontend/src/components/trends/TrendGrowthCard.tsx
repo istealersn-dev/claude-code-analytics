@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card } from '../ui/Card';
 
 interface TrendGrowthCardProps {
@@ -10,13 +9,13 @@ interface TrendGrowthCardProps {
   format: 'number' | 'currency';
 }
 
-export function TrendGrowthCard({ 
-  title, 
-  current, 
-  previous, 
-  growth, 
-  icon, 
-  format 
+export function TrendGrowthCard({
+  title,
+  current,
+  previous,
+  growth,
+  icon,
+  format,
 }: TrendGrowthCardProps) {
   const formatValue = (value: number) => {
     if (format === 'currency') {
@@ -31,7 +30,11 @@ export function TrendGrowthCard({
   };
 
   const isPositiveGrowth = growth > 0;
-  const growthColor = isPositiveGrowth ? 'text-green-400' : growth < 0 ? 'text-red-400' : 'text-gray-400';
+  const growthColor = isPositiveGrowth
+    ? 'text-green-400'
+    : growth < 0
+      ? 'text-red-400'
+      : 'text-gray-400';
   const growthIcon = isPositiveGrowth ? '↗' : growth < 0 ? '↘' : '→';
 
   return (
@@ -40,22 +43,16 @@ export function TrendGrowthCard({
         <h3 className="text-sm font-medium text-gray-300">{title}</h3>
         <span className="text-2xl">{icon}</span>
       </div>
-      
+
       <div className="space-y-2">
-        <div className="text-2xl font-bold text-white">
-          {formatValue(current)}
-        </div>
-        
+        <div className="text-2xl font-bold text-white">{formatValue(current)}</div>
+
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-400">
-            Previous: {formatValue(previous)}
-          </span>
-          
+          <span className="text-gray-400">Previous: {formatValue(previous)}</span>
+
           <div className={`flex items-center space-x-1 ${growthColor}`}>
             <span>{growthIcon}</span>
-            <span className="font-medium">
-              {Math.abs(growth).toFixed(1)}%
-            </span>
+            <span className="font-medium">{Math.abs(growth).toFixed(1)}%</span>
           </div>
         </div>
 
@@ -64,16 +61,16 @@ export function TrendGrowthCard({
           <div className="flex items-center space-x-2 text-xs text-gray-400">
             <span>Growth:</span>
             <div className="flex-1 bg-gray-700 rounded-full h-2">
-              <div 
+              <div
                 className={`h-2 rounded-full transition-all duration-500 ${
-                  isPositiveGrowth 
-                    ? 'bg-gradient-to-r from-green-600 to-green-400' 
-                    : growth < 0 
-                    ? 'bg-gradient-to-r from-red-600 to-red-400'
-                    : 'bg-gray-600'
+                  isPositiveGrowth
+                    ? 'bg-gradient-to-r from-green-600 to-green-400'
+                    : growth < 0
+                      ? 'bg-gradient-to-r from-red-600 to-red-400'
+                      : 'bg-gray-600'
                 }`}
-                style={{ 
-                  width: `${Math.min(Math.abs(growth), 100)}%` 
+                style={{
+                  width: `${Math.min(Math.abs(growth), 100)}%`,
                 }}
               />
             </div>

@@ -83,7 +83,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 
 async function fetchTrendAnalysis(filters: AnalyticsFilters): Promise<TrendAnalysis> {
   const params = new URLSearchParams();
-  
+
   if (filters.dateFrom) {
     params.append('dateFrom', filters.dateFrom.toISOString());
   }
@@ -99,13 +99,13 @@ async function fetchTrendAnalysis(filters: AnalyticsFilters): Promise<TrendAnaly
 
   const url = `${API_BASE_URL}/trends/analysis${params.toString() ? `?${params.toString()}` : ''}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch trend analysis: ${response.statusText}`);
   }
 
   const result: ApiResponse<TrendAnalysis> = await response.json();
-  
+
   if (!result.success) {
     throw new Error(result.error || 'Failed to fetch trend analysis');
   }
@@ -113,9 +113,11 @@ async function fetchTrendAnalysis(filters: AnalyticsFilters): Promise<TrendAnaly
   return result.data;
 }
 
-async function fetchCostOptimizationInsights(filters: AnalyticsFilters): Promise<CostOptimizationInsights> {
+async function fetchCostOptimizationInsights(
+  filters: AnalyticsFilters,
+): Promise<CostOptimizationInsights> {
   const params = new URLSearchParams();
-  
+
   if (filters.dateFrom) {
     params.append('dateFrom', filters.dateFrom.toISOString());
   }
@@ -131,13 +133,13 @@ async function fetchCostOptimizationInsights(filters: AnalyticsFilters): Promise
 
   const url = `${API_BASE_URL}/trends/cost-optimization${params.toString() ? `?${params.toString()}` : ''}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch cost optimization insights: ${response.statusText}`);
   }
 
   const result: ApiResponse<CostOptimizationInsights> = await response.json();
-  
+
   if (!result.success) {
     throw new Error(result.error || 'Failed to fetch cost optimization insights');
   }

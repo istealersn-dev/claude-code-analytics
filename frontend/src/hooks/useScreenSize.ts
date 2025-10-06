@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ScreenSize {
   width: number;
@@ -48,7 +48,7 @@ export function useScreenSize(): ScreenSize {
     };
 
     window.addEventListener('resize', debouncedResize);
-    
+
     return () => {
       window.removeEventListener('resize', debouncedResize);
       clearTimeout(timeoutId);

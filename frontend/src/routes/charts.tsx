@@ -1,9 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, useMemo } from 'react';
-import { InteractiveLineChart, ChartComparison, ChartBuilder } from '../components/charts/LazyCharts';
-import { useOverviewMetrics, useDailyUsageTimeSeries, useDistributionData } from '../hooks/useAnalytics';
+import { BarChart3, Settings, Sparkles, TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import type { ChartConfig } from '../components/charts/ChartBuilder';
+import {
+  ChartBuilder,
+  ChartComparison,
+  InteractiveLineChart,
+} from '../components/charts/LazyCharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { BarChart3, TrendingUp, Sparkles, Settings } from 'lucide-react';
+import {
+  useDailyUsageTimeSeries,
+} from '../hooks/useAnalytics';
 
 interface ChartAnnotation {
   id: string;
@@ -18,16 +25,14 @@ export const Route = createFileRoute('/charts')({
 });
 
 function ChartsDemo() {
-  const { data: overviewMetrics } = useOverviewMetrics();
   const { data: dailyUsage } = useDailyUsageTimeSeries();
-  const { data: distributions } = useDistributionData();
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([]);
 
   // Sample data for demonstrations
   const sampleData = useMemo(() => {
     if (!dailyUsage?.sessions) return [];
-    
-    return dailyUsage.sessions.map(item => ({
+
+    return dailyUsage.sessions.map((item) => ({
       date: item.date,
       value: item.value || 0,
       count: item.count || 0,
@@ -36,8 +41,8 @@ function ChartsDemo() {
 
   const costData = useMemo(() => {
     if (!dailyUsage?.sessions) return [];
-    
-    return dailyUsage.sessions.map(item => ({
+
+    return dailyUsage.sessions.map((item) => ({
       date: item.date,
       value: item.value * 0.1 || 0, // Mock cost data
       count: item.count || 0,
@@ -46,8 +51,8 @@ function ChartsDemo() {
 
   const sessionData = useMemo(() => {
     if (!dailyUsage?.sessions) return [];
-    
-    return dailyUsage.sessions.map(item => ({
+
+    return dailyUsage.sessions.map((item) => ({
       date: item.date,
       value: item.count || 0,
       count: item.count || 0,
@@ -56,8 +61,8 @@ function ChartsDemo() {
 
   const tokenData = useMemo(() => {
     if (!dailyUsage?.tokens) return [];
-    
-    return dailyUsage.tokens.map(item => ({
+
+    return dailyUsage.tokens.map((item) => ({
       date: item.date,
       value: item.value || 0,
       count: item.count || 0,
@@ -100,16 +105,16 @@ function ChartsDemo() {
       ...annotation,
       id: Date.now().toString(),
     };
-    setAnnotations(prev => [...prev, newAnnotation]);
+    setAnnotations((prev) => [...prev, newAnnotation]);
   };
 
-  const handleSaveChart = (config: any) => {
+  const handleSaveChart = (config: ChartConfig) => {
     console.log('Saving chart configuration:', config);
     // In a real app, you'd save this to your backend
     alert(`Chart "${config.name}" configuration saved!`);
   };
 
-  const handleExportChart = (config: any, data: any[]) => {
+  const handleExportChart = (config: ChartConfig, data: Array<Record<string, string | number>>) => {
     console.log('Exporting chart:', config, data);
     // In a real app, you'd export this as PNG/SVG/PDF
     alert(`Chart "${config.name}" exported with ${data.length} data points!`);
@@ -119,9 +124,7 @@ function ChartsDemo() {
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Interactive Charts & Visualizations
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Interactive Charts & Visualizations</h1>
         <p className="text-gray-400">
           Enhanced chart components with zoom, annotations, comparisons, and custom configurations
         </p>
@@ -129,29 +132,29 @@ function ChartsDemo() {
 
       <Tabs defaultValue="interactive" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 bg-gray-800 border border-gray-700">
-          <TabsTrigger 
-            value="interactive" 
+          <TabsTrigger
+            value="interactive"
             className="flex items-center gap-2 data-[state=active]:bg-orange-600"
           >
             <TrendingUp size={16} />
             Interactive Charts
           </TabsTrigger>
-          <TabsTrigger 
-            value="comparison" 
+          <TabsTrigger
+            value="comparison"
             className="flex items-center gap-2 data-[state=active]:bg-orange-600"
           >
             <BarChart3 size={16} />
             Chart Comparison
           </TabsTrigger>
-          <TabsTrigger 
-            value="builder" 
+          <TabsTrigger
+            value="builder"
             className="flex items-center gap-2 data-[state=active]:bg-orange-600"
           >
             <Settings size={16} />
             Chart Builder
           </TabsTrigger>
-          <TabsTrigger 
-            value="showcase" 
+          <TabsTrigger
+            value="showcase"
             className="flex items-center gap-2 data-[state=active]:bg-orange-600"
           >
             <Sparkles size={16} />
@@ -165,20 +168,17 @@ function ChartsDemo() {
               Interactive Line Chart with Zoom & Annotations
             </h2>
             <p className="text-gray-400 mb-6">
-              • Drag to zoom into specific time periods<br/>
-              • Double-click to add annotations<br/>
-              • Reset zoom with the button in top-right
+              • Drag to zoom into specific time periods
+              <br />• Double-click to add annotations
+              <br />• Reset zoom with the button in top-right
             </p>
-            
+
             <InteractiveLineChart
               data={sampleData}
               height={400}
               color="#FF6B35"
               formatValue={(value) => `$${value.toFixed(2)}`}
-              formatTooltip={(value, count) => [
-                `$${value.toFixed(2)}`,
-                `${count} sessions`
-              ]}
+              formatTooltip={(value, count) => [`$${value.toFixed(2)}`, `${count} sessions`]}
               annotations={annotations}
               onAnnotationAdd={handleAddAnnotation}
               enableZoom={true}
@@ -191,7 +191,7 @@ function ChartsDemo() {
                   Annotations ({annotations.length})
                 </h4>
                 <div className="space-y-2">
-                  {annotations.map(annotation => (
+                  {annotations.map((annotation) => (
                     <div key={annotation.id} className="text-xs text-gray-400">
                       <span className="font-medium">
                         {new Date(annotation.date).toLocaleDateString()}:
@@ -214,7 +214,7 @@ function ChartsDemo() {
               <p className="text-gray-400 mb-6">
                 Compare different metrics side-by-side, overlay them, or view as stacked charts
               </p>
-              
+
               <ChartComparison
                 datasets={comparisonData}
                 height={450}
@@ -228,13 +228,11 @@ function ChartsDemo() {
 
         <TabsContent value="builder" className="space-y-6">
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Custom Chart Builder
-            </h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Custom Chart Builder</h2>
             <p className="text-gray-400 mb-6">
               Create custom visualizations with drag-and-drop configuration
             </p>
-            
+
             <ChartBuilder
               availableFields={availableFields}
               data={sampleData}
@@ -309,9 +307,7 @@ function ChartsDemo() {
 
           {/* Usage Statistics */}
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Chart Enhancement Impact
-            </h3>
+            <h3 className="text-lg font-semibold text-white mb-4">Chart Enhancement Impact</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-500">3x</div>

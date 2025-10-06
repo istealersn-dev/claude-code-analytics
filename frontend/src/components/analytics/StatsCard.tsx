@@ -1,6 +1,6 @@
+import { clsx } from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
-import { clsx } from 'clsx';
 
 interface StatsCardProps {
   title: string;
@@ -15,14 +15,14 @@ interface StatsCardProps {
   className?: string;
 }
 
-export function StatsCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
+export function StatsCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
   trend,
   loading = false,
-  className 
+  className,
 }: StatsCardProps) {
   if (loading) {
     return (
@@ -49,13 +49,14 @@ export function StatsCard({
         <div className="flex items-center justify-between mb-4">
           <Icon className="w-8 h-8 text-primary-500" />
           {trend && (
-            <span className={clsx(
-              'text-sm font-medium px-2 py-1 rounded-full',
-              trend.value >= 0 
-                ? 'text-green-400 bg-green-400/10' 
-                : 'text-red-400 bg-red-400/10'
-            )}>
-              {trend.value >= 0 ? '+' : ''}{trend.value}%
+            <span
+              className={clsx(
+                'text-sm font-medium px-2 py-1 rounded-full',
+                trend.value >= 0 ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10',
+              )}
+            >
+              {trend.value >= 0 ? '+' : ''}
+              {trend.value}%
             </span>
           )}
         </div>
@@ -64,12 +65,8 @@ export function StatsCard({
           <p className="text-2xl font-bold text-white mb-1">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
-          {subtitle && (
-            <p className="text-xs text-gray-500">{subtitle}</p>
-          )}
-          {trend && (
-            <p className="text-xs text-gray-400 mt-1">{trend.label}</p>
-          )}
+          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+          {trend && <p className="text-xs text-gray-400 mt-1">{trend.label}</p>}
         </div>
       </CardContent>
     </Card>
