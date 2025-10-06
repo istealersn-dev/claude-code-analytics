@@ -1,8 +1,17 @@
-import { memo, useState, useCallback } from 'react';
-import { 
-  Plus, Search, Calendar, Eye, Edit3, Trash2, 
-  Copy, Download, Upload, Star, Grid, Layout as LayoutIcon
+import {
+  Calendar,
+  Copy,
+  Download,
+  Eye,
+  Grid,
+  Layout as LayoutIcon,
+  Plus,
+  Search,
+  Star,
+  Trash2,
+  Upload,
 } from 'lucide-react';
+import { memo, useCallback, useState } from 'react';
 
 // Define the types locally to avoid circular import issues
 export interface DashboardWidget {
@@ -35,7 +44,7 @@ export interface DashboardTemplate {
   name: string;
   description: string;
   widgets: DashboardWidget[];
-  layout: any[]; // Grid layout format
+  layout: Array<{ i: string; x: number; y: number; w: number; h: number }>; // Grid layout format
   created: Date;
   updated: Date;
 }
@@ -61,33 +70,33 @@ const PRESET_TEMPLATES: DashboardTemplate[] = [
         type: 'metric-card',
         title: 'Total Cost',
         config: { color: '#FF6B35', height: 120 },
-        layout: { x: 0, y: 0, w: 3, h: 2 }
+        layout: { x: 0, y: 0, w: 3, h: 2 },
       },
       {
         id: 'session-count-card',
         type: 'metric-card',
         title: 'Total Sessions',
         config: { color: '#4F46E5', height: 120 },
-        layout: { x: 3, y: 0, w: 3, h: 2 }
+        layout: { x: 3, y: 0, w: 3, h: 2 },
       },
       {
         id: 'monthly-trend',
         type: 'line-chart',
         title: 'Monthly Spending Trend',
         config: { color: '#FF6B35', height: 300 },
-        layout: { x: 0, y: 2, w: 8, h: 4 }
+        layout: { x: 0, y: 2, w: 8, h: 4 },
       },
       {
         id: 'model-distribution',
         type: 'pie-chart',
         title: 'Model Usage Distribution',
         config: { color: '#059669', showLegend: true, height: 300 },
-        layout: { x: 8, y: 2, w: 4, h: 4 }
-      }
+        layout: { x: 8, y: 2, w: 4, h: 4 },
+      },
     ],
     layout: [],
     created: new Date('2025-01-01'),
-    updated: new Date('2025-01-01')
+    updated: new Date('2025-01-01'),
   },
   {
     id: 'usage-analytics',
@@ -99,33 +108,33 @@ const PRESET_TEMPLATES: DashboardTemplate[] = [
         type: 'line-chart',
         title: 'Daily Usage Trend',
         config: { color: '#4F46E5', height: 250 },
-        layout: { x: 0, y: 0, w: 6, h: 3 }
+        layout: { x: 0, y: 0, w: 6, h: 3 },
       },
       {
         id: 'hourly-distribution',
         type: 'bar-chart',
         title: 'Hourly Usage Distribution',
         config: { color: '#059669', height: 250 },
-        layout: { x: 6, y: 0, w: 6, h: 3 }
+        layout: { x: 6, y: 0, w: 6, h: 3 },
       },
       {
         id: 'token-usage',
         type: 'line-chart',
         title: 'Token Usage Over Time',
         config: { color: '#DC2626', height: 300 },
-        layout: { x: 0, y: 3, w: 8, h: 4 }
+        layout: { x: 0, y: 3, w: 8, h: 4 },
       },
       {
         id: 'efficiency-metrics',
         type: 'metric-card',
         title: 'Avg. Cost per Session',
         config: { color: '#7C3AED', height: 150 },
-        layout: { x: 8, y: 3, w: 4, h: 2 }
-      }
+        layout: { x: 8, y: 3, w: 4, h: 2 },
+      },
     ],
     layout: [],
     created: new Date('2025-01-01'),
-    updated: new Date('2025-01-01')
+    updated: new Date('2025-01-01'),
   },
   {
     id: 'cost-optimization',
@@ -137,34 +146,34 @@ const PRESET_TEMPLATES: DashboardTemplate[] = [
         type: 'line-chart',
         title: 'Cost Trend Analysis',
         config: { color: '#FF6B35', height: 300 },
-        layout: { x: 0, y: 0, w: 8, h: 4 }
+        layout: { x: 0, y: 0, w: 8, h: 4 },
       },
       {
         id: 'cost-breakdown',
         type: 'pie-chart',
         title: 'Cost by Model',
         config: { color: '#DC2626', showLegend: true, height: 300 },
-        layout: { x: 8, y: 0, w: 4, h: 4 }
+        layout: { x: 8, y: 0, w: 4, h: 4 },
       },
       {
         id: 'daily-spend',
         type: 'metric-card',
         title: 'Avg. Daily Spend',
         config: { color: '#FF6B35', height: 120 },
-        layout: { x: 0, y: 4, w: 3, h: 2 }
+        layout: { x: 0, y: 4, w: 3, h: 2 },
       },
       {
         id: 'efficiency-ratio',
         type: 'metric-card',
         title: 'Cost Efficiency',
         config: { color: '#059669', height: 120 },
-        layout: { x: 3, y: 4, w: 3, h: 2 }
-      }
+        layout: { x: 3, y: 4, w: 3, h: 2 },
+      },
     ],
     layout: [],
     created: new Date('2025-01-01'),
-    updated: new Date('2025-01-01')
-  }
+    updated: new Date('2025-01-01'),
+  },
 ];
 
 export const DashboardTemplates = memo(function DashboardTemplates({
@@ -185,21 +194,23 @@ export const DashboardTemplates = memo(function DashboardTemplates({
   const allTemplates = [...PRESET_TEMPLATES, ...templates];
 
   // Filter templates based on search and category
-  const filteredTemplates = allTemplates.filter(template => {
-    const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         template.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = selectedCategory === 'all' ||
-                           (selectedCategory === 'preset' && PRESET_TEMPLATES.some(p => p.id === template.id)) ||
-                           (selectedCategory === 'custom' && !PRESET_TEMPLATES.some(p => p.id === template.id));
-    
+  const filteredTemplates = allTemplates.filter((template) => {
+    const matchesSearch =
+      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      template.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (selectedCategory === 'preset' && PRESET_TEMPLATES.some((p) => p.id === template.id)) ||
+      (selectedCategory === 'custom' && !PRESET_TEMPLATES.some((p) => p.id === template.id));
+
     return matchesSearch && matchesCategory;
   });
 
   const handleImportTemplate = useCallback(() => {
     try {
       const importedTemplate = JSON.parse(importText) as DashboardTemplate;
-      
+
       // Validate the template structure
       if (!importedTemplate.id || !importedTemplate.name || !importedTemplate.widgets) {
         alert('Invalid template format. Please check the JSON structure.');
@@ -214,13 +225,13 @@ export const DashboardTemplates = memo(function DashboardTemplates({
       onImportTemplate(importedTemplate);
       setShowImportDialog(false);
       setImportText('');
-    } catch (error) {
+    } catch {
       alert('Failed to parse template JSON. Please check the format.');
     }
   }, [importText, onImportTemplate]);
 
-  const isPresetTemplate = (templateId: string) => 
-    PRESET_TEMPLATES.some(p => p.id === templateId);
+  const isPresetTemplate = (templateId: string) =>
+    PRESET_TEMPLATES.some((p) => p.id === templateId);
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -236,7 +247,10 @@ export const DashboardTemplates = memo(function DashboardTemplates({
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Search templates..."
@@ -248,14 +262,14 @@ export const DashboardTemplates = memo(function DashboardTemplates({
 
         {/* Category Filter */}
         <div className="flex bg-gray-800 border border-gray-600 rounded-lg p-1">
-          {[
-            { id: 'all', label: 'All' },
-            { id: 'preset', label: 'Preset' },
-            { id: 'custom', label: 'Custom' },
-          ].map(category => (
-            <button
+          {([
+            { id: 'all' as const, label: 'All' },
+            { id: 'preset' as const, label: 'Preset' },
+            { id: 'custom' as const, label: 'Custom' },
+          ] as const).map((category) => (
+            <button type="button"
               key={category.id}
-              onClick={() => setSelectedCategory(category.id as any)}
+              onClick={() => setSelectedCategory(category.id)}
               className={`px-4 py-2 text-sm rounded transition-colors ${
                 selectedCategory === category.id
                   ? 'bg-orange-600 text-white'
@@ -269,15 +283,15 @@ export const DashboardTemplates = memo(function DashboardTemplates({
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button
+          <button type="button"
             onClick={onCreateNew}
             className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
             <Plus size={18} />
             Create New
           </button>
-          
-          <button
+
+          <button type="button"
             onClick={() => setShowImportDialog(true)}
             className="px-4 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
@@ -289,7 +303,7 @@ export const DashboardTemplates = memo(function DashboardTemplates({
 
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredTemplates.map(template => (
+        {filteredTemplates.map((template) => (
           <div
             key={template.id}
             className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-gray-600 transition-all"
@@ -297,7 +311,7 @@ export const DashboardTemplates = memo(function DashboardTemplates({
             {/* Template Preview */}
             <div className="h-32 bg-gray-900 p-3 border-b border-gray-700">
               <div className="grid grid-cols-6 grid-rows-3 gap-1 h-full">
-                {template.widgets.slice(0, 6).map((widget, index) => (
+                {template.widgets.slice(0, 6).map((widget) => (
                   <div
                     key={widget.id}
                     className="bg-gray-700 rounded-sm flex items-center justify-center"
@@ -327,21 +341,21 @@ export const DashboardTemplates = memo(function DashboardTemplates({
                   )}
                 </div>
                 <div className="flex items-center gap-1">
-                  <button
+                  <button type="button"
                     onClick={() => onSelectTemplate(template)}
                     className="p-1.5 hover:bg-gray-700 rounded"
                     title="Use Template"
                   >
                     <Eye size={14} />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => onDuplicateTemplate(template.id)}
                     className="p-1.5 hover:bg-gray-700 rounded"
                     title="Duplicate"
                   >
                     <Copy size={14} />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => onExportTemplate(template)}
                     className="p-1.5 hover:bg-gray-700 rounded"
                     title="Export"
@@ -349,7 +363,7 @@ export const DashboardTemplates = memo(function DashboardTemplates({
                     <Download size={14} />
                   </button>
                   {!isPresetTemplate(template.id) && (
-                    <button
+                    <button type="button"
                       onClick={() => onDeleteTemplate(template.id)}
                       className="p-1.5 hover:bg-gray-700 rounded text-red-400"
                       title="Delete"
@@ -359,9 +373,9 @@ export const DashboardTemplates = memo(function DashboardTemplates({
                   )}
                 </div>
               </div>
-              
+
               <p className="text-gray-400 text-sm mb-3">{template.description}</p>
-              
+
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>{template.widgets.length} widgets</span>
                 <div className="flex items-center gap-1">
@@ -378,12 +392,11 @@ export const DashboardTemplates = memo(function DashboardTemplates({
             <Grid size={48} className="mb-4 opacity-50" />
             <h3 className="text-xl font-medium mb-2">No Templates Found</h3>
             <p className="text-center mb-4">
-              {searchQuery 
+              {searchQuery
                 ? 'Try adjusting your search terms or create a new template.'
-                : 'Get started by creating your first custom dashboard template.'
-              }
+                : 'Get started by creating your first custom dashboard template.'}
             </p>
-            <button
+            <button type="button"
               onClick={onCreateNew}
               className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2"
             >
@@ -400,14 +413,14 @@ export const DashboardTemplates = memo(function DashboardTemplates({
           <div className="bg-gray-800 border border-gray-600 rounded-lg max-w-md w-full">
             <div className="flex items-center justify-between p-4 border-b border-gray-600">
               <h3 className="text-lg font-semibold text-white">Import Template</h3>
-              <button
+              <button type="button"
                 onClick={() => setShowImportDialog(false)}
                 className="text-gray-400 hover:text-white"
               >
                 ×
               </button>
             </div>
-            
+
             <div className="p-4">
               <p className="text-gray-300 text-sm mb-3">
                 Paste the JSON template configuration below:
@@ -419,16 +432,16 @@ export const DashboardTemplates = memo(function DashboardTemplates({
                 className="w-full h-40 p-3 bg-gray-700 border border-gray-600 rounded text-sm text-white placeholder-gray-400 resize-none"
               />
             </div>
-            
+
             <div className="flex gap-2 p-4 border-t border-gray-600">
-              <button
+              <button type="button"
                 onClick={handleImportTemplate}
                 disabled={!importText.trim()}
                 className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
               >
                 Import
               </button>
-              <button
+              <button type="button"
                 onClick={() => {
                   setShowImportDialog(false);
                   setImportText('');

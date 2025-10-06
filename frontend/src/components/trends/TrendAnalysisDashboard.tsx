@@ -1,9 +1,9 @@
-import { Card } from '../ui/Card';
-import { useTrendAnalysis } from '../../hooks/useTrends';
-import { TrendGrowthCard } from './TrendGrowthCard';
-import { SeasonalPatternsChart } from './SeasonalPatternsChart';
-import { AnomalyDetectionChart } from './AnomalyDetectionChart';
 import type { AnalyticsFilters } from '../../hooks/useTrends';
+import { useTrendAnalysis } from '../../hooks/useTrends';
+import { Card } from '../ui/Card';
+import { AnomalyDetectionChart } from './AnomalyDetectionChart';
+import { SeasonalPatternsChart } from './SeasonalPatternsChart';
+import { TrendGrowthCard } from './TrendGrowthCard';
 
 interface TrendAnalysisDashboardProps {
   filters?: AnalyticsFilters;
@@ -17,6 +17,7 @@ export function TrendAnalysisDashboard({ filters = {} }: TrendAnalysisDashboardP
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton loaders don't change order
             <Card key={`loading-${i}`} className="p-6">
               <div className="animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -59,7 +60,7 @@ export function TrendAnalysisDashboard({ filters = {} }: TrendAnalysisDashboardP
       {/* Growth Metrics */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-4">Trend Analysis</h2>
-        
+
         {/* Week over Week Growth */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-3">Week over Week Growth</h3>

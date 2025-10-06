@@ -1,11 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import React from 'react';
-import { TrendAnalysisDashboard } from '../components/trends/TrendAnalysisDashboard';
 import { CostOptimizationDashboard } from '../components/trends/CostOptimizationDashboard';
+import { TrendAnalysisDashboard } from '../components/trends/TrendAnalysisDashboard';
 
 function TrendsPage() {
   const { dateFrom, dateTo } = Route.useSearch();
-  
+
   const filters = {
     dateFrom: dateFrom ? new Date(dateFrom) : undefined,
     dateTo: dateTo ? new Date(dateTo) : undefined,

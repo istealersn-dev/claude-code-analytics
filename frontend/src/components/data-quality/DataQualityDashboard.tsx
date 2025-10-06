@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Info, 
-  TrendingUp, 
-  Database, 
-  RefreshCw, 
-  Trash2,
-  Shield,
-  FileX,
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
   AlertCircle,
-  Loader2
+  AlertTriangle,
+  CheckCircle,
+  Database,
+  FileX,
+  Info,
+  Loader2,
+  RefreshCw,
+  Shield,
+  Trash2,
+  TrendingUp,
+  XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
 
 const API_BASE = 'http://localhost:3001/api';
 
@@ -97,7 +97,11 @@ export function DataQualityDashboard() {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: metrics, isLoading, error } = useQuery({
+  const {
+    data: metrics,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['dataQualityMetrics'],
     queryFn: fetchDataQualityMetrics,
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -150,21 +154,31 @@ export function DataQualityDashboard() {
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
-      case 'A': return 'text-green-400';
-      case 'B': return 'text-blue-400';
-      case 'C': return 'text-yellow-400';
-      case 'D': return 'text-orange-400';
-      case 'F': return 'text-red-400';
-      default: return 'text-gray-400';
+      case 'A':
+        return 'text-green-400';
+      case 'B':
+        return 'text-blue-400';
+      case 'C':
+        return 'text-yellow-400';
+      case 'D':
+        return 'text-orange-400';
+      case 'F':
+        return 'text-red-400';
+      default:
+        return 'text-gray-400';
     }
   };
 
   const getRecommendationIcon = (type: string) => {
     switch (type) {
-      case 'error': return <XCircle className="w-4 h-4 text-red-400" />;
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-400" />;
-      case 'info': return <Info className="w-4 h-4 text-blue-400" />;
-      default: return <Info className="w-4 h-4 text-gray-400" />;
+      case 'error':
+        return <XCircle className="w-4 h-4 text-red-400" />;
+      case 'warning':
+        return <AlertTriangle className="w-4 h-4 text-yellow-400" />;
+      case 'info':
+        return <Info className="w-4 h-4 text-blue-400" />;
+      default:
+        return <Info className="w-4 h-4 text-gray-400" />;
     }
   };
 
@@ -194,14 +208,18 @@ export function DataQualityDashboard() {
               <div className="text-2xl font-bold text-white">
                 {metrics.dataCompleteness.completenessScore}%
               </div>
-              <div className={`text-xl font-bold ${getGradeColor(metrics.dataCompleteness.qualityGrade)}`}>
+              <div
+                className={`text-xl font-bold ${getGradeColor(metrics.dataCompleteness.qualityGrade)}`}
+              >
                 Grade {metrics.dataCompleteness.qualityGrade}
               </div>
             </div>
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-400">Total Sessions</div>
-            <div className="text-lg font-bold text-white">{metrics.totalSessions.toLocaleString()}</div>
+            <div className="text-lg font-bold text-white">
+              {metrics.totalSessions.toLocaleString()}
+            </div>
           </div>
         </div>
       </div>
@@ -213,9 +231,14 @@ export function DataQualityDashboard() {
             <CheckCircle className="w-4 h-4 text-green-400" />
             <div className="text-sm text-green-400">Complete Sessions</div>
           </div>
-          <div className="text-xl font-bold text-white">{metrics.completeSessions.toLocaleString()}</div>
+          <div className="text-xl font-bold text-white">
+            {metrics.completeSessions.toLocaleString()}
+          </div>
           <div className="text-xs text-green-300">
-            {metrics.totalSessions > 0 ? Math.round((metrics.completeSessions / metrics.totalSessions) * 100) : 0}% of total
+            {metrics.totalSessions > 0
+              ? Math.round((metrics.completeSessions / metrics.totalSessions) * 100)
+              : 0}
+            % of total
           </div>
         </div>
 
@@ -224,7 +247,9 @@ export function DataQualityDashboard() {
             <AlertTriangle className="w-4 h-4 text-yellow-400" />
             <div className="text-sm text-yellow-400">Incomplete</div>
           </div>
-          <div className="text-xl font-bold text-white">{metrics.incompleteSessions.toLocaleString()}</div>
+          <div className="text-xl font-bold text-white">
+            {metrics.incompleteSessions.toLocaleString()}
+          </div>
           <div className="text-xs text-yellow-300">Missing end time/duration</div>
         </div>
 
@@ -233,7 +258,9 @@ export function DataQualityDashboard() {
             <XCircle className="w-4 h-4 text-red-400" />
             <div className="text-sm text-red-400">Duplicates</div>
           </div>
-          <div className="text-xl font-bold text-white">{metrics.duplicateSessions.toLocaleString()}</div>
+          <div className="text-xl font-bold text-white">
+            {metrics.duplicateSessions.toLocaleString()}
+          </div>
           <div className="text-xs text-red-300">Session ID conflicts</div>
         </div>
 
@@ -242,7 +269,9 @@ export function DataQualityDashboard() {
             <FileX className="w-4 h-4 text-purple-400" />
             <div className="text-sm text-purple-400">Orphaned</div>
           </div>
-          <div className="text-xl font-bold text-white">{metrics.orphanedMetrics.toLocaleString()}</div>
+          <div className="text-xl font-bold text-white">
+            {metrics.orphanedMetrics.toLocaleString()}
+          </div>
           <div className="text-xs text-purple-300">Metrics without sessions</div>
         </div>
       </div>
@@ -258,19 +287,27 @@ export function DataQualityDashboard() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-300">Without End Time:</span>
-              <span className="text-white font-medium">{metrics.missingData.sessionsWithoutEndTime}</span>
+              <span className="text-white font-medium">
+                {metrics.missingData.sessionsWithoutEndTime}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Without Duration:</span>
-              <span className="text-white font-medium">{metrics.missingData.sessionsWithoutDuration}</span>
+              <span className="text-white font-medium">
+                {metrics.missingData.sessionsWithoutDuration}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Without Tokens:</span>
-              <span className="text-white font-medium">{metrics.missingData.sessionsWithoutTokens}</span>
+              <span className="text-white font-medium">
+                {metrics.missingData.sessionsWithoutTokens}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Without Cost:</span>
-              <span className="text-white font-medium">{metrics.missingData.sessionsWithoutCost}</span>
+              <span className="text-white font-medium">
+                {metrics.missingData.sessionsWithoutCost}
+              </span>
             </div>
           </div>
         </div>
@@ -292,11 +329,15 @@ export function DataQualityDashboard() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Invalid Durations:</span>
-              <span className="text-white font-medium">{metrics.dataIntegrity.invalidDurations}</span>
+              <span className="text-white font-medium">
+                {metrics.dataIntegrity.invalidDurations}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Future Timestamps:</span>
-              <span className="text-white font-medium">{metrics.dataIntegrity.futureTimestamps}</span>
+              <span className="text-white font-medium">
+                {metrics.dataIntegrity.futureTimestamps}
+              </span>
             </div>
           </div>
         </div>
@@ -314,7 +355,11 @@ export function DataQualityDashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Are you sure you want to remove ${metrics.duplicateSessions} duplicate sessions? This action cannot be undone.`)) {
+                  if (
+                    window.confirm(
+                      `Are you sure you want to remove ${metrics.duplicateSessions} duplicate sessions? This action cannot be undone.`,
+                    )
+                  ) {
                     duplicateCleanupMutation.mutate();
                   }
                 }}
@@ -329,12 +374,16 @@ export function DataQualityDashboard() {
                 Remove {metrics.duplicateSessions} Duplicates
               </button>
             )}
-            
+
             {metrics.orphanedMetrics > 0 && (
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Are you sure you want to remove ${metrics.orphanedMetrics} orphaned metric records? This action cannot be undone.`)) {
+                  if (
+                    window.confirm(
+                      `Are you sure you want to remove ${metrics.orphanedMetrics} orphaned metric records? This action cannot be undone.`,
+                    )
+                  ) {
                     orphanedCleanupMutation.mutate();
                   }
                 }}
@@ -369,19 +418,20 @@ export function DataQualityDashboard() {
               {showRecommendations ? 'Hide' : `Show ${metrics.recommendations.length}`}
             </button>
           </div>
-          
+
           {showRecommendations && (
             <div className="space-y-3">
-              {metrics.recommendations.map((rec, index) => (
-                <div key={index} className="flex gap-3 p-3 bg-gray-700/50 rounded border border-gray-600">
+              {metrics.recommendations.map((rec) => (
+                <div
+                  key={rec.title}
+                  className="flex gap-3 p-3 bg-gray-700/50 rounded border border-gray-600"
+                >
                   {getRecommendationIcon(rec.type)}
                   <div className="flex-1">
                     <div className="font-medium text-white">{rec.title}</div>
                     <div className="text-sm text-gray-300 mt-1">{rec.description}</div>
                     {rec.action && (
-                      <div className="text-xs text-gray-400 mt-2">
-                        💡 {rec.action}
-                      </div>
+                      <div className="text-xs text-gray-400 mt-2">💡 {rec.action}</div>
                     )}
                   </div>
                   <div className="text-right">

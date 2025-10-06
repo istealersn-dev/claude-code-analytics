@@ -1,6 +1,13 @@
-import React from 'react';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Card } from '../ui/Card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface SeasonalPattern {
   month: string;
@@ -36,17 +43,8 @@ export function SeasonalPatternsChart({ data }: SeasonalPatternsChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="month" 
-              stroke="#9CA3AF"
-              fontSize={12}
-              tick={{ fill: '#9CA3AF' }}
-            />
-            <YAxis 
-              stroke="#9CA3AF"
-              fontSize={12}
-              tick={{ fill: '#9CA3AF' }}
-            />
+            <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} tick={{ fill: '#9CA3AF' }} />
+            <YAxis stroke="#9CA3AF" fontSize={12} tick={{ fill: '#9CA3AF' }} />
             <Tooltip
               contentStyle={{
                 backgroundColor: '#1F2937',
@@ -55,10 +53,8 @@ export function SeasonalPatternsChart({ data }: SeasonalPatternsChartProps) {
                 color: '#F9FAFB',
               }}
               formatter={(value: number, name: string) => [
-                name === 'cost' 
-                  ? `$${value.toFixed(2)}` 
-                  : new Intl.NumberFormat().format(value),
-                name.charAt(0).toUpperCase() + name.slice(1)
+                name === 'cost' ? `$${value.toFixed(2)}` : new Intl.NumberFormat().format(value),
+                name.charAt(0).toUpperCase() + name.slice(1),
               ]}
             />
             <Line
@@ -88,7 +84,7 @@ export function SeasonalPatternsChart({ data }: SeasonalPatternsChartProps) {
           <div>
             <div className="text-xs text-gray-400">Peak Month</div>
             <div className="text-sm font-medium text-white">
-              {data.reduce((max, curr) => curr.sessions > max.sessions ? curr : max).month.trim()}
+              {data.reduce((max, curr) => (curr.sessions > max.sessions ? curr : max)).month.trim()}
             </div>
           </div>
           <div>
@@ -100,7 +96,9 @@ export function SeasonalPatternsChart({ data }: SeasonalPatternsChartProps) {
           <div>
             <div className="text-xs text-gray-400">Avg/Month</div>
             <div className="text-sm font-medium text-white">
-              {new Intl.NumberFormat().format(Math.round(data.reduce((sum, curr) => sum + curr.sessions, 0) / data.length))}
+              {new Intl.NumberFormat().format(
+                Math.round(data.reduce((sum, curr) => sum + curr.sessions, 0) / data.length),
+              )}
             </div>
           </div>
         </div>

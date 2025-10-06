@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card } from '../ui/Card';
 
 interface Recommendation {
@@ -20,7 +19,7 @@ export function OptimizationRecommendations({ recommendations }: OptimizationRec
           <h3 className="text-lg font-semibold text-white">Optimization Recommendations</h3>
           <span className="text-2xl">💡</span>
         </div>
-        
+
         <div className="text-center text-gray-400 py-8">
           <div className="text-4xl mb-4">🎉</div>
           <p className="text-sm font-medium">Great job!</p>
@@ -47,9 +46,7 @@ export function OptimizationRecommendations({ recommendations }: OptimizationRec
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm text-green-400 font-medium">Potential Monthly Savings</div>
-              <div className="text-xs text-gray-400 mt-1">
-                Based on average session frequency
-              </div>
+              <div className="text-xs text-gray-400 mt-1">Based on average session frequency</div>
             </div>
             <div className="text-2xl font-bold text-green-400">
               ${totalPotentialSavings.toFixed(2)}
@@ -59,8 +56,8 @@ export function OptimizationRecommendations({ recommendations }: OptimizationRec
 
         {/* Individual Recommendations */}
         <div className="space-y-3">
-          {recommendations.map((rec, index) => (
-            <div key={index} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+          {recommendations.map((rec) => (
+            <div key={`${rec.currentModel}-${rec.recommendedModel}`} className="bg-gray-800 border border-gray-700 rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
@@ -80,15 +77,15 @@ export function OptimizationRecommendations({ recommendations }: OptimizationRec
                   <div className="text-xs text-gray-400">per session</div>
                 </div>
               </div>
-              
-              <div className="text-xs text-gray-400 leading-relaxed">
-                {rec.reason}
-              </div>
-              
+
+              <div className="text-xs text-gray-400 leading-relaxed">{rec.reason}</div>
+
               {/* Action Button */}
               <div className="mt-3 pt-3 border-t border-gray-700">
-                <button 
-                  onClick={() => window.open(`https://docs.anthropic.com/claude/docs/models-overview`, '_blank')}
+                <button type="button"
+                  onClick={() =>
+                    window.open(`https://docs.anthropic.com/claude/docs/models-overview`, '_blank')
+                  }
                   className="text-xs text-orange-400 hover:text-orange-300 transition-colors duration-200"
                 >
                   Learn more about {rec.recommendedModel} →
