@@ -122,7 +122,8 @@ function Settings() {
   const { data: syncStatus, isLoading: statusLoading } = useQuery({
     queryKey: ['syncStatus'],
     queryFn: fetchSyncStatus,
-    refetchInterval: (data) => (data?.status === 'in_progress' ? 1000 : 5000), // More frequent updates during sync
+    refetchInterval: (query) =>
+      query.state.data?.status === 'in_progress' ? 1000 : 5000,
   });
 
   const { data: syncPreview } = useQuery({

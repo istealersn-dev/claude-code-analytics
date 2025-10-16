@@ -47,9 +47,14 @@ export function AreaChart({
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           onClick={
             onDataPointClick
-              ? (data) => {
-                  if (data?.activePayload && data.activePayload.length > 0) {
-                    onDataPointClick(data.activePayload[0].payload);
+              ? (event) => {
+                  const chartEvent = event as {
+                    activePayload?: Array<{ payload: DataPoint }>;
+                  };
+
+                  const payload = chartEvent.activePayload?.[0]?.payload;
+                  if (payload) {
+                    onDataPointClick(payload);
                   }
                 }
               : undefined

@@ -104,8 +104,9 @@ export function ChartComparison(props: ChartComparisonProps) {
 }
 
 export function ChartBuilder(props: ChartBuilderProps) {
+  const fallbackHeight = props.initialConfig?.height ?? 300;
   return (
-    <Suspense fallback={<ChartLoader height={props.height} />}>
+    <Suspense fallback={<ChartLoader height={fallbackHeight} />}>
       <LazyChartBuilder {...props} />
     </Suspense>
   );

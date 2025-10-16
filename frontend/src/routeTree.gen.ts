@@ -8,90 +8,90 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as ChartsRouteImport } from './routes/charts';
-import { Route as DashboardBuilderRouteImport } from './routes/dashboard-builder';
-import { Route as DebugRouteImport } from './routes/debug';
-import { Route as IndexRouteImport } from './routes/index';
-import { Route as SessionsRouteImport } from './routes/sessions';
-import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId';
-import { Route as SettingsRouteImport } from './routes/settings';
-import { Route as TrendsRouteImport } from './routes/trends';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrendsRouteImport } from './routes/trends'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SessionsRouteImport } from './routes/sessions'
+import { Route as DebugRouteImport } from './routes/debug'
+import { Route as DashboardBuilderRouteImport } from './routes/dashboard-builder'
+import { Route as ChartsRouteImport } from './routes/charts'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 
 const TrendsRoute = TrendsRouteImport.update({
   id: '/trends',
   path: '/trends',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SessionsRoute = SessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const DebugRoute = DebugRouteImport.update({
   id: '/debug',
   path: '/debug',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const DashboardBuilderRoute = DashboardBuilderRouteImport.update({
   id: '/dashboard-builder',
   path: '/dashboard-builder',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const ChartsRoute = ChartsRouteImport.update({
   id: '/charts',
   path: '/charts',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
   id: '/$sessionId',
   path: '/$sessionId',
   getParentRoute: () => SessionsRoute,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute;
-  '/charts': typeof ChartsRoute;
-  '/dashboard-builder': typeof DashboardBuilderRoute;
-  '/debug': typeof DebugRoute;
-  '/sessions': typeof SessionsRouteWithChildren;
-  '/settings': typeof SettingsRoute;
-  '/trends': typeof TrendsRoute;
-  '/sessions/$sessionId': typeof SessionsSessionIdRoute;
+  '/': typeof IndexRoute
+  '/charts': typeof ChartsRoute
+  '/dashboard-builder': typeof DashboardBuilderRoute
+  '/debug': typeof DebugRoute
+  '/sessions': typeof SessionsRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/trends': typeof TrendsRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute;
-  '/charts': typeof ChartsRoute;
-  '/dashboard-builder': typeof DashboardBuilderRoute;
-  '/debug': typeof DebugRoute;
-  '/sessions': typeof SessionsRouteWithChildren;
-  '/settings': typeof SettingsRoute;
-  '/trends': typeof TrendsRoute;
-  '/sessions/$sessionId': typeof SessionsSessionIdRoute;
+  '/': typeof IndexRoute
+  '/charts': typeof ChartsRoute
+  '/dashboard-builder': typeof DashboardBuilderRoute
+  '/debug': typeof DebugRoute
+  '/sessions': typeof SessionsRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/trends': typeof TrendsRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  '/': typeof IndexRoute;
-  '/charts': typeof ChartsRoute;
-  '/dashboard-builder': typeof DashboardBuilderRoute;
-  '/debug': typeof DebugRoute;
-  '/sessions': typeof SessionsRouteWithChildren;
-  '/settings': typeof SettingsRoute;
-  '/trends': typeof TrendsRoute;
-  '/sessions/$sessionId': typeof SessionsSessionIdRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/charts': typeof ChartsRoute
+  '/dashboard-builder': typeof DashboardBuilderRoute
+  '/debug': typeof DebugRoute
+  '/sessions': typeof SessionsRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/trends': typeof TrendsRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/charts'
@@ -100,8 +100,8 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/settings'
     | '/trends'
-    | '/sessions/$sessionId';
-  fileRoutesByTo: FileRoutesByTo;
+    | '/sessions/$sessionId'
+  fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/charts'
@@ -110,7 +110,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/settings'
     | '/trends'
-    | '/sessions/$sessionId';
+    | '/sessions/$sessionId'
   id:
     | '__root__'
     | '/'
@@ -120,89 +120,91 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/settings'
     | '/trends'
-    | '/sessions/$sessionId';
-  fileRoutesById: FileRoutesById;
+    | '/sessions/$sessionId'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  ChartsRoute: typeof ChartsRoute;
-  DashboardBuilderRoute: typeof DashboardBuilderRoute;
-  DebugRoute: typeof DebugRoute;
-  SessionsRoute: typeof SessionsRouteWithChildren;
-  SettingsRoute: typeof SettingsRoute;
-  TrendsRoute: typeof TrendsRoute;
+  IndexRoute: typeof IndexRoute
+  ChartsRoute: typeof ChartsRoute
+  DashboardBuilderRoute: typeof DashboardBuilderRoute
+  DebugRoute: typeof DebugRoute
+  SessionsRoute: typeof SessionsRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
+  TrendsRoute: typeof TrendsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/trends': {
-      id: '/trends';
-      path: '/trends';
-      fullPath: '/trends';
-      preLoaderRoute: typeof TrendsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/trends'
+      path: '/trends'
+      fullPath: '/trends'
+      preLoaderRoute: typeof TrendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
-      id: '/settings';
-      path: '/settings';
-      fullPath: '/settings';
-      preLoaderRoute: typeof SettingsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sessions': {
-      id: '/sessions';
-      path: '/sessions';
-      fullPath: '/sessions';
-      preLoaderRoute: typeof SessionsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof SessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/debug': {
-      id: '/debug';
-      path: '/debug';
-      fullPath: '/debug';
-      preLoaderRoute: typeof DebugRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/debug'
+      path: '/debug'
+      fullPath: '/debug'
+      preLoaderRoute: typeof DebugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard-builder': {
-      id: '/dashboard-builder';
-      path: '/dashboard-builder';
-      fullPath: '/dashboard-builder';
-      preLoaderRoute: typeof DashboardBuilderRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/dashboard-builder'
+      path: '/dashboard-builder'
+      fullPath: '/dashboard-builder'
+      preLoaderRoute: typeof DashboardBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/charts': {
-      id: '/charts';
-      path: '/charts';
-      fullPath: '/charts';
-      preLoaderRoute: typeof ChartsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/charts'
+      path: '/charts'
+      fullPath: '/charts'
+      preLoaderRoute: typeof ChartsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
-      id: '/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sessions/$sessionId': {
-      id: '/sessions/$sessionId';
-      path: '/$sessionId';
-      fullPath: '/sessions/$sessionId';
-      preLoaderRoute: typeof SessionsSessionIdRouteImport;
-      parentRoute: typeof SessionsRoute;
-    };
+      id: '/sessions/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/sessions/$sessionId'
+      preLoaderRoute: typeof SessionsSessionIdRouteImport
+      parentRoute: typeof SessionsRoute
+    }
   }
 }
 
 interface SessionsRouteChildren {
-  SessionsSessionIdRoute: typeof SessionsSessionIdRoute;
+  SessionsSessionIdRoute: typeof SessionsSessionIdRoute
 }
 
 const SessionsRouteChildren: SessionsRouteChildren = {
   SessionsSessionIdRoute: SessionsSessionIdRoute,
-};
+}
 
-const SessionsRouteWithChildren = SessionsRoute._addFileChildren(SessionsRouteChildren);
+const SessionsRouteWithChildren = SessionsRoute._addFileChildren(
+  SessionsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -212,7 +214,7 @@ const rootRouteChildren: RootRouteChildren = {
   SessionsRoute: SessionsRouteWithChildren,
   SettingsRoute: SettingsRoute,
   TrendsRoute: TrendsRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

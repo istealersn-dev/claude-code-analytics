@@ -114,18 +114,28 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
                 borderRadius: '8px',
                 color: '#F9FAFB',
               }}
-              formatter={(_value: number, _name: string, props: { payload: { date: string; type: string; value: number; expectedValue: number; deviation: number } }) => {
-                const { payload } = props;
-                return [
-                  [
-                    `Date: ${new Date(payload.date).toLocaleDateString()}`,
-                    `Type: ${payload.type}`,
-                    `Value: ${payload.value.toFixed(2)}`,
-                    `Expected: ${payload.expectedValue.toFixed(2)}`,
-                    `Deviation: ${payload.deviation.toFixed(2)}σ`,
-                  ].join('\n'),
-                  'Anomaly Details',
+              formatter={(_value: number, _name: string, entry) => {
+                const payload = (entry?.payload ?? {}) as {
+                  date?: string;
+                  type?: string;
+                  value?: number;
+                  expectedValue?: number;
+                  deviation?: number;
+                };
+
+                if (!payload.date) {
+                  return ['No details', 'Anomaly Details'];
+                }
+
+                const lines = [
+                  `Date: ${new Date(payload.date).toLocaleDateString()}`,
+                  `Type: ${payload.type ?? 'Unknown'}`,
+                  `Value: ${(payload.value ?? 0).toFixed(2)}`,
+                  `Expected: ${(payload.expectedValue ?? 0).toFixed(2)}`,
+                  `Deviation: ${(payload.deviation ?? 0).toFixed(2)}σ`,
                 ];
+
+                return [lines.join('\n'), 'Anomaly Details'];
               }}
             />
             <Scatter data={scatterData}>

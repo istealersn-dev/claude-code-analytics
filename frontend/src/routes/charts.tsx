@@ -178,7 +178,7 @@ function ChartsDemo() {
               height={400}
               color="#FF6B35"
               formatValue={(value) => `$${value.toFixed(2)}`}
-              formatTooltip={(value, count) => [`$${value.toFixed(2)}`, `${count} sessions`]}
+              formatTooltip={(value) => [`$${value.toFixed(2)}`, 'Sessions']}
               annotations={annotations}
               onAnnotationAdd={handleAddAnnotation}
               enableZoom={true}

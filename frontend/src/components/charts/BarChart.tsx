@@ -46,7 +46,7 @@ export function BarChart({
         <RechartsBarChart
           data={displayData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          layout={orientation === 'horizontal' ? 'verseReverse' : 'horizontal'}
+          layout={orientation === 'horizontal' ? 'vertical' : 'horizontal'}
         >
           {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />}
 

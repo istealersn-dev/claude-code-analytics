@@ -7,6 +7,7 @@ import {
   Settings,
   TrendingUp,
 } from 'lucide-react';
+import type { ReactElement } from 'react';
 import { memo, useMemo, useState } from 'react';
 import {
   Area,
@@ -47,8 +48,12 @@ export interface ChartConfig {
 
 interface GroupedDataItem {
   key: string;
+  xValue: string | number;
   values: number[];
+  group?: string | number | null;
 }
+
+type GroupedDataMap = Record<string, GroupedDataItem>;
 
 export interface ChartBuilderProps {
   availableFields: Array<{
@@ -116,7 +121,7 @@ export const ChartBuilder = memo(function ChartBuilder({
   const [showSettings, setShowSettings] = useState(false);
 
   // Process data based on configuration
-  const processedData = useMemo(() => {
+  const processedData = useMemo<Array<Record<string, string | number>>>(() => {
     if (!config.xAxis || !config.yAxis || !data.length) return [];
 
     let filtered = data;
@@ -144,25 +149,28 @@ export const ChartBuilder = memo(function ChartBuilder({
 
     // Group and aggregate data
     if (config.groupBy) {
-      const grouped = filtered.reduce(
-        (acc, item) => {
-          const groupKey = item[config.groupBy!];
-          const xValue = item[config.xAxis];
-          const yValue = Number(item[config.yAxis]) || 0;
-
-          const key = `${groupKey}-${xValue}`;
-          if (!acc[key]) {
-            acc[key] = {
-              [config.xAxis]: xValue,
-              group: groupKey,
-              values: [],
-            };
-          }
-          acc[key].values.push(yValue);
+      const grouped = filtered.reduce((acc, item) => {
+        const groupKey = item[config.groupBy!];
+        const xValue = item[config.xAxis];
+        if (xValue === undefined || xValue === null) {
           return acc;
-        },
-        {} as Record<string, GroupedDataItem>,
-      );
+        }
+        const yValue = Number(item[config.yAxis]) || 0;
+
+        const normalizedGroup = groupKey ?? 'Ungrouped';
+        const mapKey = `${String(normalizedGroup)}-${String(xValue)}`;
+        if (!acc[mapKey]) {
+          acc[mapKey] = {
+            key: mapKey,
+            xValue,
+            group: normalizedGroup,
+            values: [],
+          };
+        }
+
+        acc[mapKey].values.push(yValue);
+        return acc;
+      }, {} as GroupedDataMap);
 
       return Object.values(grouped).map((item) => {
         let aggregatedValue = 0;
@@ -185,31 +193,39 @@ export const ChartBuilder = memo(function ChartBuilder({
             break;
         }
 
-        return {
-          [config.xAxis]: item[config.xAxis],
+        const record: Record<string, string | number> = {
+          [config.xAxis]: item.xValue,
           [config.yAxis]: aggregatedValue,
-          group: item.group,
         };
+
+        if (config.groupBy) {
+          record.group = typeof item.group === 'number' ? item.group : String(item.group);
+        }
+
+        return record;
       });
     }
 
     // Simple aggregation by x-axis
-    const grouped = filtered.reduce(
-      (acc, item) => {
-        const xValue = item[config.xAxis];
-        const yValue = Number(item[config.yAxis]) || 0;
-
-        if (!acc[xValue]) {
-          acc[xValue] = {
-            [config.xAxis]: xValue,
-            values: [],
-          };
-        }
-        acc[xValue].values.push(yValue);
+    const grouped = filtered.reduce((acc, item) => {
+      const xValue = item[config.xAxis];
+      if (xValue === undefined || xValue === null) {
         return acc;
-      },
-      {} as Record<string, GroupedDataItem>,
-    );
+      }
+      const yValue = Number(item[config.yAxis]) || 0;
+      const mapKey = String(xValue);
+
+      if (!acc[mapKey]) {
+        acc[mapKey] = {
+          key: mapKey,
+          xValue,
+          values: [],
+        };
+      }
+
+      acc[mapKey].values.push(yValue);
+      return acc;
+    }, {} as GroupedDataMap);
 
     return Object.values(grouped)
       .map((item) => {
@@ -233,10 +249,12 @@ export const ChartBuilder = memo(function ChartBuilder({
             break;
         }
 
-        return {
-          [config.xAxis]: item[config.xAxis],
+        const record: Record<string, string | number> = {
+          [config.xAxis]: item.xValue,
           [config.yAxis]: aggregatedValue,
         };
+
+        return record;
       })
       .sort((a, b) => {
         const aValue = a[config.xAxis];
@@ -283,7 +301,7 @@ export const ChartBuilder = memo(function ChartBuilder({
   //   }));
   // };
 
-  const renderChart = () => {
+  const renderChart = (): ReactElement => {
     if (!processedData.length) {
       return (
         <div className="flex items-center justify-center h-64 text-gray-400">
@@ -370,7 +388,7 @@ export const ChartBuilder = memo(function ChartBuilder({
         );
 
       default:
-        return null;
+        return <div />;
     }
   };
 

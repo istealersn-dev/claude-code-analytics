@@ -94,9 +94,9 @@ function Dashboard() {
   const processedProjectUsage = useMemo(
     () =>
       overview?.topProjects?.map((project) => ({
-        name: getProjectDisplayName(project.project_name || 'Unknown', 'legend'),
+        name: getProjectDisplayName(project.project || 'Unknown', 'legend'),
         value: project.count || 0,
-        tooltip: getProjectDisplayName(project.project_name || 'Unknown', 'tooltip'),
+        tooltip: getProjectDisplayName(project.project || 'Unknown', 'tooltip'),
       })) || [],
     [overview?.topProjects],
   );
@@ -398,7 +398,7 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <PieChart data={distributions?.modelUsage || []} height={250} showLabels={true} />
+                <PieChart data={distributions?.modelUsage || []} height={250} />
               )}
             </CardContent>
           </Card>
@@ -421,7 +421,6 @@ function Dashboard() {
                   data={distributions?.toolUsage || []}
                   height={250}
                   color="#10B981"
-                  showTooltip={true}
                 />
               )}
             </CardContent>
@@ -444,7 +443,6 @@ function Dashboard() {
                 <PieChart
                   data={processedProjectUsage}
                   height={250}
-                  showLabels={true}
                   formatTooltip={(value, name, percentage) => [
                     `${value} sessions (${percentage.toFixed(1)}%)`,
                     processedProjectUsage.find((p) => p.name === name)?.tooltip || name,

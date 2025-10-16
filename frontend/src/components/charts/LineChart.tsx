@@ -1,5 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import type { MouseEvent } from 'react';
+import type { CategoricalChartFunc } from 'recharts/types/chart/types';
+import type { MouseHandlerDataParam } from 'recharts/types/synchronisation/types';
 import {
   CartesianGrid,
   Line,
@@ -10,9 +12,9 @@ import {
   YAxis,
 } from 'recharts';
 
-interface ChartMouseEvent {
-  activePayload?: Array<{ payload: { date: string; value: number; count?: number } }>;
-}
+type LineDotEvent = {
+  payload?: { date: string; value: number; count?: number };
+};
 
 export interface LineChartProps {
   data: Array<{ date: string; value: number; count?: number }>;
@@ -59,13 +61,20 @@ export const LineChart = memo(function LineChart({
     [onDataPointClick, data],
   );
 
-  const handleChartClick = useCallback(
-    (clickData: ChartMouseEvent | null) => {
+  const handleChartClick = useCallback<CategoricalChartFunc>(
+    (nextState: MouseHandlerDataParam) => {
       if (!onDataPointClick) return;
-      console.log('LineChart onClick triggered:', clickData);
-      if (clickData?.activePayload && clickData.activePayload.length > 0) {
-        console.log('Calling onDataPointClick with:', clickData.activePayload[0].payload);
-        onDataPointClick(clickData.activePayload[0].payload);
+
+      const chartState = nextState as MouseHandlerDataParam & {
+        activePayload?: Array<{ payload: { date: string; value: number; count?: number } }>;
+      };
+
+      const payload = chartState.activePayload?.[0]?.payload as
+        | { date: string; value: number; count?: number }
+        | undefined;
+
+      if (payload) {
+        onDataPointClick(payload);
       }
     },
     [onDataPointClick],
@@ -172,9 +181,10 @@ export const LineChart = memo(function LineChart({
                     fill: color,
                     strokeWidth: 2,
                     r: 4,
-                    onClick: (data) => {
-                      if (data?.payload) {
-                        onDataPointClick(data.payload);
+                    onClick: (event) => {
+                      const dotEvent = event as LineDotEvent;
+                      if (dotEvent.payload) {
+                        onDataPointClick(dotEvent.payload);
                       }
                     },
                     style: { cursor: 'pointer' },
@@ -186,9 +196,10 @@ export const LineChart = memo(function LineChart({
               stroke: color,
               strokeWidth: 2,
               onClick: onDataPointClick
-                ? (data) => {
-                    if (data?.payload) {
-                      onDataPointClick(data.payload);
+                ? (event) => {
+                    const dotEvent = event as LineDotEvent;
+                    if (dotEvent.payload) {
+                      onDataPointClick(dotEvent.payload);
                     }
                   }
                 : undefined,

@@ -17,6 +17,10 @@ interface ChartMouseEvent {
   activePayload?: Array<{ payload: { date: string; value: number } }>;
 }
 
+type LineDotEvent = {
+  payload?: { date: string; value: number; count?: number };
+};
+
 interface ChartAnnotation {
   id: string;
   date: string;
@@ -308,7 +312,7 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
               strokeDasharray="2 2"
               label={{
                 value: annotation.text,
-                position: 'topLeft',
+                position: 'insideTopLeft',
                 offset: 10,
                 style: {
                   fontSize: '11px',
@@ -332,9 +336,10 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
               stroke: color,
               strokeWidth: 2,
               onClick: onDataPointClick
-                ? (data) => {
-                    if (data?.payload) {
-                      onDataPointClick(data.payload);
+                ? (event) => {
+                    const dotEvent = event as LineDotEvent;
+                    if (dotEvent.payload) {
+                      onDataPointClick(dotEvent.payload);
                     }
                   }
                 : undefined,
