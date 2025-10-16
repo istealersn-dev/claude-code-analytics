@@ -53,6 +53,11 @@
   - [x] Reduced lint warnings from 39 to 34 with legitimate suppressions
   - [x] Added comprehensive error boundaries and null checks
 
+- [x] **Backlog Cleanup** (October 9, 2025)
+  - [x] Removed obsolete test scripts that referenced missing entry points
+  - [x] Pruned unused backend (`node-cron`, `nodemailer`) and frontend (`d3-zoom`) dependencies
+  - [x] Regenerated lockfiles after dependency and script cleanup
+
 ---
 
 ## 🎨 Phase 2: Frontend Foundation & Basic Dashboard

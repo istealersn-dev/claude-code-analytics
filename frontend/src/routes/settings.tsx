@@ -1,7 +1,16 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, RefreshCw, AlertCircle, CheckCircle, Database, RotateCw, TrendingUp, Activity } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Database,
+  Loader2,
+  RefreshCw,
+  RotateCw,
+  TrendingUp,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { DataQualityDashboard } from '../components/data-quality/DataQualityDashboard';
 
 const API_BASE = 'http://localhost:3001/api';
@@ -103,7 +112,7 @@ async function runSync(): Promise<SyncResult> {
 
 export const Route = createFileRoute('/settings')({
   component: Settings,
-})
+});
 
 function Settings() {
   const [showSyncResult, setShowSyncResult] = useState(false);
@@ -113,7 +122,8 @@ function Settings() {
   const { data: syncStatus, isLoading: statusLoading } = useQuery({
     queryKey: ['syncStatus'],
     queryFn: fetchSyncStatus,
-    refetchInterval: (data) => data?.status === 'in_progress' ? 1000 : 5000, // More frequent updates during sync
+    refetchInterval: (query) =>
+      query.state.data?.status === 'in_progress' ? 1000 : 5000,
   });
 
   const { data: syncPreview } = useQuery({
@@ -156,7 +166,7 @@ function Settings() {
           Configure your analytics dashboard preferences and data sync options
         </p>
       </div>
-      
+
       {/* Sync Success/Result Banner */}
       {showSyncResult && syncMutation.data && (
         <div className="bg-green-900/30 border border-green-700 rounded-lg p-4 mb-6">
@@ -165,9 +175,9 @@ function Settings() {
             <div>
               <h3 className="text-green-400 font-medium">Sync Completed Successfully</h3>
               <p className="text-sm text-green-300 mt-1">
-                Processed {syncMutation.data.data.summary.filesProcessed} files, 
-                added {syncMutation.data.data.summary.sessionsInserted} sessions 
-                in {syncMutation.data.data.timing.durationHuman}
+                Processed {syncMutation.data.data.summary.filesProcessed} files, added{' '}
+                {syncMutation.data.data.summary.sessionsInserted} sessions in{' '}
+                {syncMutation.data.data.timing.durationHuman}
               </p>
               {syncMutation.data.data.errors && syncMutation.data.data.errors.count > 0 && (
                 <p className="text-sm text-yellow-300 mt-1">
@@ -190,14 +200,14 @@ function Settings() {
                 {syncMutation.error?.message || 'Unknown error occurred during sync'}
               </p>
               <div className="flex gap-2 mt-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => syncMutation.mutate()}
                   className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium transition-colors"
                 >
                   Retry Sync
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => syncMutation.reset()}
                   className="text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded font-medium transition-colors"
@@ -211,47 +221,48 @@ function Settings() {
       )}
 
       {/* Sync Success Banner with detailed results */}
-      {showSyncResult && syncMutation.data && syncMutation.data.data.errors && syncMutation.data.data.errors.count > 0 && (
-        <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="text-yellow-400 font-medium">Sync Completed with Warnings</h3>
-              <p className="text-sm text-yellow-300 mt-1">
-                {syncMutation.data.data.errors.count} files encountered errors during processing
-              </p>
-              <details className="mt-3">
-                <summary className="text-sm text-yellow-200 cursor-pointer hover:text-yellow-100 select-none">
-                  View Error Details
-                </summary>
-                <div className="mt-2 p-3 bg-yellow-900/20 rounded border border-yellow-600">
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {syncMutation.data.data.errors.details.slice(0, 5).map((error) => (
-                      <div key={error.sessionId} className="text-xs">
-                        <div className="font-mono text-yellow-200">{error.sessionId}</div>
-                        <div className="text-yellow-300 ml-2">{error.error}</div>
-                      </div>
-                    ))}
-                    {syncMutation.data.data.errors.count > 5 && (
-                      <div className="text-xs text-yellow-400 italic">
-                        ... and {syncMutation.data.data.errors.count - 5} more errors
-                      </div>
-                    )}
+      {showSyncResult &&
+        syncMutation.data &&
+        syncMutation.data.data.errors &&
+        syncMutation.data.data.errors.count > 0 && (
+          <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-yellow-400 font-medium">Sync Completed with Warnings</h3>
+                <p className="text-sm text-yellow-300 mt-1">
+                  {syncMutation.data.data.errors.count} files encountered errors during processing
+                </p>
+                <details className="mt-3">
+                  <summary className="text-sm text-yellow-200 cursor-pointer hover:text-yellow-100 select-none">
+                    View Error Details
+                  </summary>
+                  <div className="mt-2 p-3 bg-yellow-900/20 rounded border border-yellow-600">
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {syncMutation.data.data.errors.details.slice(0, 5).map((error) => (
+                        <div key={error.sessionId} className="text-xs">
+                          <div className="font-mono text-yellow-200">{error.sessionId}</div>
+                          <div className="text-yellow-300 ml-2">{error.error}</div>
+                        </div>
+                      ))}
+                      {syncMutation.data.data.errors.count > 5 && (
+                        <div className="text-xs text-yellow-400 italic">
+                          ... and {syncMutation.data.data.errors.count - 5} more errors
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </details>
+                </details>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Data Sync Settings */}
       <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white">Data Synchronization</h2>
-          {statusLoading && (
-            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-          )}
+          {statusLoading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
         </div>
 
         {/* Enhanced Sync Status */}
@@ -259,16 +270,27 @@ function Settings() {
           <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${
-                  syncStatus.status === 'in_progress' ? 'bg-yellow-400 animate-pulse' :
-                  syncStatus.status === 'completed' ? 'bg-green-400' :
-                  syncStatus.status === 'failed' ? 'bg-red-400' : 'bg-gray-400'
-                }`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    syncStatus.status === 'in_progress'
+                      ? 'bg-yellow-400 animate-pulse'
+                      : syncStatus.status === 'completed'
+                        ? 'bg-green-400'
+                        : syncStatus.status === 'failed'
+                          ? 'bg-red-400'
+                          : 'bg-gray-400'
+                  }`}
+                />
                 <div>
                   <p className="text-white font-medium">
-                    Status: {syncStatus.status === 'in_progress' ? 'Syncing...' :
-                             syncStatus.status === 'completed' ? 'Up to date' :
-                             syncStatus.status === 'failed' ? 'Failed' : 'Ready'}
+                    Status:{' '}
+                    {syncStatus.status === 'in_progress'
+                      ? 'Syncing...'
+                      : syncStatus.status === 'completed'
+                        ? 'Up to date'
+                        : syncStatus.status === 'failed'
+                          ? 'Failed'
+                          : 'Ready'}
                   </p>
                   {syncStatus.lastSync && (
                     <p className="text-sm text-gray-400">
@@ -286,7 +308,7 @@ function Settings() {
                 )}
               </div>
             </div>
-            
+
             {/* Progress Bar */}
             {syncStatus.status === 'in_progress' && syncStatus.progress && (
               <div className="space-y-2">
@@ -297,8 +319,8 @@ function Settings() {
                   <span className="text-gray-300">{Math.round(syncProgress)}%</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-primary-500 h-2 rounded-full transition-all duration-300" 
+                  <div
+                    className="bg-primary-500 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${syncProgress}%` }}
                   />
                 </div>
@@ -345,16 +367,22 @@ function Settings() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div className="text-center">
-                <div className="text-lg font-bold text-white">{syncStats.totalSessions.toLocaleString()}</div>
+                <div className="text-lg font-bold text-white">
+                  {syncStats.totalSessions.toLocaleString()}
+                </div>
                 <div className="text-gray-400">Total Sessions</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-white">{syncStats.totalMessages.toLocaleString()}</div>
+                <div className="text-lg font-bold text-white">
+                  {syncStats.totalMessages.toLocaleString()}
+                </div>
                 <div className="text-gray-400">Total Messages</div>
               </div>
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
-                  {syncStats.oldestSession ? new Date(syncStats.oldestSession).toLocaleDateString() : 'N/A'}
+                  {syncStats.oldestSession
+                    ? new Date(syncStats.oldestSession).toLocaleDateString()
+                    : 'N/A'}
                 </div>
                 <div className="text-gray-400">Oldest Session</div>
               </div>
@@ -379,15 +407,16 @@ function Settings() {
                 placeholder="~/.claude/projects"
                 readOnly
               />
-              <button type="button" className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-r-lg font-medium transition-colors">
+              <button
+                type="button"
+                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-r-lg font-medium transition-colors"
+              >
                 Browse
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Path to your Claude Code data directory
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Path to your Claude Code data directory</p>
           </div>
-          
+
           {/* Auto-sync Settings */}
           <div className="space-y-4 p-4 bg-gray-800/30 rounded-lg border border-gray-600">
             <div className="flex items-center space-x-3">
@@ -400,25 +429,27 @@ function Settings() {
                 Enable automatic data synchronization
               </label>
             </div>
-            
+
             <div className="ml-7 space-y-3 text-sm">
               <div>
                 <label htmlFor="sync-interval" className="block text-gray-400 mb-1">
                   Sync Interval
                 </label>
-                <select 
-                  id="sync-interval" 
+                <select
+                  id="sync-interval"
                   className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
                   disabled
                 >
                   <option value="15">Every 15 minutes</option>
                   <option value="30">Every 30 minutes</option>
-                  <option value="60" selected>Every hour</option>
+                  <option value="60" selected>
+                    Every hour
+                  </option>
                   <option value="240">Every 4 hours</option>
                   <option value="1440">Daily</option>
                 </select>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -430,7 +461,7 @@ function Settings() {
                   Sync on application startup
                 </label>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
@@ -442,16 +473,16 @@ function Settings() {
                   Sync when system goes idle
                 </label>
               </div>
-              
+
               <div className="text-xs text-gray-500 italic mt-2">
                 ℹ️ Auto-sync features coming in a future update
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => syncMutation.mutate()}
               disabled={syncMutation.isPending || syncStatus?.status === 'in_progress'}
               className="bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
@@ -468,9 +499,9 @@ function Settings() {
                 </>
               )}
             </button>
-            
-            <button 
-              type="button" 
+
+            <button
+              type="button"
               onClick={() => queryClient.invalidateQueries({ queryKey: ['syncStatus'] })}
               className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
             >
@@ -480,10 +511,10 @@ function Settings() {
           </div>
         </div>
       </div>
-      
+
       {/* Data Quality Dashboard */}
       <DataQualityDashboard />
-      
+
       {/* Display Settings */}
       <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold text-white mb-4">Display Preferences</h2>
@@ -492,19 +523,25 @@ function Settings() {
             <label htmlFor="time-range" className="block text-sm font-medium text-gray-400 mb-2">
               Default Time Range
             </label>
-            <select id="time-range" className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select
+              id="time-range"
+              className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+            >
               <option>Last 30 days</option>
               <option>Last 7 days</option>
               <option>Last 24 hours</option>
               <option>All time</option>
             </select>
           </div>
-          
+
           <div>
             <label htmlFor="currency" className="block text-sm font-medium text-gray-400 mb-2">
               Currency
             </label>
-            <select id="currency" className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select
+              id="currency"
+              className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+            >
               <option>USD ($)</option>
               <option>EUR (€)</option>
               <option>GBP (£)</option>
@@ -512,7 +549,7 @@ function Settings() {
           </div>
         </div>
       </div>
-      
+
       {/* Data Retention */}
       <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Data Management</h2>
@@ -521,7 +558,10 @@ function Settings() {
             <label htmlFor="retention" className="block text-sm font-medium text-gray-400 mb-2">
               Data Retention Period
             </label>
-            <select id="retention" className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select
+              id="retention"
+              className="w-full md:w-auto bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+            >
               <option>90 days</option>
               <option>180 days</option>
               <option>1 year</option>
@@ -531,17 +571,18 @@ function Settings() {
               Older data will be automatically cleaned up
             </p>
           </div>
-          
+
           <div className="pt-4 border-t border-gray-700">
-            <button type="button" className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+            <button
+              type="button"
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
               Clear All Data
             </button>
-            <p className="text-xs text-gray-500 mt-1">
-              This action cannot be undone
-            </p>
+            <p className="text-xs text-gray-500 mt-1">This action cannot be undone</p>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

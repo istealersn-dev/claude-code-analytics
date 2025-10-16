@@ -1,6 +1,15 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import {
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Card } from '../ui/Card';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface Anomaly {
   date: string;
@@ -17,14 +26,16 @@ interface AnomalyDetectionChartProps {
 export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
   const mostCommonAnomalyType = useMemo(() => {
     if (!data || data.length === 0) return 'None';
-    
-    const counts = data.reduce((acc, curr) => {
-      acc[curr.type] = (acc[curr.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return Object.entries(counts)
-      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'None';
+
+    const counts = data.reduce(
+      (acc, curr) => {
+        acc[curr.type] = (acc[curr.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return Object.entries(counts).sort(([, a], [, b]) => b - a)[0]?.[0] || 'None';
   }, [data]);
 
   if (!data || data.length === 0) {
@@ -41,15 +52,19 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
 
   const getColorByType = (type: string) => {
     switch (type) {
-      case 'sessions': return '#FF6B35';
-      case 'cost': return '#EF4444';
-      case 'tokens': return '#10B981';
-      default: return '#6B7280';
+      case 'sessions':
+        return '#FF6B35';
+      case 'cost':
+        return '#EF4444';
+      case 'tokens':
+        return '#10B981';
+      default:
+        return '#6B7280';
     }
   };
 
   // Transform data for scatter plot
-  const scatterData = data.map((anomaly, index) => ({
+  const scatterData = data.map((anomaly) => ({
     x: new Date(anomaly.date).getTime(),
     y: anomaly.deviation,
     date: anomaly.date,
@@ -71,7 +86,7 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
+            <XAxis
               type="number"
               dataKey="x"
               scale="time"
@@ -81,11 +96,16 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
               tick={{ fill: '#9CA3AF' }}
               tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
             />
-            <YAxis 
+            <YAxis
               stroke="#9CA3AF"
               fontSize={12}
               tick={{ fill: '#9CA3AF' }}
-              label={{ value: 'Deviation', angle: -90, position: 'insideLeft', style: { fill: '#9CA3AF' } }}
+              label={{
+                value: 'Deviation',
+                angle: -90,
+                position: 'insideLeft',
+                style: { fill: '#9CA3AF' },
+              }}
             />
             <Tooltip
               contentStyle={{
@@ -94,23 +114,33 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
                 borderRadius: '8px',
                 color: '#F9FAFB',
               }}
-              formatter={(value: number, name: string, props: any) => {
-                const { payload } = props;
-                return [
-                  [
-                    `Date: ${new Date(payload.date).toLocaleDateString()}`,
-                    `Type: ${payload.type}`,
-                    `Value: ${payload.value.toFixed(2)}`,
-                    `Expected: ${payload.expectedValue.toFixed(2)}`,
-                    `Deviation: ${payload.deviation.toFixed(2)}σ`,
-                  ].join('\n'),
-                  'Anomaly Details'
+              formatter={(_value: number, _name: string, entry) => {
+                const payload = (entry?.payload ?? {}) as {
+                  date?: string;
+                  type?: string;
+                  value?: number;
+                  expectedValue?: number;
+                  deviation?: number;
+                };
+
+                if (!payload.date) {
+                  return ['No details', 'Anomaly Details'];
+                }
+
+                const lines = [
+                  `Date: ${new Date(payload.date).toLocaleDateString()}`,
+                  `Type: ${payload.type ?? 'Unknown'}`,
+                  `Value: ${(payload.value ?? 0).toFixed(2)}`,
+                  `Expected: ${(payload.expectedValue ?? 0).toFixed(2)}`,
+                  `Deviation: ${(payload.deviation ?? 0).toFixed(2)}σ`,
                 ];
+
+                return [lines.join('\n'), 'Anomaly Details'];
               }}
             />
             <Scatter data={scatterData}>
-              {scatterData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+              {scatterData.map((entry) => (
+                <Cell key={`${entry.date}-${entry.value}`} fill={entry.color} />
               ))}
             </Scatter>
           </ScatterChart>
@@ -143,14 +173,12 @@ export function AnomalyDetectionChart({ data }: AnomalyDetectionChartProps) {
           </div>
           <div>
             <div className="text-xs text-gray-400">Most Common</div>
-            <div className="text-sm font-medium text-white">
-              {mostCommonAnomalyType}
-            </div>
+            <div className="text-sm font-medium text-white">{mostCommonAnomalyType}</div>
           </div>
           <div>
             <div className="text-xs text-gray-400">Max Deviation</div>
             <div className="text-sm font-medium text-white">
-              {data.length > 0 ? `${Math.max(...data.map(d => d.deviation)).toFixed(1)}σ` : '0σ'}
+              {data.length > 0 ? `${Math.max(...data.map((d) => d.deviation)).toFixed(1)}σ` : '0σ'}
             </div>
           </div>
         </div>

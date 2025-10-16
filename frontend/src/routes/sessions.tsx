@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { z } from 'zod';
-import { useMemo, useRef } from 'react';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { ArrowLeft, ChevronRight, Clock, Hash, Wrench, Zap } from 'lucide-react';
+import { useMemo, useRef } from 'react';
+import { z } from 'zod';
+import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
 import { useScreenSize } from '../hooks/useScreenSize';
-import { ArrowLeft, Clock, DollarSign, Hash, Zap, Wrench, ChevronRight } from 'lucide-react';
-import { formatCurrency, formatNumber, formatDuration } from '../hooks/useAnalytics';
 
 const API_BASE = 'http://localhost:3001/api';
 
@@ -40,17 +40,20 @@ const sessionsSearchSchema = z.object({
   model: z.string().optional(),
 });
 
-async function fetchSessions(params?: { dateFrom?: string; dateTo?: string }): Promise<SessionsResponse> {
+async function fetchSessions(params?: {
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<SessionsResponse> {
   const queryParams = new URLSearchParams();
   queryParams.append('limit', '20');
   queryParams.append('offset', '0');
-  
+
   if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
   if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
-  
+
   const url = `${API_BASE}/analytics/sessions?${queryParams.toString()}`;
   console.log('Fetching sessions from URL:', url);
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error('Failed to fetch sessions');
@@ -63,14 +66,14 @@ async function fetchSessions(params?: { dateFrom?: string; dateTo?: string }): P
 export const Route = createFileRoute('/sessions')({
   component: Sessions,
   validateSearch: sessionsSearchSchema,
-})
+});
 
 function Sessions() {
   const { dateFrom, dateTo, project, model } = Route.useSearch();
   const screenSize = useScreenSize();
-  
+
   console.log('Sessions component - Search params:', { dateFrom, dateTo, project, model });
-  
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['sessions', { dateFrom, dateTo, project, model }],
     queryFn: () => fetchSessions({ dateFrom, dateTo }),
@@ -83,19 +86,19 @@ function Sessions() {
   // Virtualization setup for performance with large lists
   const parentRef = useRef<HTMLDivElement>(null);
   const sessions = useMemo(() => data?.sessions || [], [data?.sessions]);
-  
+
   const virtualizer = useVirtualizer({
     count: sessions.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => screenSize.isMobile ? 80 : 96, // Smaller height on mobile
+    estimateSize: () => (screenSize.isMobile ? 80 : 96), // Smaller height on mobile
     overscan: 5, // Render 5 extra items above and below visible area
   });
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
       <div className="flex items-center gap-4 mb-6 sm:mb-8">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -103,7 +106,7 @@ function Sessions() {
           <span className="sm:hidden">Back</span>
         </Link>
       </div>
-      
+
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Sessions</h1>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
@@ -113,19 +116,18 @@ function Sessions() {
           {(dateFrom || dateTo) && (
             <div className="flex items-center gap-2">
               <span className="text-sm bg-orange-900/30 text-orange-300 px-3 py-1 rounded-full">
-                📅 Filtered by: {
-                  dateFrom && dateTo && dateFrom.startsWith(dateTo.split('T')[0]) 
-                    ? new Date(dateFrom).toLocaleDateString()
-                    : dateFrom === dateTo 
-                      ? dateFrom 
-                      : `${dateFrom} to ${dateTo}`
-                }
+                📅 Filtered by:{' '}
+                {dateFrom && dateTo && dateFrom.startsWith(dateTo.split('T')[0])
+                  ? new Date(dateFrom).toLocaleDateString()
+                  : dateFrom === dateTo
+                    ? dateFrom
+                    : `${dateFrom} to ${dateTo}`}
               </span>
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Filters */}
       <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
         <h2 className="text-lg font-semibold text-white mb-4">Filters</h2>
@@ -134,7 +136,10 @@ function Sessions() {
             <label htmlFor="date-range" className="block text-sm font-medium text-gray-400 mb-2">
               Date Range
             </label>
-            <select id="date-range" className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select
+              id="date-range"
+              className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+            >
               <option>Last 30 days</option>
               <option>Last 7 days</option>
               <option>Last 24 hours</option>
@@ -145,7 +150,10 @@ function Sessions() {
             <label htmlFor="project" className="block text-sm font-medium text-gray-400 mb-2">
               Project
             </label>
-            <select id="project" className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select
+              id="project"
+              className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+            >
               <option>All projects</option>
             </select>
           </div>
@@ -153,42 +161,42 @@ function Sessions() {
             <label htmlFor="model" className="block text-sm font-medium text-gray-400 mb-2">
               Model
             </label>
-            <select id="model" className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none">
+            <select
+              id="model"
+              className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+            >
               <option>All models</option>
             </select>
           </div>
           <div className="flex items-end sm:col-span-2 lg:col-span-1">
-            <button type="button" className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button
+              type="button"
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
               Apply Filters
             </button>
           </div>
         </div>
       </div>
-      
+
       {/* Sessions List */}
       <div className="bg-gray-800 border border-gray-700 rounded-lg">
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Recent Sessions</h2>
             {data && (
-              <span className="text-sm text-gray-400">
-                {data.pagination.total} total sessions
-              </span>
+              <span className="text-sm text-gray-400">{data.pagination.total} total sessions</span>
             )}
           </div>
         </div>
-        
+
         {error && (
           <div className="p-8 text-center">
             <div className="text-red-400 mb-4">⚠️</div>
-            <h3 className="text-lg font-semibold text-red-400 mb-2">
-              Error Loading Sessions
-            </h3>
-            <p className="text-gray-400 mb-4">
-              {error.message}
-            </p>
-            <button 
-              type="button" 
+            <h3 className="text-lg font-semibold text-red-400 mb-2">Error Loading Sessions</h3>
+            <p className="text-gray-400 mb-4">{error.message}</p>
+            <button
+              type="button"
               onClick={() => window.location.reload()}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
@@ -196,7 +204,7 @@ function Sessions() {
             </button>
           </div>
         )}
-        
+
         {isLoading && (
           <div className="p-8">
             <div className="space-y-4">
@@ -218,17 +226,15 @@ function Sessions() {
             </div>
           </div>
         )}
-        
+
         {data && data.sessions.length === 0 && (
           <div className="p-8 text-center">
             <div className="text-6xl mb-4">📝</div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              No sessions found
-            </h3>
+            <h3 className="text-xl font-semibold text-white mb-2">No sessions found</h3>
             <p className="text-gray-400 mb-6">
               Sync your Claude Code data to start viewing your conversation sessions
             </p>
-            <Link 
+            <Link
               to="/"
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block"
             >
@@ -236,12 +242,12 @@ function Sessions() {
             </Link>
           </div>
         )}
-        
+
         {sessions.length > 0 && (
-          <div 
+          <div
             ref={parentRef}
             className="overflow-auto"
-            style={{ 
+            style={{
               height: screenSize.isMobile ? '500px' : screenSize.isTablet ? '550px' : '600px',
               // Improve touch scrolling on mobile
               WebkitOverflowScrolling: 'touch',
@@ -259,10 +265,11 @@ function Sessions() {
                 const startedAt = new Date(session.started_at);
                 const projectName = session.project_name?.split('-').pop() || 'Unknown Project';
                 const totalTokens = session.total_input_tokens + session.total_output_tokens;
-                const cost = typeof session.total_cost_usd === 'string' 
-                  ? parseFloat(session.total_cost_usd) 
-                  : session.total_cost_usd;
-                
+                const cost =
+                  typeof session.total_cost_usd === 'string'
+                    ? parseFloat(session.total_cost_usd)
+                    : session.total_cost_usd;
+
                 return (
                   <Link
                     key={session.session_id}
@@ -274,13 +281,19 @@ function Sessions() {
                       transform: `translateY(${virtualItem.start}px)`,
                     }}
                   >
-                    <div className={`${screenSize.isMobile ? 'p-4' : 'p-6'} flex items-center gap-3 sm:gap-6 h-full`}>
+                    <div
+                      className={`${screenSize.isMobile ? 'p-4' : 'p-6'} flex items-center gap-3 sm:gap-6 h-full`}
+                    >
                       <div className="flex-shrink-0">
-                        <div className={`${screenSize.isMobile ? 'w-10 h-10' : 'w-12 h-12'} bg-orange-900/30 rounded-lg flex items-center justify-center`}>
-                          <Hash className={`${screenSize.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-400`} />
+                        <div
+                          className={`${screenSize.isMobile ? 'w-10 h-10' : 'w-12 h-12'} bg-orange-900/30 rounded-lg flex items-center justify-center`}
+                        >
+                          <Hash
+                            className={`${screenSize.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-400`}
+                          />
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
                           <h3 className="text-white font-medium truncate text-sm sm:text-base">
@@ -291,13 +304,14 @@ function Sessions() {
                             {session.model_name || 'unknown'}
                           </span>
                         </div>
-                        <div className={`flex items-center ${screenSize.isMobile ? 'gap-3 flex-wrap' : 'gap-4'} text-xs sm:text-sm text-gray-400`}>
+                        <div
+                          className={`flex items-center ${screenSize.isMobile ? 'gap-3 flex-wrap' : 'gap-4'} text-xs sm:text-sm text-gray-400`}
+                        >
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {session.duration_seconds 
+                            {session.duration_seconds
                               ? formatDuration(session.duration_seconds)
-                              : 'Unknown'
-                            }
+                              : 'Unknown'}
                           </span>
                           <span className="flex items-center gap-1">
                             <Zap className="w-3 h-3" />
@@ -309,19 +323,21 @@ function Sessions() {
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="text-right flex-shrink-0">
                         <div className="text-white font-medium mb-1 text-sm sm:text-base">
                           {formatCurrency(cost)}
                         </div>
                         <div className="text-gray-400 text-xs sm:text-sm">
-                          {screenSize.isMobile 
-                            ? startedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                            : startedAt.toLocaleDateString()
-                          }
+                          {screenSize.isMobile
+                            ? startedAt.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : startedAt.toLocaleDateString()}
                         </div>
                       </div>
-                      
+
                       <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                     </div>
                   </Link>
@@ -332,5 +348,5 @@ function Sessions() {
         )}
       </div>
     </div>
-  )
+  );
 }

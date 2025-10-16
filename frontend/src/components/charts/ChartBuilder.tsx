@@ -1,8 +1,32 @@
-import { memo, useState, useMemo } from 'react';
-import { BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Save, Download, Settings, Palette, BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
+import {
+  BarChart3,
+  Download,
+  LineChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  Save,
+  Settings,
+  TrendingUp,
+} from 'lucide-react';
+import type { ReactElement } from 'react';
+import { memo, useMemo, useState } from 'react';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-interface ChartConfig {
+export interface ChartConfig {
   id: string;
   name: string;
   type: 'line' | 'bar' | 'area' | 'pie';
@@ -22,15 +46,24 @@ interface ChartConfig {
   }>;
 }
 
-interface ChartBuilderProps {
+interface GroupedDataItem {
+  key: string;
+  xValue: string | number;
+  values: number[];
+  group?: string | number | null;
+}
+
+type GroupedDataMap = Record<string, GroupedDataItem>;
+
+export interface ChartBuilderProps {
   availableFields: Array<{
     name: string;
     type: 'string' | 'number' | 'date';
     values?: string[];
   }>;
-  data: Array<Record<string, any>>;
+  data: Array<Record<string, string | number>>;
   onSaveChart?: (config: ChartConfig) => void;
-  onExportChart?: (config: ChartConfig, data: any[]) => void;
+  onExportChart?: (config: ChartConfig, data: Array<Record<string, string | number>>) => void;
   initialConfig?: Partial<ChartConfig>;
 }
 
@@ -42,8 +75,16 @@ const CHART_TYPES = [
 ] as const;
 
 const COLORS = [
-  '#FF6B35', '#4F46E5', '#059669', '#DC2626', '#7C3AED',
-  '#EA580C', '#0891B2', '#BE123C', '#0F766E', '#7C2D12'
+  '#FF6B35',
+  '#4F46E5',
+  '#059669',
+  '#DC2626',
+  '#7C3AED',
+  '#EA580C',
+  '#0891B2',
+  '#BE123C',
+  '#0F766E',
+  '#7C2D12',
 ];
 
 const AGGREGATIONS = [
@@ -80,14 +121,14 @@ export const ChartBuilder = memo(function ChartBuilder({
   const [showSettings, setShowSettings] = useState(false);
 
   // Process data based on configuration
-  const processedData = useMemo(() => {
+  const processedData = useMemo<Array<Record<string, string | number>>>(() => {
     if (!config.xAxis || !config.yAxis || !data.length) return [];
 
     let filtered = data;
 
     // Apply filters
-    config.filters.forEach(filter => {
-      filtered = filtered.filter(item => {
+    config.filters.forEach((filter) => {
+      filtered = filtered.filter((item) => {
         const value = item[filter.field];
         const filterValue = filter.value;
 
@@ -111,28 +152,35 @@ export const ChartBuilder = memo(function ChartBuilder({
       const grouped = filtered.reduce((acc, item) => {
         const groupKey = item[config.groupBy!];
         const xValue = item[config.xAxis];
+        if (xValue === undefined || xValue === null) {
+          return acc;
+        }
         const yValue = Number(item[config.yAxis]) || 0;
 
-        const key = `${groupKey}-${xValue}`;
-        if (!acc[key]) {
-          acc[key] = {
-            [config.xAxis]: xValue,
-            group: groupKey,
+        const normalizedGroup = groupKey ?? 'Ungrouped';
+        const mapKey = `${String(normalizedGroup)}-${String(xValue)}`;
+        if (!acc[mapKey]) {
+          acc[mapKey] = {
+            key: mapKey,
+            xValue,
+            group: normalizedGroup,
             values: [],
           };
         }
-        acc[key].values.push(yValue);
-        return acc;
-      }, {} as Record<string, any>);
 
-      return Object.values(grouped).map((item: any) => {
+        acc[mapKey].values.push(yValue);
+        return acc;
+      }, {} as GroupedDataMap);
+
+      return Object.values(grouped).map((item) => {
         let aggregatedValue = 0;
         switch (config.aggregation) {
           case 'sum':
             aggregatedValue = item.values.reduce((sum: number, val: number) => sum + val, 0);
             break;
           case 'avg':
-            aggregatedValue = item.values.reduce((sum: number, val: number) => sum + val, 0) / item.values.length;
+            aggregatedValue =
+              item.values.reduce((sum: number, val: number) => sum + val, 0) / item.values.length;
             break;
           case 'count':
             aggregatedValue = item.values.length;
@@ -145,100 +193,115 @@ export const ChartBuilder = memo(function ChartBuilder({
             break;
         }
 
-        return {
-          [config.xAxis]: item[config.xAxis],
+        const record: Record<string, string | number> = {
+          [config.xAxis]: item.xValue,
           [config.yAxis]: aggregatedValue,
-          group: item.group,
         };
+
+        if (config.groupBy) {
+          record.group = typeof item.group === 'number' ? item.group : String(item.group);
+        }
+
+        return record;
       });
     }
 
     // Simple aggregation by x-axis
     const grouped = filtered.reduce((acc, item) => {
       const xValue = item[config.xAxis];
+      if (xValue === undefined || xValue === null) {
+        return acc;
+      }
       const yValue = Number(item[config.yAxis]) || 0;
+      const mapKey = String(xValue);
 
-      if (!acc[xValue]) {
-        acc[xValue] = {
-          [config.xAxis]: xValue,
+      if (!acc[mapKey]) {
+        acc[mapKey] = {
+          key: mapKey,
+          xValue,
           values: [],
         };
       }
-      acc[xValue].values.push(yValue);
+
+      acc[mapKey].values.push(yValue);
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as GroupedDataMap);
 
-    return Object.values(grouped).map((item: any) => {
-      let aggregatedValue = 0;
-      switch (config.aggregation) {
-        case 'sum':
-          aggregatedValue = item.values.reduce((sum: number, val: number) => sum + val, 0);
-          break;
-        case 'avg':
-          aggregatedValue = item.values.reduce((sum: number, val: number) => sum + val, 0) / item.values.length;
-          break;
-        case 'count':
-          aggregatedValue = item.values.length;
-          break;
-        case 'max':
-          aggregatedValue = Math.max(...item.values);
-          break;
-        case 'min':
-          aggregatedValue = Math.min(...item.values);
-          break;
-      }
+    return Object.values(grouped)
+      .map((item) => {
+        let aggregatedValue = 0;
+        switch (config.aggregation) {
+          case 'sum':
+            aggregatedValue = item.values.reduce((sum: number, val: number) => sum + val, 0);
+            break;
+          case 'avg':
+            aggregatedValue =
+              item.values.reduce((sum: number, val: number) => sum + val, 0) / item.values.length;
+            break;
+          case 'count':
+            aggregatedValue = item.values.length;
+            break;
+          case 'max':
+            aggregatedValue = Math.max(...item.values);
+            break;
+          case 'min':
+            aggregatedValue = Math.min(...item.values);
+            break;
+        }
 
-      return {
-        [config.xAxis]: item[config.xAxis],
-        [config.yAxis]: aggregatedValue,
-      };
-    }).sort((a, b) => {
-      const aValue = a[config.xAxis];
-      const bValue = b[config.xAxis];
-      
-      // Try to sort as dates first, then numbers, then strings
-      const aDate = new Date(aValue);
-      const bDate = new Date(bValue);
-      if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
-        return aDate.getTime() - bDate.getTime();
-      }
-      
-      if (!isNaN(Number(aValue)) && !isNaN(Number(bValue))) {
-        return Number(aValue) - Number(bValue);
-      }
-      
-      return String(aValue).localeCompare(String(bValue));
-    });
+        const record: Record<string, string | number> = {
+          [config.xAxis]: item.xValue,
+          [config.yAxis]: aggregatedValue,
+        };
+
+        return record;
+      })
+      .sort((a, b) => {
+        const aValue = a[config.xAxis];
+        const bValue = b[config.xAxis];
+
+        // Try to sort as dates first, then numbers, then strings
+        const aDate = new Date(aValue);
+        const bDate = new Date(bValue);
+        if (!Number.isNaN(aDate.getTime()) && !Number.isNaN(bDate.getTime())) {
+          return aDate.getTime() - bDate.getTime();
+        }
+
+        if (!Number.isNaN(Number(aValue)) && !Number.isNaN(Number(bValue))) {
+          return Number(aValue) - Number(bValue);
+        }
+
+        return String(aValue).localeCompare(String(bValue));
+      });
   }, [config, data]);
 
   const updateConfig = (updates: Partial<ChartConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig((prev) => ({ ...prev, ...updates }));
   };
 
-  const addFilter = () => {
-    setConfig(prev => ({
-      ...prev,
-      filters: [...prev.filters, { field: '', operator: 'equals', value: '' }]
-    }));
-  };
+  // Filter management functions commented out for future use
+  // const addFilter = () => {
+  //   setConfig((prev) => ({
+  //     ...prev,
+  //     filters: [...prev.filters, { field: '', operator: 'equals', value: '' }],
+  //   }));
+  // };
 
-  const updateFilter = (index: number, updates: Partial<typeof config.filters[0]>) => {
-    setConfig(prev => ({
-      ...prev,
-      filters: prev.filters.map((filter, i) => 
-        i === index ? { ...filter, ...updates } : filter
-      )
-    }));
-  };
+  // const updateFilter = (index: number, updates: Partial<(typeof config.filters)[0]>) => {
+  //   setConfig((prev) => ({
+  //     ...prev,
+  //     filters: prev.filters.map((filter, i) => (i === index ? { ...filter, ...updates } : filter)),
+  //   }));
+  // };
 
-  const removeFilter = (index: number) => {
-    setConfig(prev => ({
-      ...prev,
-      filters: prev.filters.filter((_, i) => i !== index)
-    }));
-  };
+  // const removeFilter = (index: number) => {
+  //   setConfig((prev) => ({
+  //     ...prev,
+  //     filters: prev.filters.filter((_, i) => i !== index),
+  //   }));
+  // };
 
-  const renderChart = () => {
+  const renderChart = (): ReactElement => {
     if (!processedData.length) {
       return (
         <div className="flex items-center justify-center h-64 text-gray-400">
@@ -256,14 +319,16 @@ export const ChartBuilder = memo(function ChartBuilder({
       case 'line':
         return (
           <LineChart {...commonProps}>
-            {config.showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />}
+            {config.showGrid && (
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+            )}
             <XAxis dataKey={config.xAxis} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} />
-            <Line 
-              type="monotone" 
-              dataKey={config.yAxis} 
-              stroke={config.color} 
+            <Line
+              type="monotone"
+              dataKey={config.yAxis}
+              stroke={config.color}
               strokeWidth={2}
               dot={{ fill: config.color, r: 3 }}
             />
@@ -273,7 +338,9 @@ export const ChartBuilder = memo(function ChartBuilder({
       case 'bar':
         return (
           <BarChart {...commonProps}>
-            {config.showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />}
+            {config.showGrid && (
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+            )}
             <XAxis dataKey={config.xAxis} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} />
@@ -284,14 +351,16 @@ export const ChartBuilder = memo(function ChartBuilder({
       case 'area':
         return (
           <AreaChart {...commonProps}>
-            {config.showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />}
+            {config.showGrid && (
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+            )}
             <XAxis dataKey={config.xAxis} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} />
-            <Area 
-              type="monotone" 
-              dataKey={config.yAxis} 
-              stroke={config.color} 
+            <Area
+              type="monotone"
+              dataKey={config.yAxis}
+              stroke={config.color}
               fill={config.color}
               fillOpacity={0.3}
             />
@@ -309,8 +378,8 @@ export const ChartBuilder = memo(function ChartBuilder({
               cy="50%"
               outerRadius={80}
             >
-              {processedData.slice(0, 10).map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              {processedData.slice(0, 10).map((entry) => (
+                <Cell key={entry[config.xAxis]} fill={COLORS[processedData.indexOf(entry) % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} />
@@ -319,7 +388,7 @@ export const ChartBuilder = memo(function ChartBuilder({
         );
 
       default:
-        return null;
+        return <div />;
     }
   };
 
@@ -336,9 +405,9 @@ export const ChartBuilder = memo(function ChartBuilder({
           />
           <p className="text-sm text-gray-400 mt-1">Custom chart configuration</p>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <button
+          <button type="button"
             onClick={() => setShowSettings(!showSettings)}
             className="p-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded"
             title="Settings"
@@ -346,7 +415,7 @@ export const ChartBuilder = memo(function ChartBuilder({
             <Settings size={16} />
           </button>
           {onSaveChart && (
-            <button
+            <button type="button"
               onClick={() => onSaveChart(config)}
               className="p-2 bg-orange-600 hover:bg-orange-700 rounded"
               title="Save Chart"
@@ -355,7 +424,7 @@ export const ChartBuilder = memo(function ChartBuilder({
             </button>
           )}
           {onExportChart && (
-            <button
+            <button type="button"
               onClick={() => onExportChart(config, processedData)}
               className="p-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded"
               title="Export Chart"
@@ -371,14 +440,14 @@ export const ChartBuilder = memo(function ChartBuilder({
         <div className="lg:col-span-1 space-y-4">
           {/* Chart Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Chart Type</label>
+            <div className="block text-sm font-medium text-gray-300 mb-2">Chart Type</div>
             <div className="grid grid-cols-2 gap-2">
-              {CHART_TYPES.map(type => {
+              {CHART_TYPES.map((type) => {
                 const Icon = type.icon;
                 return (
-                  <button
+                  <button type="button"
                     key={type.id}
-                    onClick={() => updateConfig({ type: type.id as any })}
+                    onClick={() => updateConfig({ type: type.id as ChartConfig['type'] })}
                     className={`p-3 border rounded-lg flex flex-col items-center gap-2 transition-all ${
                       config.type === type.id
                         ? 'border-orange-500 bg-orange-500/10'
@@ -395,14 +464,15 @@ export const ChartBuilder = memo(function ChartBuilder({
 
           {/* Axis Configuration */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">X-Axis</label>
+            <label htmlFor="chart-x-axis" className="block text-sm font-medium text-gray-300 mb-2">X-Axis</label>
             <select
+              id="chart-x-axis"
               value={config.xAxis}
               onChange={(e) => updateConfig({ xAxis: e.target.value })}
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm"
             >
               <option value="">Select field...</option>
-              {availableFields.map(field => (
+              {availableFields.map((field) => (
                 <option key={field.name} value={field.name}>
                   {field.name} ({field.type})
                 </option>
@@ -411,41 +481,47 @@ export const ChartBuilder = memo(function ChartBuilder({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Y-Axis</label>
+            <label htmlFor="chart-y-axis" className="block text-sm font-medium text-gray-300 mb-2">Y-Axis</label>
             <select
+              id="chart-y-axis"
               value={config.yAxis}
               onChange={(e) => updateConfig({ yAxis: e.target.value })}
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm"
             >
               <option value="">Select field...</option>
-              {availableFields.filter(f => f.type === 'number').map(field => (
-                <option key={field.name} value={field.name}>
-                  {field.name}
-                </option>
-              ))}
+              {availableFields
+                .filter((f) => f.type === 'number')
+                .map((field) => (
+                  <option key={field.name} value={field.name}>
+                    {field.name}
+                  </option>
+                ))}
             </select>
           </div>
 
           {/* Aggregation */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Aggregation</label>
+            <label htmlFor="chart-aggregation" className="block text-sm font-medium text-gray-300 mb-2">Aggregation</label>
             <select
+              id="chart-aggregation"
               value={config.aggregation}
-              onChange={(e) => updateConfig({ aggregation: e.target.value as any })}
+              onChange={(e) => updateConfig({ aggregation: e.target.value as ChartConfig['aggregation'] })}
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm"
             >
-              {AGGREGATIONS.map(agg => (
-                <option key={agg.id} value={agg.id}>{agg.name}</option>
+              {AGGREGATIONS.map((agg) => (
+                <option key={agg.id} value={agg.id}>
+                  {agg.name}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Color */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Color</label>
+            <div className="block text-sm font-medium text-gray-300 mb-2">Color</div>
             <div className="flex flex-wrap gap-2">
-              {COLORS.map(color => (
-                <button
+              {COLORS.map((color) => (
+                <button type="button"
                   key={color}
                   onClick={() => updateConfig({ color })}
                   className={`w-8 h-8 rounded border-2 ${
@@ -468,9 +544,11 @@ export const ChartBuilder = memo(function ChartBuilder({
                   onChange={(e) => updateConfig({ showGrid: e.target.checked })}
                   className="rounded"
                 />
-                <label htmlFor="showGrid" className="text-sm text-gray-300">Show Grid</label>
+                <label htmlFor="showGrid" className="text-sm text-gray-300">
+                  Show Grid
+                </label>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -479,12 +557,15 @@ export const ChartBuilder = memo(function ChartBuilder({
                   onChange={(e) => updateConfig({ showLegend: e.target.checked })}
                   className="rounded"
                 />
-                <label htmlFor="showLegend" className="text-sm text-gray-300">Show Legend</label>
+                <label htmlFor="showLegend" className="text-sm text-gray-300">
+                  Show Legend
+                </label>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Height (px)</label>
+                <label htmlFor="chart-height" className="block text-sm font-medium text-gray-300 mb-2">Height (px)</label>
                 <input
+                  id="chart-height"
                   type="number"
                   value={config.height}
                   onChange={(e) => updateConfig({ height: Number(e.target.value) })}
@@ -506,12 +587,12 @@ export const ChartBuilder = memo(function ChartBuilder({
               {renderChart()}
             </ResponsiveContainer>
           </div>
-          
+
           {/* Data Summary */}
           <div className="mt-4 p-3 bg-gray-700 rounded-lg">
             <div className="flex justify-between text-sm text-gray-300">
               <span>Data Points: {processedData.length}</span>
-              <span>Chart Type: {CHART_TYPES.find(t => t.id === config.type)?.name}</span>
+              <span>Chart Type: {CHART_TYPES.find((t) => t.id === config.type)?.name}</span>
             </div>
           </div>
         </div>

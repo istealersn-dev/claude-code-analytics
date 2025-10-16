@@ -13,10 +13,6 @@
     "build:frontend": "cd frontend && npm run build",
     "build:all": "npm run build && npm run build:frontend",
     "build:start": "npm run build && npm start",
-    "test": "npx ts-node test/test-parser.ts",
-    "test:parser": "npx ts-node test/test-parser.ts",
-    "test:db": "npx ts-node test/test-database-insertion.ts",
-    "db:test": "node test-db-connection.js",
     "db:reset": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics -f schema.sql",
     "db:connect": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics"
   },
@@ -37,12 +33,8 @@
     "@fastify/helmet": "^13.0.1",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/sensible": "^6.0.3",
-    "@types/node-cron": "^3.0.11",
-    "@types/nodemailer": "^7.0.1",
     "dotenv": "^17.2.1",
     "fastify": "^5.5.0",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.6",
     "pg": "^8.16.3"
   },
   "devDependencies": {

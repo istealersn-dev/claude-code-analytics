@@ -1,6 +1,5 @@
-import React from 'react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card } from '../ui/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ModelEfficiency {
   model: string;
@@ -39,8 +38,8 @@ export function ModelEfficiencyChart({ data }: ModelEfficiencyChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={sortedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="model" 
+            <XAxis
+              dataKey="model"
               stroke="#9CA3AF"
               fontSize={11}
               tick={{ fill: '#9CA3AF' }}
@@ -48,11 +47,16 @@ export function ModelEfficiencyChart({ data }: ModelEfficiencyChartProps) {
               textAnchor="end"
               height={80}
             />
-            <YAxis 
+            <YAxis
               stroke="#9CA3AF"
               fontSize={12}
               tick={{ fill: '#9CA3AF' }}
-              label={{ value: 'Tokens per Dollar', angle: -90, position: 'insideLeft', style: { fill: '#9CA3AF' } }}
+              label={{
+                value: 'Tokens per Dollar',
+                angle: -90,
+                position: 'insideLeft',
+                style: { fill: '#9CA3AF' },
+              }}
             />
             <Tooltip
               contentStyle={{
@@ -61,18 +65,14 @@ export function ModelEfficiencyChart({ data }: ModelEfficiencyChartProps) {
                 borderRadius: '8px',
                 color: '#F9FAFB',
               }}
-              formatter={(value: number, name: string, props: any) => [
+              formatter={(value: number) => [
                 `${value.toFixed(0)} tokens/$`,
-                'Efficiency'
+                'Efficiency',
               ]}
               labelFormatter={(label: string) => `Model: ${label}`}
               itemStyle={{ color: '#F9FAFB' }}
             />
-            <Bar 
-              dataKey="efficiency" 
-              fill="#FF6B35"
-              radius={[4, 4, 0, 0]}
-            />
+            <Bar dataKey="efficiency" fill="#FF6B35" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -82,9 +82,7 @@ export function ModelEfficiencyChart({ data }: ModelEfficiencyChartProps) {
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <div className="text-xs text-gray-400">Most Efficient</div>
-            <div className="text-sm font-medium text-white">
-              {sortedData[0]?.model || 'N/A'}
-            </div>
+            <div className="text-sm font-medium text-white">{sortedData[0]?.model || 'N/A'}</div>
             <div className="text-xs text-green-400">
               {sortedData[0]?.efficiency.toFixed(0)} tokens/$
             </div>

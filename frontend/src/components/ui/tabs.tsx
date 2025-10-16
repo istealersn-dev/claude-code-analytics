@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { createContext, type ReactNode, useContext, useState } from 'react';
 
 interface TabsContextType {
   activeTab: string;
@@ -19,9 +19,7 @@ export function Tabs({ defaultValue, children, className }: TabsProps) {
 
   return (
     <TabsContext.Provider value={{ activeTab, setActiveTab }}>
-      <div className={className}>
-        {children}
-      </div>
+      <div className={className}>{children}</div>
     </TabsContext.Provider>
   );
 }
@@ -32,11 +30,7 @@ interface TabsListProps {
 }
 
 export function TabsList({ children, className }: TabsListProps) {
-  return (
-    <div className={clsx('flex', className)}>
-      {children}
-    </div>
-  );
+  return <div className={clsx('flex', className)}>{children}</div>;
 }
 
 interface TabsTriggerProps {
@@ -55,15 +49,13 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
   const isActive = activeTab === value;
 
   return (
-    <button
+    <button type="button"
       onClick={() => setActiveTab(value)}
       className={clsx(
         'px-4 py-2 text-sm font-medium transition-colors',
         'focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800',
-        isActive 
-          ? 'text-white bg-orange-600' 
-          : 'text-gray-400 hover:text-white hover:bg-gray-700',
-        className
+        isActive ? 'text-white bg-orange-600' : 'text-gray-400 hover:text-white hover:bg-gray-700',
+        className,
       )}
       data-state={isActive ? 'active' : 'inactive'}
     >
@@ -85,14 +77,10 @@ export function TabsContent({ value, children, className }: TabsContentProps) {
   }
 
   const { activeTab } = context;
-  
+
   if (activeTab !== value) {
     return null;
   }
 
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }

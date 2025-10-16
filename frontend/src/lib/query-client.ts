@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,9 +16,9 @@ export const queryClient = new QueryClient({
           }
         }
         // Retry up to 2 times for other errors (reduced from 3)
-        return failureCount < 2
+        return failureCount < 2;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     },
   },
-})
+});

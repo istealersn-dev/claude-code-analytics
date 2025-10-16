@@ -1,6 +1,25 @@
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea, ReferenceLine } from 'recharts';
-import { memo, useMemo, useCallback, useState, useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, MessageSquare } from 'lucide-react';
+import { MessageSquare, RotateCcw } from 'lucide-react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  CartesianGrid,
+  Line,
+  LineChart as RechartsLineChart,
+  ReferenceArea,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+
+interface ChartMouseEvent {
+  activeLabel?: string;
+  activePayload?: Array<{ payload: { date: string; value: number } }>;
+}
+
+type LineDotEvent = {
+  payload?: { date: string; value: number; count?: number };
+};
 
 interface ChartAnnotation {
   id: string;
@@ -10,12 +29,12 @@ interface ChartAnnotation {
   color: string;
 }
 
-interface InteractiveLineChartProps {
+export interface InteractiveLineChartProps {
   data: Array<{ date: string; value: number; count?: number }>;
   height?: number;
   color?: string;
   formatValue?: (value: number) => string;
-  formatTooltip?: (value: number, count?: number) => [string, string];
+  formatTooltip?: (value: number) => [string, string];
   showGrid?: boolean;
   onDataPointClick?: (data: { date: string; value: number; count?: number }) => void;
   annotations?: ChartAnnotation[];
@@ -29,7 +48,7 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
   height = 300,
   color = '#FF6B35',
   formatValue = (value) => value.toString(),
-  formatTooltip = (value, count) => [formatValue?.(value) || value.toString(), 'Value'],
+  formatTooltip = (value) => [formatValue?.(value) || value.toString(), 'Value'],
   showGrid = true,
   onDataPointClick,
   annotations = [],
@@ -44,21 +63,23 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
     refAreaRight?: string;
     isZooming?: boolean;
   }>({});
-  
+
   const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
-  const [annotationPoint, setAnnotationPoint] = useState<{ date: string; value: number } | null>(null);
+  const [annotationPoint, setAnnotationPoint] = useState<{ date: string; value: number } | null>(
+    null,
+  );
   const [annotationText, setAnnotationText] = useState('');
-  
-  const chartRef = useRef<any>(null);
+
+  const chartRef = useRef<SVGSVGElement>(null);
 
   // Filter data based on zoom state
   const displayData = useMemo(() => {
     if (!zoomState.left || !zoomState.right) return data;
-    
+
     const startDate = new Date(zoomState.left);
     const endDate = new Date(zoomState.right);
-    
-    return data.filter(item => {
+
+    return data.filter((item) => {
       const itemDate = new Date(item.date);
       return itemDate >= startDate && itemDate <= endDate;
     });
@@ -66,19 +87,30 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
 
   const chartMargin = useMemo(() => ({ top: 20, right: 30, left: 20, bottom: 20 }), []);
 
-  const handleMouseDown = useCallback((e: any) => {
-    if (!enableZoom || !e || !e.activeLabel) return;
-    setZoomState(prev => ({ ...prev, refAreaLeft: e.activeLabel, isZooming: true }));
-  }, [enableZoom]);
+  const handleMouseDown = useCallback(
+    (e: ChartMouseEvent | null) => {
+      if (!enableZoom || !e || !e.activeLabel) return;
+      setZoomState((prev) => ({ ...prev, refAreaLeft: e.activeLabel, isZooming: true }));
+    },
+    [enableZoom],
+  );
 
-  const handleMouseMove = useCallback((e: any) => {
-    if (!enableZoom || !zoomState.isZooming || !e || !e.activeLabel) return;
-    setZoomState(prev => ({ ...prev, refAreaRight: e.activeLabel }));
-  }, [enableZoom, zoomState.isZooming]);
+  const handleMouseMove = useCallback(
+    (e: ChartMouseEvent | null) => {
+      if (!enableZoom || !zoomState.isZooming || !e || !e.activeLabel) return;
+      setZoomState((prev) => ({ ...prev, refAreaRight: e.activeLabel }));
+    },
+    [enableZoom, zoomState.isZooming],
+  );
 
   const handleMouseUp = useCallback(() => {
     if (!enableZoom || !zoomState.refAreaLeft || !zoomState.refAreaRight) {
-      setZoomState(prev => ({ ...prev, isZooming: false, refAreaLeft: undefined, refAreaRight: undefined }));
+      setZoomState((prev) => ({
+        ...prev,
+        isZooming: false,
+        refAreaLeft: undefined,
+        refAreaRight: undefined,
+      }));
       return;
     }
 
@@ -103,24 +135,27 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
     setZoomState({});
   }, []);
 
-  const handleChartDoubleClick = useCallback((e: any) => {
-    if (!enableAnnotations || !onAnnotationAdd || !e?.activePayload?.[0]?.payload) return;
-    
-    const payload = e.activePayload[0].payload;
-    setAnnotationPoint({ date: payload.date, value: payload.value });
-    setShowAnnotationDialog(true);
-  }, [enableAnnotations, onAnnotationAdd]);
+  const handleChartDoubleClick = useCallback(
+    (e: ChartMouseEvent | null) => {
+      if (!enableAnnotations || !onAnnotationAdd || !e?.activePayload?.[0]?.payload) return;
+
+      const payload = e.activePayload[0].payload;
+      setAnnotationPoint({ date: payload.date, value: payload.value });
+      setShowAnnotationDialog(true);
+    },
+    [enableAnnotations, onAnnotationAdd],
+  );
 
   const handleAddAnnotation = useCallback(() => {
     if (!annotationPoint || !annotationText.trim() || !onAnnotationAdd) return;
-    
+
     onAnnotationAdd({
       date: annotationPoint.date,
       value: annotationPoint.value,
       text: annotationText.trim(),
-      color: '#FF6B35'
+      color: '#FF6B35',
     });
-    
+
     setShowAnnotationDialog(false);
     setAnnotationText('');
     setAnnotationPoint(null);
@@ -128,10 +163,7 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
 
   if (!data || data.length === 0) {
     return (
-      <div 
-        className="flex items-center justify-center text-gray-400"
-        style={{ height }}
-      >
+      <div className="flex items-center justify-center text-gray-400" style={{ height }}>
         No data available
       </div>
     );
@@ -143,7 +175,7 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
       <div className="absolute top-2 right-2 z-20 flex gap-2">
         {enableZoom && (
           <>
-            <button
+            <button type="button"
               onClick={handleZoomOut}
               disabled={!zoomState.left && !zoomState.right}
               className="p-1.5 bg-gray-800 border border-gray-600 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -178,17 +210,16 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
               placeholder="Enter annotation text..."
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-sm resize-none"
               rows={3}
-              autoFocus
             />
             <div className="flex gap-2 mt-3">
-              <button
+              <button type="button"
                 onClick={handleAddAnnotation}
                 disabled={!annotationText.trim()}
                 className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm"
               >
                 Add
               </button>
-              <button
+              <button type="button"
                 onClick={() => {
                   setShowAnnotationDialog(false);
                   setAnnotationText('');
@@ -204,7 +235,7 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
       )}
 
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsLineChart 
+        <RechartsLineChart
           ref={chartRef}
           data={displayData}
           margin={chartMargin}
@@ -213,16 +244,10 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
           onMouseUp={handleMouseUp}
           onDoubleClick={handleChartDoubleClick}
         >
-          {showGrid && (
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke="#374151" 
-              opacity={0.3} 
-            />
-          )}
-          
-          <XAxis 
-            dataKey="date" 
+          {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />}
+
+          <XAxis
+            dataKey="date"
             stroke="#9CA3AF"
             fontSize={12}
             tickLine={false}
@@ -230,14 +255,14 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
             domain={['dataMin', 'dataMax']}
             tickFormatter={(value) => {
               const date = new Date(value);
-              return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric' 
+              return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
               });
             }}
           />
-          
-          <YAxis 
+
+          <YAxis
             stroke="#9CA3AF"
             fontSize={12}
             tickLine={false}
@@ -245,7 +270,7 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
             tickFormatter={formatValue}
             domain={['dataMin - 5%', 'dataMax + 5%']}
           />
-          
+
           <Tooltip
             contentStyle={{
               backgroundColor: '#1F2937',
@@ -263,9 +288,8 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
                 day: 'numeric',
               });
             }}
-            formatter={(value: number, _name, props) => {
-              const count = props.payload?.count;
-              return formatTooltip(value, count);
+            formatter={(value: number) => {
+              return formatTooltip(value);
             }}
           />
 
@@ -288,34 +312,37 @@ export const InteractiveLineChart = memo(function InteractiveLineChart({
               strokeDasharray="2 2"
               label={{
                 value: annotation.text,
-                position: 'topLeft',
+                position: 'insideTopLeft',
                 offset: 10,
-                style: { 
-                  fontSize: '11px', 
+                style: {
+                  fontSize: '11px',
                   fill: annotation.color,
                   backgroundColor: 'rgba(0,0,0,0.8)',
                   padding: '2px 4px',
-                  borderRadius: '2px'
-                }
+                  borderRadius: '2px',
+                },
               }}
             />
           ))}
-          
+
           <Line
             type="monotone"
             dataKey="value"
             stroke={color}
             strokeWidth={2}
             dot={{ fill: color, strokeWidth: 2, r: 3 }}
-            activeDot={{ 
-              r: 6, 
-              stroke: color, 
+            activeDot={{
+              r: 6,
+              stroke: color,
               strokeWidth: 2,
-              onClick: onDataPointClick ? (data, index) => {
-                if (data && data.payload) {
-                  onDataPointClick(data.payload);
-                }
-              } : undefined
+              onClick: onDataPointClick
+                ? (event) => {
+                    const dotEvent = event as LineDotEvent;
+                    if (dotEvent.payload) {
+                      onDataPointClick(dotEvent.payload);
+                    }
+                  }
+                : undefined,
             }}
           />
         </RechartsLineChart>
