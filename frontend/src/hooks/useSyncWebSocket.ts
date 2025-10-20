@@ -37,7 +37,9 @@ export function useSyncWebSocket() {
     try {
       // Convert HTTP URL to WebSocket URL
       const apiUrl = getApiUrl('/ws/sync');
-      const wsUrl = apiUrl.replace(/^https?:\/\//, 'ws://').replace(/^http:\/\//, 'ws://');
+      const wsUrl = apiUrl.replace(/^https?:\/\//, (match) => 
+        match === 'https://' ? 'wss://' : 'ws://'
+      );
       
       const ws = new WebSocket(wsUrl);
 
