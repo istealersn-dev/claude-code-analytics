@@ -60,7 +60,7 @@ export interface DateRange {
   end: string;
 }
 
-const API_BASE = 'http://localhost:3001/api';
+import { getApiUrl } from '../config/environment';
 
 // Helper function to build query string with date filters
 function buildQueryString(dateRange?: DateRange): string {
@@ -76,7 +76,7 @@ function buildQueryString(dateRange?: DateRange): string {
 
 // Fetch functions
 async function fetchOverviewMetrics(dateRange?: DateRange): Promise<OverviewMetrics> {
-  const response = await fetch(`${API_BASE}/analytics${buildQueryString(dateRange)}`);
+  const response = await fetch(`${getApiUrl('/analytics')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch overview metrics');
   }
@@ -85,7 +85,7 @@ async function fetchOverviewMetrics(dateRange?: DateRange): Promise<OverviewMetr
 }
 
 async function fetchCostAnalysis(dateRange?: DateRange): Promise<CostAnalysis> {
-  const response = await fetch(`${API_BASE}/analytics/costs${buildQueryString(dateRange)}`);
+  const response = await fetch(`${getApiUrl('/analytics/costs')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch cost analysis');
   }
@@ -93,7 +93,7 @@ async function fetchCostAnalysis(dateRange?: DateRange): Promise<CostAnalysis> {
 }
 
 async function fetchDailyUsageTimeSeries(dateRange?: DateRange): Promise<DailyUsageTimeSeries> {
-  const response = await fetch(`${API_BASE}/analytics/daily-usage${buildQueryString(dateRange)}`);
+  const response = await fetch(`${getApiUrl('/analytics/daily-usage')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch daily usage time series');
   }
@@ -101,7 +101,7 @@ async function fetchDailyUsageTimeSeries(dateRange?: DateRange): Promise<DailyUs
 }
 
 async function fetchDistributionData(dateRange?: DateRange): Promise<DistributionData> {
-  const response = await fetch(`${API_BASE}/analytics/distributions${buildQueryString(dateRange)}`);
+  const response = await fetch(`${getApiUrl('/analytics/distributions')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch distribution data');
   }
@@ -109,7 +109,7 @@ async function fetchDistributionData(dateRange?: DateRange): Promise<Distributio
 }
 
 async function fetchHeatmapData(dateRange?: DateRange): Promise<HeatmapData[]> {
-  const response = await fetch(`${API_BASE}/analytics/heatmap${buildQueryString(dateRange)}`);
+  const response = await fetch(`${getApiUrl('/analytics/heatmap')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch heatmap data');
   }
@@ -117,7 +117,7 @@ async function fetchHeatmapData(dateRange?: DateRange): Promise<HeatmapData[]> {
 }
 
 async function fetchPerformanceMetrics(dateRange?: DateRange): Promise<PerformanceMetrics> {
-  const response = await fetch(`${API_BASE}/analytics/performance${buildQueryString(dateRange)}`);
+  const response = await fetch(`${getApiUrl('/analytics/performance')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch performance metrics');
   }

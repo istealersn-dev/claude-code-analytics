@@ -5,7 +5,7 @@ import { StatsCard } from '../components/analytics/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
 
-const API_BASE = 'http://localhost:3001/api';
+import { getApiUrl } from '../config/environment';
 
 interface SessionDetail {
   session_id: string;
@@ -23,7 +23,7 @@ interface SessionDetail {
 }
 
 async function fetchSessionDetail(sessionId: string): Promise<SessionDetail> {
-  const response = await fetch(`${API_BASE}/analytics/sessions/${sessionId}`);
+  const response = await fetch(getApiUrl(`/analytics/sessions/${sessionId}`));
   if (!response.ok) {
     if (response.status === 404) {
       throw new Error('Session not found');

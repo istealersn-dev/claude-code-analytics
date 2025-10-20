@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from 'react';
 import { DataQualityDashboard } from '../components/data-quality/DataQualityDashboard';
 
-const API_BASE = 'http://localhost:3001/api';
+import { getApiUrl } from '../config/environment';
 
 interface SyncStatus {
   isRunning: boolean;
@@ -72,7 +72,7 @@ interface SyncResult {
 }
 
 async function fetchSyncStatus(): Promise<SyncStatus> {
-  const response = await fetch(`${API_BASE}/sync/status`);
+  const response = await fetch(getApiUrl('/sync/status'));
   if (!response.ok) {
     throw new Error('Failed to fetch sync status');
   }
@@ -81,7 +81,7 @@ async function fetchSyncStatus(): Promise<SyncStatus> {
 }
 
 async function fetchSyncPreview(): Promise<SyncPreview> {
-  const response = await fetch(`${API_BASE}/sync/preview`);
+  const response = await fetch(getApiUrl('/sync/preview'));
   if (!response.ok) {
     throw new Error('Failed to fetch sync preview');
   }
@@ -90,7 +90,7 @@ async function fetchSyncPreview(): Promise<SyncPreview> {
 }
 
 async function fetchSyncStats(): Promise<SyncStats> {
-  const response = await fetch(`${API_BASE}/sync/stats`);
+  const response = await fetch(getApiUrl('/sync/stats'));
   if (!response.ok) {
     throw new Error('Failed to fetch sync stats');
   }
@@ -99,7 +99,7 @@ async function fetchSyncStats(): Promise<SyncStats> {
 }
 
 async function runSync(): Promise<SyncResult> {
-  const response = await fetch(`${API_BASE}/sync/run`, {
+  const response = await fetch(getApiUrl('/sync/run'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ incremental: true }),

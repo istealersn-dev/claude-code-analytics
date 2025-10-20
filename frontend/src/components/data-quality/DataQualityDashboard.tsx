@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-const API_BASE = 'http://localhost:3001/api';
+import { getApiUrl } from '../../config/environment';
 
 interface DataQualityMetrics {
   totalSessions: number;
@@ -63,7 +63,7 @@ interface CleanupResult {
 }
 
 async function fetchDataQualityMetrics(): Promise<DataQualityMetrics> {
-  const response = await fetch(`${API_BASE}/data-quality/metrics`);
+  const response = await fetch(getApiUrl('/data-quality/metrics'));
   if (!response.ok) {
     throw new Error('Failed to fetch data quality metrics');
   }
@@ -72,7 +72,7 @@ async function fetchDataQualityMetrics(): Promise<DataQualityMetrics> {
 }
 
 async function cleanupDuplicates(): Promise<CleanupResult> {
-  const response = await fetch(`${API_BASE}/data-quality/cleanup/duplicates`, {
+  const response = await fetch(getApiUrl('/data-quality/cleanup/duplicates'), {
     method: 'POST',
   });
   if (!response.ok) {
@@ -83,7 +83,7 @@ async function cleanupDuplicates(): Promise<CleanupResult> {
 }
 
 async function cleanupOrphanedMetrics(): Promise<CleanupResult> {
-  const response = await fetch(`${API_BASE}/data-quality/cleanup/orphaned-metrics`, {
+  const response = await fetch(getApiUrl('/data-quality/cleanup/orphaned-metrics'), {
     method: 'POST',
   });
   if (!response.ok) {

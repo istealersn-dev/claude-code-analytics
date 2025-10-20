@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
 import { useScreenSize } from '../hooks/useScreenSize';
 
-const API_BASE = 'http://localhost:3001/api';
+import { getApiUrl } from '../config/environment';
 
 interface Session {
   session_id: string;
@@ -51,7 +51,7 @@ async function fetchSessions(params?: {
   if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
   if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
 
-  const url = `${API_BASE}/analytics/sessions?${queryParams.toString()}`;
+  const url = `${getApiUrl('/analytics/sessions')}?${queryParams.toString()}`;
   console.log('Fetching sessions from URL:', url);
 
   const response = await fetch(url);

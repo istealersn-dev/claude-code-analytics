@@ -79,7 +79,7 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+import { getApiUrl } from '../config/environment';
 
 async function fetchTrendAnalysis(filters: AnalyticsFilters): Promise<TrendAnalysis> {
   const params = new URLSearchParams();
@@ -97,7 +97,7 @@ async function fetchTrendAnalysis(filters: AnalyticsFilters): Promise<TrendAnaly
     params.append('modelName', filters.modelName);
   }
 
-  const url = `${API_BASE_URL}/trends/analysis${params.toString() ? `?${params.toString()}` : ''}`;
+  const url = `${getApiUrl('/trends/analysis')}${params.toString() ? `?${params.toString()}` : ''}`;
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -131,7 +131,7 @@ async function fetchCostOptimizationInsights(
     params.append('modelName', filters.modelName);
   }
 
-  const url = `${API_BASE_URL}/trends/cost-optimization${params.toString() ? `?${params.toString()}` : ''}`;
+  const url = `${getApiUrl('/trends/cost-optimization')}${params.toString() ? `?${params.toString()}` : ''}`;
   const response = await fetch(url);
 
   if (!response.ok) {
