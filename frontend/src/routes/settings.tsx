@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DataQualityDashboard } from '../components/data-quality/DataQualityDashboard';
+import { RealTimeSyncStatus } from '../components/sync/RealTimeSyncStatus';
 
 import { getApiUrl } from '../config/environment';
 
@@ -165,6 +166,11 @@ function Settings() {
         <p className="text-gray-400">
           Configure your analytics dashboard preferences and data sync options
         </p>
+      </div>
+
+      {/* Real-time Sync Status */}
+      <div className="mb-8">
+        <RealTimeSyncStatus />
       </div>
 
       {/* Sync Success/Result Banner */}
