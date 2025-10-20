@@ -6,6 +6,7 @@ import { setupCors } from './config/cors.js';
 import { setupErrorHandling } from './config/error-handling.js';
 import { registerRoutes } from './config/routes.js';
 import { setupSecurity } from './config/security.js';
+import { webSocketService } from '../services/websocket.js';
 
 export interface AppConfig {
   port: number;
@@ -52,6 +53,9 @@ export async function createApp(
   // Register routes
   await registerRoutes(app);
 
+  // Register WebSocket service
+  await webSocketService.register(app);
+
   // Root endpoint
   app.get('/', async (_request, _reply) => {
     return {
@@ -64,6 +68,7 @@ export async function createApp(
         analytics: '/api/analytics',
         sync: '/api/sync',
         retention: '/api/retention',
+        websocket: '/ws/sync',
       },
     };
   });
@@ -123,6 +128,10 @@ export async function startServer(config?: Partial<AppConfig>) {
     console.log(`\n📋 Received ${signal}, shutting down gracefully...`);
 
     try {
+      // Close WebSocket connections
+      webSocketService.closeAllConnections();
+      console.log('🔌 WebSocket connections closed');
+
       await app.close();
       console.log('🔌 HTTP server closed');
 

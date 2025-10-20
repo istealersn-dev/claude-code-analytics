@@ -3,6 +3,7 @@ import { DatabaseInserter } from '../database/inserter.js';
 import { JSONLParser } from '../parsers/jsonl-parser.js';
 import type { FileInfo, ParsedSessionData, ParseError } from '../types/index.js';
 import { FileDiscoveryService } from '../utils/file-discovery.js';
+import { syncProgressService } from './sync-progress.js';
 
 export interface SyncOptions {
   dryRun?: boolean;
@@ -103,6 +104,10 @@ export class DataSyncService {
 
       // Parse all JSONL files
       const parseResult = await this.parser.parseAllSessions();
+      
+      // Start progress tracking
+      const totalFiles = parseResult.successful.length + parseResult.failed.length;
+      syncProgressService.startSync(totalFiles);
 
       result.details.successful = parseResult.successful;
       result.details.failed = parseResult.failed;
@@ -155,6 +160,14 @@ export class DataSyncService {
         // Insert data in batches
         console.log(`💾 Inserting ${sessionsToInsert.length} sessions...`);
 
+        // Update progress before insertion
+        syncProgressService.updateProgress(
+          result.summary.filesProcessed,
+          sessionsToInsert.length,
+          sessionsToInsert.reduce((sum, s) => sum + s.messages.length, 0),
+          result.summary.errors
+        );
+
         const insertionResult = await this.inserter.batchInsertSessions(sessionsToInsert);
 
         result.summary.sessionsInserted = insertionResult.inserted.sessions;
@@ -177,6 +190,9 @@ export class DataSyncService {
           `✅ Insertion complete: ${result.summary.sessionsInserted} sessions, ${result.summary.messagesInserted} messages`,
         );
       }
+
+      // Complete progress tracking
+      syncProgressService.completeSync(result.success);
 
       // Update sync metadata on success
       if (result.success || result.details.insertionErrors.length === 0) {
@@ -201,6 +217,9 @@ export class DataSyncService {
     } catch (error) {
       console.error('💥 Sync failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Fail progress tracking
+      syncProgressService.failSync(errorMessage);
 
       result.details.insertionErrors.push({
         sessionId: 'sync_process',
