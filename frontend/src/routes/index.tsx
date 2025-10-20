@@ -26,6 +26,7 @@ import {
 } from '../components/charts/LazyCharts';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { DateRangePicker } from '../components/ui/DateRangePicker';
+import { ChartWithErrorBoundary } from '../components/charts/ChartWithErrorBoundary';
 import {
   formatCurrency,
   formatDuration,
@@ -220,13 +221,15 @@ function Dashboard() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
               </div>
             ) : (
-              <AreaChart
-                data={chartData.dailyCosts}
-                height={getChartHeight(screenSize)}
-                color="#FF6B35"
-                formatValue={formatCurrency}
-                formatTooltip={(value) => [formatCurrency(value), 'Cost']}
-              />
+              <ChartWithErrorBoundary fallbackTitle="Cost Analysis Chart Error">
+                <AreaChart
+                  data={chartData.dailyCosts}
+                  height={getChartHeight(screenSize)}
+                  color="#FF6B35"
+                  formatValue={formatCurrency}
+                  formatTooltip={(value) => [formatCurrency(value), 'Cost']}
+                />
+              </ChartWithErrorBoundary>
             )}
           </CardContent>
         </Card>
@@ -302,14 +305,16 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <LineChart
-                  data={chartData.dailySessions}
-                  height={getChartHeight(screenSize)}
-                  color="#3B82F6"
-                  formatValue={formatNumber}
-                  onDataPointClick={handleChartClick}
-                  formatTooltip={(value) => [`${formatNumber(value)} sessions`, 'Sessions']}
-                />
+                <ChartWithErrorBoundary fallbackTitle="Sessions Chart Error">
+                  <LineChart
+                    data={chartData.dailySessions}
+                    height={getChartHeight(screenSize)}
+                    color="#3B82F6"
+                    formatValue={formatNumber}
+                    onDataPointClick={handleChartClick}
+                    formatTooltip={(value) => [`${formatNumber(value)} sessions`, 'Sessions']}
+                  />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
@@ -333,14 +338,16 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <LineChart
-                  data={chartData.dailyTokens}
-                  height={250}
-                  color="#10B981"
-                  formatValue={formatNumber}
-                  onDataPointClick={handleChartClick}
-                  formatTooltip={(value) => [`${formatNumber(value)} tokens`, 'Tokens']}
-                />
+                <ChartWithErrorBoundary fallbackTitle="Token Usage Chart Error">
+                  <LineChart
+                    data={chartData.dailyTokens}
+                    height={250}
+                    color="#10B981"
+                    formatValue={formatNumber}
+                    onDataPointClick={handleChartClick}
+                    formatTooltip={(value) => [`${formatNumber(value)} tokens`, 'Tokens']}
+                  />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
@@ -364,14 +371,16 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <LineChart
-                  data={chartData.sessionDuration}
-                  height={250}
-                  color="#8B5CF6"
-                  formatValue={formatDuration}
-                  onDataPointClick={handleChartClick}
-                  formatTooltip={(value) => [`${formatDuration(value)} avg`, 'Duration']}
-                />
+                <ChartWithErrorBoundary fallbackTitle="Session Duration Chart Error">
+                  <LineChart
+                    data={chartData.sessionDuration}
+                    height={250}
+                    color="#8B5CF6"
+                    formatValue={formatDuration}
+                    onDataPointClick={handleChartClick}
+                    formatTooltip={(value) => [`${formatDuration(value)} avg`, 'Duration']}
+                  />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
@@ -398,7 +407,9 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <PieChart data={distributions?.modelUsage || []} height={250} />
+                <ChartWithErrorBoundary fallbackTitle="Model Usage Chart Error">
+                  <PieChart data={distributions?.modelUsage || []} height={250} />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
@@ -417,11 +428,13 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <BarChart
-                  data={distributions?.toolUsage || []}
-                  height={250}
-                  color="#10B981"
-                />
+                <ChartWithErrorBoundary fallbackTitle="Tool Usage Chart Error">
+                  <BarChart
+                    data={distributions?.toolUsage || []}
+                    height={250}
+                    color="#10B981"
+                  />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
@@ -440,14 +453,16 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <PieChart
-                  data={processedProjectUsage}
-                  height={250}
-                  formatTooltip={(value, name, percentage) => [
-                    `${value} sessions (${percentage.toFixed(1)}%)`,
-                    processedProjectUsage.find((p) => p.name === name)?.tooltip || name,
-                  ]}
-                />
+                <ChartWithErrorBoundary fallbackTitle="Project Usage Chart Error">
+                  <PieChart
+                    data={processedProjectUsage}
+                    height={250}
+                    formatTooltip={(value, name, percentage) => [
+                      `${value} sessions (${percentage.toFixed(1)}%)`,
+                      processedProjectUsage.find((p) => p.name === name)?.tooltip || name,
+                    ]}
+                  />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
@@ -474,12 +489,14 @@ function Dashboard() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               ) : (
-                <HeatmapChart
-                  data={heatmapData || []}
-                  height={300}
-                  formatValue={(value) => value.toString()}
-                  showLabels={true}
-                />
+                <ChartWithErrorBoundary fallbackTitle="Usage Heatmap Chart Error">
+                  <HeatmapChart
+                    data={heatmapData || []}
+                    height={300}
+                    formatValue={(value) => value.toString()}
+                    showLabels={true}
+                  />
+                </ChartWithErrorBoundary>
               )}
             </CardContent>
           </Card>
