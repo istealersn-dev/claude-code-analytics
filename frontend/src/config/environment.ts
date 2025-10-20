@@ -51,6 +51,15 @@ export function validateEnvironment(): void {
     throw new Error('API base URL is not configured');
   }
 
+  // Validate URL format for absolute URLs
+  if (env.apiBaseUrl.startsWith('http')) {
+    try {
+      new URL(env.apiBaseUrl);
+    } catch {
+      throw new Error(`Invalid API base URL format: ${env.apiBaseUrl}`);
+    }
+  }
+
   if (env.isDevelopment && env.apiBaseUrl === '/api') {
     console.warn(
       'Warning: Using relative API path in development. Make sure the backend is running on the same port as the frontend.',
