@@ -104,9 +104,9 @@ export interface DatabaseMessage {
 }
 
 export interface ParsedSessionData {
-  session: DatabaseSession;
-  messages: DatabaseMessage[];
-  metrics: SessionMetrics;
+  session: DatabaseSessionEnhanced;
+  messages: DatabaseMessageEnhanced[];
+  metrics: SessionMetricsEnhanced;
 }
 
 export interface SessionMetrics {

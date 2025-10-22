@@ -2,8 +2,10 @@ import type { PoolClient } from 'pg';
 import type {
   DatabaseMessage,
   DatabaseSession,
+  DatabaseSessionEnhanced,
   ParsedSessionData,
   SessionMetrics,
+  SessionMetricsEnhanced,
   SyncMetadata,
 } from '../types/index.js';
 import { DatabaseConnection } from './connection.js';
@@ -143,15 +145,17 @@ export class DatabaseInserter {
 
   private async insertOrUpdateSession(
     client: PoolClient,
-    session: DatabaseSession,
+    session: DatabaseSessionEnhanced,
   ): Promise<{ inserted: boolean; sessionId?: string }> {
     const insertQuery = `
       INSERT INTO sessions (
         session_id, project_name, started_at, ended_at, duration_seconds,
         model_name, total_input_tokens, total_output_tokens, total_cost_usd,
-        tools_used, cache_hit_count, cache_miss_count
+        tools_used, cache_hit_count, cache_miss_count,
+        is_extended_session, has_background_tasks, has_subagents, has_vscode_integration,
+        session_type, autonomy_level
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
       )
       ON CONFLICT (session_id) DO UPDATE SET
         ended_at = EXCLUDED.ended_at,
@@ -162,6 +166,12 @@ export class DatabaseInserter {
         tools_used = EXCLUDED.tools_used,
         cache_hit_count = EXCLUDED.cache_hit_count,
         cache_miss_count = EXCLUDED.cache_miss_count,
+        is_extended_session = EXCLUDED.is_extended_session,
+        has_background_tasks = EXCLUDED.has_background_tasks,
+        has_subagents = EXCLUDED.has_subagents,
+        has_vscode_integration = EXCLUDED.has_vscode_integration,
+        session_type = EXCLUDED.session_type,
+        autonomy_level = EXCLUDED.autonomy_level,
         updated_at = NOW()
       RETURNING id, session_id, 
         (xmax = 0) AS inserted
@@ -180,6 +190,13 @@ export class DatabaseInserter {
       session.tools_used,
       session.cache_hit_count,
       session.cache_miss_count,
+      // Claude Code 2.0 enhancements
+      session.is_extended_session,
+      session.has_background_tasks,
+      session.has_subagents,
+      session.has_vscode_integration,
+      session.session_type,
+      session.autonomy_level,
     ];
 
     const result = await client.query(insertQuery, values);
@@ -274,7 +291,7 @@ export class DatabaseInserter {
 
   private async insertOrUpdateMetrics(
     client: PoolClient,
-    metrics: SessionMetrics,
+    metrics: SessionMetricsEnhanced,
   ): Promise<{ inserted: boolean }> {
     // Get session UUID
     const sessionIdQuery = 'SELECT id FROM sessions WHERE session_id = $1';
@@ -290,9 +307,11 @@ export class DatabaseInserter {
       INSERT INTO session_metrics (
         session_id, date_bucket, hour_bucket, weekday, week_of_year,
         month, year, input_tokens, output_tokens, cost_usd,
-        duration_seconds, message_count, tool_usage_count, cache_efficiency
+        duration_seconds, message_count, tool_usage_count, cache_efficiency,
+        checkpoint_count, rewind_count, background_task_count, subagent_count,
+        vscode_integration_count, autonomy_score, parallel_development_efficiency
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
       )
       ON CONFLICT (session_id) DO UPDATE SET
         input_tokens = EXCLUDED.input_tokens,
@@ -301,7 +320,14 @@ export class DatabaseInserter {
         duration_seconds = EXCLUDED.duration_seconds,
         message_count = EXCLUDED.message_count,
         tool_usage_count = EXCLUDED.tool_usage_count,
-        cache_efficiency = EXCLUDED.cache_efficiency
+        cache_efficiency = EXCLUDED.cache_efficiency,
+        checkpoint_count = EXCLUDED.checkpoint_count,
+        rewind_count = EXCLUDED.rewind_count,
+        background_task_count = EXCLUDED.background_task_count,
+        subagent_count = EXCLUDED.subagent_count,
+        vscode_integration_count = EXCLUDED.vscode_integration_count,
+        autonomy_score = EXCLUDED.autonomy_score,
+        parallel_development_efficiency = EXCLUDED.parallel_development_efficiency
       RETURNING (xmax = 0) AS inserted
     `;
 
@@ -320,6 +346,14 @@ export class DatabaseInserter {
       metrics.message_count,
       metrics.tool_usage_count,
       metrics.cache_efficiency,
+      // Claude Code 2.0 enhancements
+      metrics.checkpoint_count,
+      metrics.rewind_count,
+      metrics.background_task_count,
+      metrics.subagent_count,
+      metrics.vscode_integration_count,
+      metrics.autonomy_score,
+      metrics.parallel_development_efficiency,
     ];
 
     const result = await client.query(insertQuery, values);
