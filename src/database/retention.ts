@@ -130,8 +130,12 @@ export class DataRetentionManager {
           table: table.name,
           totalRecords: parseInt(String(rowData['total_records'] || 0), 10),
           eligibleForDeletion: parseInt(String(rowData['eligible_for_deletion'] || 0), 10),
-          oldestRecord: rowData['oldest_record'] ? new Date(String(rowData['oldest_record'])) : undefined,
-          newestRecord: rowData['newest_record'] ? new Date(String(rowData['newest_record'])) : undefined,
+          oldestRecord: rowData['oldest_record']
+            ? new Date(String(rowData['oldest_record']))
+            : undefined,
+          newestRecord: rowData['newest_record']
+            ? new Date(String(rowData['newest_record']))
+            : undefined,
           sizeOnDisk: String(rowData['size_on_disk'] || '0 bytes'),
         };
 

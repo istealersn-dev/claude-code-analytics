@@ -131,8 +131,12 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
         timestamp: new Date().toISOString(),
         latency,
         server: {
-          currentTime: testResult.rows[0] ? (testResult.rows[0] as any)['current_time'] : new Date(),
-          version: testResult.rows[0] ? String((testResult.rows[0] as any)['version']).split(',')[0] : 'unknown',
+          currentTime: testResult.rows[0]
+            ? (testResult.rows[0] as any)['current_time']
+            : new Date(),
+          version: testResult.rows[0]
+            ? String((testResult.rows[0] as any)['version']).split(',')[0]
+            : 'unknown',
         },
         connectionPool: {
           total: poolStats.totalConnections,

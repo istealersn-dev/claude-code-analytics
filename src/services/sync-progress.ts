@@ -34,7 +34,7 @@ export class SyncProgressService {
     sessionsProcessed: number,
     messagesProcessed: number,
     errors: number = 0,
-    currentFile?: string
+    currentFile?: string,
   ) {
     if (!this.progress) return;
 
@@ -75,9 +75,10 @@ export class SyncProgressService {
   private broadcastProgress() {
     if (!this.progress) return;
 
-    const progressPercentage = this.progress.totalFiles > 0 
-      ? Math.round((this.progress.processedFiles / this.progress.totalFiles) * 100)
-      : 0;
+    const progressPercentage =
+      this.progress.totalFiles > 0
+        ? Math.round((this.progress.processedFiles / this.progress.totalFiles) * 100)
+        : 0;
 
     const estimatedTimeRemaining = this.calculateEstimatedTimeRemaining();
 
@@ -101,7 +102,7 @@ export class SyncProgressService {
     const elapsed = Date.now() - this.progress.startTime.getTime();
     const filesPerMs = this.progress.processedFiles / elapsed;
     const remainingFiles = this.progress.totalFiles - this.progress.processedFiles;
-    
+
     return Math.round(remainingFiles / filesPerMs);
   }
 

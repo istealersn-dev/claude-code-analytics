@@ -1,5 +1,5 @@
-import { FastifyInstance } from 'fastify';
-import { AnalyticsQueryBuilder, AnalyticsFilters } from '../../database/query-builder.js';
+import type { FastifyInstance } from 'fastify';
+import { AnalyticsQueryBuilder, type AnalyticsFilters } from '../../database/query-builder.js';
 
 export async function trendsRoutes(fastify: FastifyInstance) {
   const queryBuilder = new AnalyticsQueryBuilder();
@@ -7,7 +7,7 @@ export async function trendsRoutes(fastify: FastifyInstance) {
   fastify.get('/analysis', async (request, reply) => {
     try {
       const query = request.query as Record<string, unknown>;
-      
+
       const filters: AnalyticsFilters = {
         dateFrom: query['dateFrom'] ? new Date(query['dateFrom'] as string) : undefined,
         dateTo: query['dateTo'] ? new Date(query['dateTo'] as string) : undefined,
@@ -16,7 +16,7 @@ export async function trendsRoutes(fastify: FastifyInstance) {
       };
 
       const analysis = await queryBuilder.getTrendAnalysis(filters);
-      
+
       return {
         success: true,
         data: analysis,
@@ -33,7 +33,7 @@ export async function trendsRoutes(fastify: FastifyInstance) {
   fastify.get('/cost-optimization', async (request, reply) => {
     try {
       const query = request.query as Record<string, unknown>;
-      
+
       const filters: AnalyticsFilters = {
         dateFrom: query['dateFrom'] ? new Date(query['dateFrom'] as string) : undefined,
         dateTo: query['dateTo'] ? new Date(query['dateTo'] as string) : undefined,
@@ -42,7 +42,7 @@ export async function trendsRoutes(fastify: FastifyInstance) {
       };
 
       const insights = await queryBuilder.getCostOptimizationInsights(filters);
-      
+
       return {
         success: true,
         data: insights,

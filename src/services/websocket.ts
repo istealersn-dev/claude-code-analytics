@@ -43,7 +43,7 @@ export class WebSocketService {
 
   async register(app: FastifyInstance) {
     this.app = app;
-    
+
     // Register WebSocket plugin
     await app.register(require('@fastify/websocket'), {
       options: {
@@ -54,9 +54,9 @@ export class WebSocketService {
     // WebSocket route handler
     (app as any).get('/ws/sync', { websocket: true }, (connection: any, req: any) => {
       console.log('🔌 New WebSocket connection for sync updates');
-      
+
       this.connections.add(connection);
-      
+
       // Send initial status
       this.sendToConnection(connection, {
         type: 'sync_status',
@@ -84,7 +84,8 @@ export class WebSocketService {
 
   private sendToConnection(connection: any, message: WebSocketMessage) {
     try {
-      if (connection.socket.readyState === 1) { // WebSocket.OPEN
+      if (connection.socket.readyState === 1) {
+        // WebSocket.OPEN
         connection.socket.send(JSON.stringify(message));
       }
     } catch (error) {
@@ -94,9 +95,9 @@ export class WebSocketService {
 
   broadcast(message: WebSocketMessage) {
     console.log(`📡 Broadcasting message: ${message.type}`);
-    
+
     const deadConnections: any[] = [];
-    
+
     for (const connection of this.connections) {
       try {
         this.sendToConnection(connection, message);
@@ -107,7 +108,7 @@ export class WebSocketService {
     }
 
     // Clean up dead connections
-    deadConnections.forEach(conn => this.connections.delete(conn));
+    deadConnections.forEach((conn) => this.connections.delete(conn));
   }
 
   sendSyncProgress(progress: SyncProgressUpdate['data']) {

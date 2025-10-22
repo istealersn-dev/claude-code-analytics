@@ -213,7 +213,7 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(metricsQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       throw new Error('No data found for metrics query');
     }
@@ -321,7 +321,7 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(costQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       throw new Error('No data found for cost analysis query');
     }
@@ -334,41 +334,41 @@ export class AnalyticsQueryBuilder {
     const mostExpensiveSessions = (row as any)['most_expensive_sessions'] || [];
 
     return {
-      dailyCosts: Array.isArray(dailyCosts) ? dailyCosts.map(
-        (item: { date: string; value: string; count: number }) => ({
-          date: item.date,
-          value: parseFloat(item.value),
-          count: item.count,
-        }),
-      ) : [],
-      weeklyCosts: Array.isArray(weeklyCosts) ? weeklyCosts.map(
-        (item: { date: string; value: string; count: number }) => ({
-          date: item.date,
-          value: parseFloat(item.value),
-          count: item.count,
-        }),
-      ) : [],
-      monthlyCosts: Array.isArray(monthlyCosts) ? monthlyCosts.map(
-        (item: { date: string; value: string; count: number }) => ({
-          date: item.date,
-          value: parseFloat(item.value),
-          count: item.count,
-        }),
-      ) : [],
-      costByModel: Array.isArray(costByModel) ? costByModel.map(
-        (item: { model: string; cost: string; percentage: string }) => ({
-          model: item.model || 'Unknown',
-          cost: parseFloat(item.cost),
-          percentage: parseFloat(item.percentage) || 0,
-        }),
-      ) : [],
-      costByProject: Array.isArray(costByProject) ? costByProject.map(
-        (item: { project: string; cost: string; percentage: string }) => ({
-          project: item.project || 'Unknown',
-          cost: parseFloat(item.cost),
-          percentage: parseFloat(item.percentage) || 0,
-        }),
-      ) : [],
+      dailyCosts: Array.isArray(dailyCosts)
+        ? dailyCosts.map((item: { date: string; value: string; count: number }) => ({
+            date: item.date,
+            value: parseFloat(item.value),
+            count: item.count,
+          }))
+        : [],
+      weeklyCosts: Array.isArray(weeklyCosts)
+        ? weeklyCosts.map((item: { date: string; value: string; count: number }) => ({
+            date: item.date,
+            value: parseFloat(item.value),
+            count: item.count,
+          }))
+        : [],
+      monthlyCosts: Array.isArray(monthlyCosts)
+        ? monthlyCosts.map((item: { date: string; value: string; count: number }) => ({
+            date: item.date,
+            value: parseFloat(item.value),
+            count: item.count,
+          }))
+        : [],
+      costByModel: Array.isArray(costByModel)
+        ? costByModel.map((item: { model: string; cost: string; percentage: string }) => ({
+            model: item.model || 'Unknown',
+            cost: parseFloat(item.cost),
+            percentage: parseFloat(item.percentage) || 0,
+          }))
+        : [],
+      costByProject: Array.isArray(costByProject)
+        ? costByProject.map((item: { project: string; cost: string; percentage: string }) => ({
+            project: item.project || 'Unknown',
+            cost: parseFloat(item.cost),
+            percentage: parseFloat(item.percentage) || 0,
+          }))
+        : [],
       mostExpensiveSessions: Array.isArray(mostExpensiveSessions) ? mostExpensiveSessions : [],
     };
   }
@@ -450,7 +450,7 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(tokenQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       throw new Error('No data found for token analysis query');
     }
@@ -535,7 +535,7 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(sessionsQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       return {
         sessions: [],
@@ -637,7 +637,7 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(summaryQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       return {
         totalSessions: 0,
@@ -689,26 +689,26 @@ export class AnalyticsQueryBuilder {
     `;
 
     const result = await this.db.query(usageQuery, params);
-    
+
     const sessions: TimeSeriesPoint[] = [];
     const tokens: TimeSeriesPoint[] = [];
     const duration: TimeSeriesPoint[] = [];
 
     result.rows.forEach((row) => {
       const date = row['date'] as string;
-      
+
       sessions.push({
         date,
         value: parseInt(row['session_count'] as string, 10),
         count: parseInt(row['session_count'] as string, 10),
       });
-      
+
       tokens.push({
         date,
         value: parseInt(row['total_tokens'] as string, 10) || 0,
         count: parseInt(row['session_count'] as string, 10),
       });
-      
+
       duration.push({
         date,
         value: parseFloat(row['avg_duration_seconds'] as string) || 0,
@@ -779,11 +779,11 @@ export class AnalyticsQueryBuilder {
     const projectUsage = (row as any)['project_usage'] || [];
 
     return {
-      modelUsage: Array.isArray(modelUsage) 
+      modelUsage: Array.isArray(modelUsage)
         ? modelUsage.map((item: any) => ({
             name: item.name,
             value: parseInt(item.value, 10),
-          })) 
+          }))
         : [],
       toolUsage: Array.isArray(toolUsage)
         ? toolUsage.map((item: any) => ({
@@ -800,11 +800,13 @@ export class AnalyticsQueryBuilder {
     };
   }
 
-  async getHourlyUsageHeatmap(filters: AnalyticsFilters = {}): Promise<Array<{
-    hour: number;
-    day: string;
-    value: number;
-  }>> {
+  async getHourlyUsageHeatmap(filters: AnalyticsFilters = {}): Promise<
+    Array<{
+      hour: number;
+      day: string;
+      value: number;
+    }>
+  > {
     const { whereClause, params } = this.buildWhereClause(filters);
 
     const heatmapQuery = `
@@ -827,7 +829,7 @@ export class AnalyticsQueryBuilder {
     `;
 
     const result = await this.db.query(heatmapQuery, params);
-    
+
     return result.rows.map((row) => ({
       hour: parseInt(row['hour'] as string, 10),
       day: row['day'] as string,
@@ -902,11 +904,11 @@ export class AnalyticsQueryBuilder {
     const cacheStats = (row as any)['cache_stats'] || { hit_rate: 0, total_requests: 0 };
 
     return {
-      sessionLengthDistribution: Array.isArray(sessionLengthDistribution) 
+      sessionLengthDistribution: Array.isArray(sessionLengthDistribution)
         ? sessionLengthDistribution.map((item: any) => ({
             range: item.range,
             count: parseInt(item.count, 10),
-          })) 
+          }))
         : [],
       tokenEfficiency: Array.isArray(tokenEfficiency)
         ? tokenEfficiency.map((item: any) => ({
@@ -1034,7 +1036,7 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(trendQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       throw new Error('No data found for trend analysis query');
     }
@@ -1086,23 +1088,29 @@ export class AnalyticsQueryBuilder {
           growth: calculateGrowth(currentMonth.tokens, previousMonth.tokens),
         },
       },
-      seasonalPatterns: Array.isArray(seasonalPatterns) ? seasonalPatterns.map((item: any) => ({
-        month: item.month.trim(),
-        sessions: parseInt(item.sessions, 10),
-        cost: parseFloat(item.cost),
-        tokens: parseInt(item.tokens, 10),
-      })) : [],
-      anomalyDetection: Array.isArray(anomalies) ? anomalies.map((item: any) => ({
-        date: item.date,
-        type: item.type as 'sessions' | 'cost' | 'tokens',
-        value: parseFloat(item.value),
-        expectedValue: parseFloat(item.expected_value),
-        deviation: parseFloat(item.deviation) || 0,
-      })) : [],
+      seasonalPatterns: Array.isArray(seasonalPatterns)
+        ? seasonalPatterns.map((item: any) => ({
+            month: item.month.trim(),
+            sessions: parseInt(item.sessions, 10),
+            cost: parseFloat(item.cost),
+            tokens: parseInt(item.tokens, 10),
+          }))
+        : [],
+      anomalyDetection: Array.isArray(anomalies)
+        ? anomalies.map((item: any) => ({
+            date: item.date,
+            type: item.type as 'sessions' | 'cost' | 'tokens',
+            value: parseFloat(item.value),
+            expectedValue: parseFloat(item.expected_value),
+            deviation: parseFloat(item.deviation) || 0,
+          }))
+        : [],
     };
   }
 
-  async getCostOptimizationInsights(filters: AnalyticsFilters = {}): Promise<CostOptimizationInsights> {
+  async getCostOptimizationInsights(
+    filters: AnalyticsFilters = {},
+  ): Promise<CostOptimizationInsights> {
     const { whereClause, params } = this.buildWhereClause(filters);
 
     const optimizationQuery = `
@@ -1153,35 +1161,41 @@ export class AnalyticsQueryBuilder {
 
     const result = await this.db.query(optimizationQuery, params);
     const row = result.rows[0];
-    
+
     if (!row) {
       throw new Error('No data found for cost optimization query');
     }
 
     const expensiveSessions = (row as any)['expensive_sessions'] || [];
     const modelEfficiency = (row as any)['model_efficiency'] || [];
-    const budgetInfo = (row as any)['budget_info'] || { current_spend: 0, days_elapsed: 1, days_in_month: 30 };
+    const budgetInfo = (row as any)['budget_info'] || {
+      current_spend: 0,
+      days_elapsed: 1,
+      days_in_month: 30,
+    };
 
-    const projectedSpend = budgetInfo.days_elapsed > 0 
-      ? (parseFloat(budgetInfo.current_spend) / budgetInfo.days_elapsed) * budgetInfo.days_in_month
-      : 0;
+    const projectedSpend =
+      budgetInfo.days_elapsed > 0
+        ? (parseFloat(budgetInfo.current_spend) / budgetInfo.days_elapsed) *
+          budgetInfo.days_in_month
+        : 0;
 
     // Set a reasonable default monthly budget - can be made configurable later
-    const monthlyBudgetLimit = parseFloat(
-      process.env['MONTHLY_BUDGET_LIMIT'] ?? '100'
-    );
+    const monthlyBudgetLimit = parseFloat(process.env['MONTHLY_BUDGET_LIMIT'] ?? '100');
     const currentSpend = parseFloat(budgetInfo.current_spend) || 0;
 
     const recommendations = [];
     if (Array.isArray(modelEfficiency) && modelEfficiency.length > 1) {
       const mostEfficient = modelEfficiency[0];
       const leastEfficient = modelEfficiency[modelEfficiency.length - 1];
-      
+
       if (mostEfficient.efficiency > leastEfficient.efficiency * 1.5) {
         recommendations.push({
           currentModel: leastEfficient.model,
           recommendedModel: mostEfficient.model,
-          potentialSavings: parseFloat(leastEfficient.avg_cost_per_session) - parseFloat(mostEfficient.avg_cost_per_session),
+          potentialSavings:
+            parseFloat(leastEfficient.avg_cost_per_session) -
+            parseFloat(mostEfficient.avg_cost_per_session),
           reason: `${mostEfficient.model} provides ${(mostEfficient.efficiency / leastEfficient.efficiency).toFixed(1)}x better token-to-cost ratio`,
         });
       }
@@ -1189,12 +1203,14 @@ export class AnalyticsQueryBuilder {
 
     return {
       mostExpensiveSessions: Array.isArray(expensiveSessions) ? expensiveSessions : [],
-      costPerOutcomeAnalysis: Array.isArray(modelEfficiency) ? modelEfficiency.map((item: any) => ({
-        model: item.model || 'Unknown',
-        avgCostPerSession: parseFloat(item.avg_cost_per_session) || 0,
-        avgTokensPerSession: parseFloat(item.avg_tokens_per_session) || 0,
-        efficiency: parseFloat(item.efficiency) || 0,
-      })) : [],
+      costPerOutcomeAnalysis: Array.isArray(modelEfficiency)
+        ? modelEfficiency.map((item: any) => ({
+            model: item.model || 'Unknown',
+            avgCostPerSession: parseFloat(item.avg_cost_per_session) || 0,
+            avgTokensPerSession: parseFloat(item.avg_tokens_per_session) || 0,
+            efficiency: parseFloat(item.efficiency) || 0,
+          }))
+        : [],
       modelEfficiencyRecommendations: recommendations,
       budgetTracking: {
         currentMonthSpend: currentSpend,
