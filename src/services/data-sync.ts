@@ -104,7 +104,7 @@ export class DataSyncService {
 
       // Parse all JSONL files
       const parseResult = await this.parser.parseAllSessions();
-      
+
       // Start progress tracking
       const totalFiles = parseResult.successful.length + parseResult.failed.length;
       syncProgressService.startSync(totalFiles);
@@ -165,7 +165,7 @@ export class DataSyncService {
           result.summary.filesProcessed,
           sessionsToInsert.length,
           sessionsToInsert.reduce((sum, s) => sum + s.messages.length, 0),
-          result.summary.errors
+          result.summary.errors,
         );
 
         const insertionResult = await this.inserter.batchInsertSessions(sessionsToInsert);

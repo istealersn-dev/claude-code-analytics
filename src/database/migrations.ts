@@ -58,7 +58,10 @@ export class MigrationManager {
     if (!row) {
       return 1;
     }
-    return Number((row as any)['next_batch'] || 0) + (Number((row as any)['next_batch'] || 0) > 0 ? 0 : 1);
+    return (
+      Number((row as any)['next_batch'] || 0) +
+      (Number((row as any)['next_batch'] || 0) > 0 ? 0 : 1)
+    );
   }
 
   private async getAppliedMigrations(): Promise<MigrationRecord[]> {

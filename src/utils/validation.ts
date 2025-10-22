@@ -297,7 +297,7 @@ export class DataValidator {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (!line || line.trim().length === 0) continue;
-      
+
       const trimmedLine = line.trim();
 
       try {

@@ -184,7 +184,13 @@ export interface BackgroundTask {
   session_id: string;
   task_id: string;
   task_name?: string;
-  task_type: 'code_generation' | 'testing' | 'refactoring' | 'documentation' | 'review' | 'optimization';
+  task_type:
+    | 'code_generation'
+    | 'testing'
+    | 'refactoring'
+    | 'documentation'
+    | 'review'
+    | 'optimization';
   started_at: Date;
   completed_at?: Date;
   duration_seconds?: number;

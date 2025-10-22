@@ -194,8 +194,19 @@ export class DatabaseInserter {
   private async batchInsertMessages(
     client: PoolClient,
     messages: DatabaseMessage[],
-  ): Promise<{ inserted: number; errors: Array<{ type: 'session' | 'message' | 'metric'; data: Record<string, unknown>; error: string }> }> {
-    const errors: Array<{ type: 'session' | 'message' | 'metric'; data: Record<string, unknown>; error: string }> = [];
+  ): Promise<{
+    inserted: number;
+    errors: Array<{
+      type: 'session' | 'message' | 'metric';
+      data: Record<string, unknown>;
+      error: string;
+    }>;
+  }> {
+    const errors: Array<{
+      type: 'session' | 'message' | 'metric';
+      data: Record<string, unknown>;
+      error: string;
+    }> = [];
     let inserted = 0;
 
     // First, get the actual session UUID from session_id string
@@ -324,7 +335,7 @@ export class DatabaseInserter {
       WHERE session_id = ANY($1)
     `;
 
-    const result = await this.db.query<{session_id: string}>(query, [sessionIds]);
+    const result = await this.db.query<{ session_id: string }>(query, [sessionIds]);
     return result.rows.map((row) => row.session_id);
   }
 
@@ -411,7 +422,7 @@ export class DatabaseInserter {
 
     const row = result.rows[0];
     if (!row) return null;
-    
+
     return {
       id: row.id,
       sync_key: row.sync_key,
@@ -489,7 +500,7 @@ export class DatabaseInserter {
 
     const row = result.rows[0];
     if (!row) return { exists: false };
-    
+
     return {
       exists: true,
       lastUpdated: row.updated_at,

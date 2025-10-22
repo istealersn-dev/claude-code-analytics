@@ -56,11 +56,11 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
         duplicateData,
         missingData,
         integrityIssues,
-        orphanedMetrics
+        orphanedMetrics,
       ] = await Promise.all([
         // Total sessions count
         db.query('SELECT COUNT(*) as count FROM sessions'),
-        
+
         // Complete sessions (have end time and duration)
         db.query(`
           SELECT COUNT(*) as count 
@@ -69,7 +69,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
             AND duration_seconds IS NOT NULL 
             AND duration_seconds > 0
         `),
-        
+
         // Duplicate session IDs
         db.query(`
           SELECT session_id, COUNT(*) as duplicate_count,
@@ -81,7 +81,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
           ORDER BY duplicate_count DESC
           LIMIT 50
         `),
-        
+
         // Missing data analysis
         db.query(`
           SELECT 
@@ -91,7 +91,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
             COUNT(*) FILTER (WHERE total_cost_usd = 0) as sessions_without_cost
           FROM sessions
         `),
-        
+
         // Data integrity issues
         db.query(`
           SELECT 
@@ -102,14 +102,14 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
             COUNT(*) FILTER (WHERE ended_at < started_at) as inconsistent_timestamps
           FROM sessions
         `),
-        
+
         // Orphaned session metrics (metrics without parent session)
         db.query(`
           SELECT COUNT(*) as count
           FROM session_metrics sm
           LEFT JOIN sessions s ON sm.session_id = s.id
           WHERE s.id IS NULL
-        `)
+        `),
       ]);
 
       // Calculate metrics without messages
@@ -123,7 +123,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
       const totalCount = parseInt(String(totalSessions.rows[0]?.count || 0));
       const completeCount = parseInt(String(completeSessions.rows[0]?.count || 0));
       const duplicateCount = duplicateData.rows.length;
-      
+
       // Build missing data object
       const missingDataRow = missingData.rows[0] || {};
       const missing = {
@@ -145,10 +145,12 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
       };
 
       // Calculate completeness score
-      const totalIssues = Object.values(missing).reduce((sum, val) => sum + val, 0) +
-                         Object.values(integrity).reduce((sum, val) => sum + val, 0);
-      const completenessScore = totalCount > 0 ? Math.max(0, Math.round((1 - totalIssues / totalCount) * 100)) : 100;
-      
+      const totalIssues =
+        Object.values(missing).reduce((sum, val) => sum + val, 0) +
+        Object.values(integrity).reduce((sum, val) => sum + val, 0);
+      const completenessScore =
+        totalCount > 0 ? Math.max(0, Math.round((1 - totalIssues / totalCount) * 100)) : 100;
+
       // Determine quality grade
       let qualityGrade: 'A' | 'B' | 'C' | 'D' | 'F';
       if (completenessScore >= 95) qualityGrade = 'A';
@@ -172,7 +174,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
           title: 'Duplicate Sessions Detected',
           description: `Found ${duplicateCount} session IDs with multiple records. This may cause incorrect analytics.`,
           affectedRecords: duplicateCount,
-          action: 'Review and merge duplicate sessions'
+          action: 'Review and merge duplicate sessions',
         });
       }
 
@@ -182,7 +184,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
           title: 'Incomplete Sessions',
           description: `${missing.sessionsWithoutEndTime} sessions are missing end times, indicating incomplete data.`,
           affectedRecords: missing.sessionsWithoutEndTime,
-          action: 'Re-sync recent sessions'
+          action: 'Re-sync recent sessions',
         });
       }
 
@@ -192,7 +194,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
           title: 'Invalid Data Values',
           description: `Found negative values in token counts or costs. This indicates data corruption.`,
           affectedRecords: integrity.negativeTokens + integrity.negativeCosts,
-          action: 'Investigate and correct invalid records'
+          action: 'Investigate and correct invalid records',
         });
       }
 
@@ -201,7 +203,7 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
           type: 'info',
           title: 'Excellent Data Quality',
           description: 'Your data quality is excellent with minimal issues detected.',
-          affectedRecords: 0
+          affectedRecords: 0,
         });
       }
 
@@ -232,12 +234,11 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
         data: metrics,
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
       app.log.error(`Data quality metrics error: ${error}`);
-      return reply.status(500).send(
-        app.httpErrors.internalServerError('Failed to fetch data quality metrics')
-      );
+      return reply
+        .status(500)
+        .send(app.httpErrors.internalServerError('Failed to fetch data quality metrics'));
     }
   });
 
@@ -267,16 +268,15 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
         success: true,
         data: {
           deletedRecords: parseInt(String(deletedCount)),
-          message: `Successfully removed ${deletedCount} duplicate sessions`
+          message: `Successfully removed ${deletedCount} duplicate sessions`,
         },
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
       app.log.error(`Duplicate cleanup error: ${error}`);
-      return reply.status(500).send(
-        app.httpErrors.internalServerError('Failed to cleanup duplicate sessions')
-      );
+      return reply
+        .status(500)
+        .send(app.httpErrors.internalServerError('Failed to cleanup duplicate sessions'));
     }
   });
 
@@ -298,16 +298,15 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
         success: true,
         data: {
           deletedRecords: parseInt(String(deletedCount)),
-          message: `Successfully removed ${deletedCount} orphaned metric records`
+          message: `Successfully removed ${deletedCount} orphaned metric records`,
         },
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
       app.log.error(`Orphaned metrics cleanup error: ${error}`);
-      return reply.status(500).send(
-        app.httpErrors.internalServerError('Failed to cleanup orphaned metrics')
-      );
+      return reply
+        .status(500)
+        .send(app.httpErrors.internalServerError('Failed to cleanup orphaned metrics'));
     }
   });
 
@@ -340,14 +339,13 @@ export const dataQualityRoutes: FastifyPluginAsync = async (app: FastifyInstance
         data: {
           validationResults: validationResults.rows,
           timestamp: new Date().toISOString(),
-        }
+        },
       });
-
     } catch (error) {
       app.log.error(`Data validation error: ${error}`);
-      return reply.status(500).send(
-        app.httpErrors.internalServerError('Failed to validate data integrity')
-      );
+      return reply
+        .status(500)
+        .send(app.httpErrors.internalServerError('Failed to validate data integrity'));
     }
   });
 };

@@ -136,8 +136,18 @@ export class JSONLParser {
       content: obj.message?.content || obj.content || obj.text || '',
       timestamp: obj.timestamp || obj.created_at || new Date().toISOString(),
       tokens: {
-        input: obj.message?.usage?.input_tokens || obj.usage?.input_tokens || obj.tokens?.input || obj.input_tokens || 0,
-        output: obj.message?.usage?.output_tokens || obj.usage?.output_tokens || obj.tokens?.output || obj.output_tokens || 0,
+        input:
+          obj.message?.usage?.input_tokens ||
+          obj.usage?.input_tokens ||
+          obj.tokens?.input ||
+          obj.input_tokens ||
+          0,
+        output:
+          obj.message?.usage?.output_tokens ||
+          obj.usage?.output_tokens ||
+          obj.tokens?.output ||
+          obj.output_tokens ||
+          0,
       },
       processing_time_ms: obj.processing_time_ms || obj.duration_ms,
       // Claude Code 2.0 enhancements
@@ -188,12 +198,10 @@ export class JSONLParser {
       const cacheData = obj.cache_stats || obj.cache || {};
       const usageData = obj.message?.usage || obj.usage || {};
       message.cache_stats = {
-        cache_creation_input_tokens: 
-          usageData.cache_creation_input_tokens || 
-          cacheData.cache_creation_input_tokens || 0,
-        cache_read_input_tokens: 
-          usageData.cache_read_input_tokens || 
-          cacheData.cache_read_input_tokens || 0,
+        cache_creation_input_tokens:
+          usageData.cache_creation_input_tokens || cacheData.cache_creation_input_tokens || 0,
+        cache_read_input_tokens:
+          usageData.cache_read_input_tokens || cacheData.cache_read_input_tokens || 0,
         cache_hits: cacheData.cache_hits || 0,
         cache_misses: cacheData.cache_misses || 0,
       };
@@ -226,13 +234,15 @@ export class JSONLParser {
     const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
     // Claude Code 2.0 feature detection
-    const hasCheckpoints = messages.some(msg => msg.checkpoint_id);
-    const hasBackgroundTasks = messages.some(msg => msg.background_task_id || msg.role === 'background_task');
-    const hasSubagents = messages.some(msg => msg.subagent_id || msg.role === 'subagent');
-    const hasVSCodeIntegration = messages.some(msg => msg.vscode_integration_id);
+    const hasCheckpoints = messages.some((msg) => msg.checkpoint_id);
+    const hasBackgroundTasks = messages.some(
+      (msg) => msg.background_task_id || msg.role === 'background_task',
+    );
+    const hasSubagents = messages.some((msg) => msg.subagent_id || msg.role === 'subagent');
+    const hasVSCodeIntegration = messages.some((msg) => msg.vscode_integration_id);
     const isExtendedSession = durationSeconds > 108000; // 30 hours
-    const maxAutonomyLevel = Math.max(...messages.map(msg => msg.autonomy_level || 0));
-    
+    const maxAutonomyLevel = Math.max(...messages.map((msg) => msg.autonomy_level || 0));
+
     // Determine session type
     let sessionType: 'standard' | 'extended' | 'autonomous' = 'standard';
     if (isExtendedSession) {
@@ -319,12 +329,17 @@ export class JSONLParser {
     };
 
     // Count Claude Code 2.0 features
-    const checkpointCount = messages.filter(msg => msg.checkpoint_id).length;
-    const rewindCount = messages.filter(msg => msg.is_rewind_trigger).length;
-    const backgroundTaskCount = messages.filter(msg => msg.background_task_id || msg.role === 'background_task').length;
-    const subagentCount = messages.filter(msg => msg.subagent_id || msg.role === 'subagent').length;
-    const vscodeIntegrationCount = messages.filter(msg => msg.vscode_integration_id).length;
-    const avgAutonomyLevel = messages.reduce((sum, msg) => sum + (msg.autonomy_level || 0), 0) / messages.length;
+    const checkpointCount = messages.filter((msg) => msg.checkpoint_id).length;
+    const rewindCount = messages.filter((msg) => msg.is_rewind_trigger).length;
+    const backgroundTaskCount = messages.filter(
+      (msg) => msg.background_task_id || msg.role === 'background_task',
+    ).length;
+    const subagentCount = messages.filter(
+      (msg) => msg.subagent_id || msg.role === 'subagent',
+    ).length;
+    const vscodeIntegrationCount = messages.filter((msg) => msg.vscode_integration_id).length;
+    const avgAutonomyLevel =
+      messages.reduce((sum, msg) => sum + (msg.autonomy_level || 0), 0) / messages.length;
 
     const metrics: SessionMetricsEnhanced = {
       session_id: sessionId,
