@@ -8,6 +8,13 @@ import type {
   ParseError,
   ParseResult,
   SessionMetrics,
+  Checkpoint,
+  BackgroundTask,
+  Subagent,
+  VSCodeIntegration,
+  DatabaseSessionEnhanced,
+  SessionMetricsEnhanced,
+  DatabaseMessageEnhanced,
 } from '../types/index.js';
 
 export class JSONLParser {
@@ -133,6 +140,13 @@ export class JSONLParser {
         output: obj.message?.usage?.output_tokens || obj.usage?.output_tokens || obj.tokens?.output || obj.output_tokens || 0,
       },
       processing_time_ms: obj.processing_time_ms || obj.duration_ms,
+      // Claude Code 2.0 enhancements
+      checkpoint_id: obj.checkpoint_id || obj.checkpoint?.id,
+      subagent_id: obj.subagent_id || obj.subagent?.id,
+      background_task_id: obj.background_task_id || obj.background_task?.id,
+      vscode_integration_id: obj.vscode_integration_id || obj.vscode_integration?.id,
+      is_rewind_trigger: obj.is_rewind_trigger || obj.rewind_trigger || false,
+      autonomy_level: obj.autonomy_level || obj.autonomy?.level || 0,
     };
 
     // Handle tool calls from Claude Code format (in message.content array)
@@ -211,13 +225,27 @@ export class JSONLParser {
     const endTime = new Date(lastMessage.timestamp);
     const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
+    // Claude Code 2.0 feature detection
+    const hasCheckpoints = messages.some(msg => msg.checkpoint_id);
+    const hasBackgroundTasks = messages.some(msg => msg.background_task_id || msg.role === 'background_task');
+    const hasSubagents = messages.some(msg => msg.subagent_id || msg.role === 'subagent');
+    const hasVSCodeIntegration = messages.some(msg => msg.vscode_integration_id);
+    const isExtendedSession = durationSeconds > 108000; // 30 hours
+    const maxAutonomyLevel = Math.max(...messages.map(msg => msg.autonomy_level || 0));
+    
+    // Determine session type
+    let sessionType: 'standard' | 'extended' | 'autonomous' = 'standard';
+    if (isExtendedSession) {
+      sessionType = maxAutonomyLevel > 7 ? 'autonomous' : 'extended';
+    }
+
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let totalCacheHits = 0;
     let totalCacheMisses = 0;
     const toolsUsed = new Set<string>();
 
-    const databaseMessages: DatabaseMessage[] = sortedMessages.map((msg, index) => {
+    const databaseMessages: DatabaseMessageEnhanced[] = sortedMessages.map((msg, index) => {
       const inputTokens = msg.tokens?.input || 0;
       const outputTokens = msg.tokens?.output || 0;
 
@@ -252,6 +280,13 @@ export class JSONLParser {
           : undefined,
         timestamp: new Date(msg.timestamp),
         processing_time_ms: msg.processing_time_ms,
+        // Claude Code 2.0 enhancements
+        checkpoint_id: msg.checkpoint_id,
+        subagent_id: msg.subagent_id,
+        background_task_id: msg.background_task_id,
+        vscode_integration_id: msg.vscode_integration_id,
+        is_rewind_trigger: msg.is_rewind_trigger || false,
+        autonomy_level: msg.autonomy_level || 0,
       };
     });
 
@@ -261,7 +296,7 @@ export class JSONLParser {
       this.detectModel(messages),
     );
 
-    const session: DatabaseSession = {
+    const session: DatabaseSessionEnhanced = {
       session_id: sessionId,
       project_name: projectName || undefined,
       started_at: startTime,
@@ -274,9 +309,24 @@ export class JSONLParser {
       tools_used: Array.from(toolsUsed),
       cache_hit_count: totalCacheHits,
       cache_miss_count: totalCacheMisses,
+      // Claude Code 2.0 enhancements
+      is_extended_session: isExtendedSession,
+      has_background_tasks: hasBackgroundTasks,
+      has_subagents: hasSubagents,
+      has_vscode_integration: hasVSCodeIntegration,
+      session_type: sessionType,
+      autonomy_level: maxAutonomyLevel,
     };
 
-    const metrics: SessionMetrics = {
+    // Count Claude Code 2.0 features
+    const checkpointCount = messages.filter(msg => msg.checkpoint_id).length;
+    const rewindCount = messages.filter(msg => msg.is_rewind_trigger).length;
+    const backgroundTaskCount = messages.filter(msg => msg.background_task_id || msg.role === 'background_task').length;
+    const subagentCount = messages.filter(msg => msg.subagent_id || msg.role === 'subagent').length;
+    const vscodeIntegrationCount = messages.filter(msg => msg.vscode_integration_id).length;
+    const avgAutonomyLevel = messages.reduce((sum, msg) => sum + (msg.autonomy_level || 0), 0) / messages.length;
+
+    const metrics: SessionMetricsEnhanced = {
       session_id: sessionId,
       date_bucket: new Date(startTime.toDateString()),
       hour_bucket: startTime.getHours(),
@@ -294,6 +344,14 @@ export class JSONLParser {
         totalCacheHits + totalCacheMisses > 0
           ? totalCacheHits / (totalCacheHits + totalCacheMisses)
           : 0,
+      // Claude Code 2.0 metrics
+      checkpoint_count: checkpointCount,
+      rewind_count: rewindCount,
+      background_task_count: backgroundTaskCount,
+      subagent_count: subagentCount,
+      vscode_integration_count: vscodeIntegrationCount,
+      autonomy_score: avgAutonomyLevel,
+      parallel_development_efficiency: hasSubagents ? (subagentCount / messages.length) * 100 : 0,
     };
 
     return {

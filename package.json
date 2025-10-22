@@ -14,7 +14,18 @@
     "build:all": "npm run build && npm run build:frontend",
     "build:start": "npm run build && npm start",
     "db:reset": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics -f schema.sql",
-    "db:connect": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics"
+    "db:reset:claude-code-2": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics -f schema-claude-code-2.sql",
+    "db:connect": "psql -h localhost -p 5432 -U $USER -d claude_code_analytics",
+    "test": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:claude-code-2": "vitest run tests/unit/claude-code-2-parser.test.ts tests/integration/claude-code-2-api.test.ts tests/e2e/claude-code-2-dashboard.test.ts",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest watch",
+    "sync:claude-code-2": "npx tsx src/services/data-sync.ts --claude-code-2",
+    "docker:claude-code-2": "docker-compose -f docker-compose.claude-code-2.yml up --build",
+    "docker:claude-code-2:down": "docker-compose -f docker-compose.claude-code-2.yml down"
   },
   "keywords": [
     "claude-code",
@@ -41,9 +52,13 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
+    "@playwright/test": "^1.40.0",
+    "@vitest/coverage-v8": "^1.0.0",
     "concurrently": "^9.2.1",
+    "playwright": "^1.40.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^1.0.0"
   }
 }
