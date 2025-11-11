@@ -136,7 +136,7 @@ cd frontend && npm run dev
 
 ### Environment Configuration
 
-Create a `.env` file in the project root:
+#### Backend Configuration (`.env` in project root)
 
 ```env
 # Database Configuration
@@ -148,12 +148,47 @@ DB_NAME=claude_code_analytics
 
 # Application Settings
 NODE_ENV=development
-API_PORT=3001
+HOST=0.0.0.0
+PORT=3001
 
 # Data Settings
 CLAUDE_DATA_PATH=~/.claude/projects
 DATA_RETENTION_DAYS=90
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 ```
+
+#### Frontend Configuration (`frontend/.env.local`)
+
+```env
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3001/api
+
+# Development Settings
+VITE_DEV_MODE=true
+VITE_LOG_LEVEL=debug
+```
+
+#### Deployment Scenarios
+
+**Development (different ports):**
+```bash
+VITE_API_BASE_URL=http://localhost:3001/api
+```
+
+**Production (same origin):**
+```bash
+VITE_API_BASE_URL=/api
+```
+
+**Production (subdomain):**
+```bash
+VITE_API_BASE_URL=https://api.yourdomain.com/api
+```
+
+**Docker Compose:**
+Use `.env` in project root, Docker Compose will handle service networking
 
 ## 📖 Usage
 

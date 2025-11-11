@@ -184,3 +184,23 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - `frontend/src/routes/dashboard-builder.tsx` - Dashboard builder route
 - `frontend/src/components/ui/tabs.tsx` - Custom tabs component
 - `frontend/src/styles/grid-layout.css` - Grid layout styling
+
+## Key Files Reference
+
+### Critical Backend Files
+- `src/server/app.ts` - Fastify server configuration
+- `src/database/query-builder.ts` - Analytics query abstraction
+- `src/services/data-sync.ts` - Data synchronization service
+- `src/parsers/jsonl-parser.ts` - Claude Code JSONL parser
+
+### Critical Frontend Files
+- `frontend/src/routes/index.tsx` - Main dashboard page
+- `frontend/src/hooks/useAnalytics.ts` - Data fetching hooks
+- `frontend/src/components/charts/` - Chart components
+- `frontend/src/lib/api.ts` - API client
+
+### Configuration Files
+- `schema.sql` - Database schema
+- `docker-compose.yml` - Container orchestration
+- `package.json` - Backend dependencies
+- `frontend/package.json` - Frontend dependencies
