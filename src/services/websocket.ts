@@ -69,12 +69,12 @@ export class WebSocketService {
         },
       });
 
-      connection.socket.on('close', () => {
+      connection.on('close', () => {
         console.log('🔌 WebSocket connection closed');
         this.connections.delete(connection);
       });
 
-      connection.socket.on('error', (error: any) => {
+      connection.on('error', (error: any) => {
         console.error('🔌 WebSocket error:', error);
         this.connections.delete(connection);
       });
@@ -85,9 +85,9 @@ export class WebSocketService {
 
   private sendToConnection(connection: any, message: WebSocketMessage) {
     try {
-      if (connection.socket.readyState === 1) {
+      if (connection.readyState === 1) {
         // WebSocket.OPEN
-        connection.socket.send(JSON.stringify(message));
+        connection.send(JSON.stringify(message));
       }
     } catch (error) {
       console.error('Failed to send WebSocket message:', error);
@@ -133,7 +133,7 @@ export class WebSocketService {
   closeAllConnections() {
     for (const connection of this.connections) {
       try {
-        connection.socket.close();
+        connection.close();
       } catch (error) {
         console.error('Error closing WebSocket connection:', error);
       }
