@@ -27,9 +27,35 @@ export interface InsertionResult {
 
 export class DatabaseInserter {
   private db: DatabaseConnection;
+  private hasCC2Schema: boolean | null = null;
 
   constructor(db?: DatabaseConnection) {
     this.db = db || DatabaseConnection.getInstance();
+  }
+
+  /**
+   * Detect if database has Claude Code 2.0 schema columns
+   */
+  private async detectCC2Schema(client: PoolClient): Promise<boolean> {
+    if (this.hasCC2Schema !== null) {
+      return this.hasCC2Schema;
+    }
+
+    try {
+      const query = `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'sessions'
+        AND column_name = 'is_extended_session'
+      `;
+      const result = await client.query(query);
+      this.hasCC2Schema = result.rows.length > 0;
+      return this.hasCC2Schema;
+    } catch (error) {
+      // If query fails, assume standard schema
+      this.hasCC2Schema = false;
+      return false;
+    }
   }
 
   async insertSessionData(sessionData: ParsedSessionData): Promise<InsertionResult> {
@@ -147,57 +173,102 @@ export class DatabaseInserter {
     client: PoolClient,
     session: DatabaseSessionEnhanced,
   ): Promise<{ inserted: boolean; sessionId?: string }> {
-    const insertQuery = `
-      INSERT INTO sessions (
-        session_id, project_name, started_at, ended_at, duration_seconds,
-        model_name, total_input_tokens, total_output_tokens, total_cost_usd,
-        tools_used, cache_hit_count, cache_miss_count,
-        is_extended_session, has_background_tasks, has_subagents, has_vscode_integration,
-        session_type, autonomy_level
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
-      )
-      ON CONFLICT (session_id) DO UPDATE SET
-        ended_at = EXCLUDED.ended_at,
-        duration_seconds = EXCLUDED.duration_seconds,
-        total_input_tokens = EXCLUDED.total_input_tokens,
-        total_output_tokens = EXCLUDED.total_output_tokens,
-        total_cost_usd = EXCLUDED.total_cost_usd,
-        tools_used = EXCLUDED.tools_used,
-        cache_hit_count = EXCLUDED.cache_hit_count,
-        cache_miss_count = EXCLUDED.cache_miss_count,
-        is_extended_session = EXCLUDED.is_extended_session,
-        has_background_tasks = EXCLUDED.has_background_tasks,
-        has_subagents = EXCLUDED.has_subagents,
-        has_vscode_integration = EXCLUDED.has_vscode_integration,
-        session_type = EXCLUDED.session_type,
-        autonomy_level = EXCLUDED.autonomy_level,
-        updated_at = NOW()
-      RETURNING id, session_id, 
-        (xmax = 0) AS inserted
-    `;
+    const hasCC2 = await this.detectCC2Schema(client);
 
-    const values = [
-      session.session_id,
-      session.project_name,
-      session.started_at,
-      session.ended_at,
-      session.duration_seconds,
-      session.model_name,
-      session.total_input_tokens,
-      session.total_output_tokens,
-      session.total_cost_usd,
-      session.tools_used,
-      session.cache_hit_count,
-      session.cache_miss_count,
-      // Claude Code 2.0 enhancements
-      session.is_extended_session,
-      session.has_background_tasks,
-      session.has_subagents,
-      session.has_vscode_integration,
-      session.session_type,
-      session.autonomy_level,
-    ];
+    let insertQuery: string;
+    let values: unknown[];
+
+    if (hasCC2) {
+      // Claude Code 2.0 schema with enhanced fields
+      insertQuery = `
+        INSERT INTO sessions (
+          session_id, project_name, started_at, ended_at, duration_seconds,
+          model_name, total_input_tokens, total_output_tokens, total_cost_usd,
+          tools_used, cache_hit_count, cache_miss_count,
+          is_extended_session, has_background_tasks, has_subagents, has_vscode_integration,
+          session_type, autonomy_level
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+        )
+        ON CONFLICT (session_id) DO UPDATE SET
+          ended_at = EXCLUDED.ended_at,
+          duration_seconds = EXCLUDED.duration_seconds,
+          total_input_tokens = EXCLUDED.total_input_tokens,
+          total_output_tokens = EXCLUDED.total_output_tokens,
+          total_cost_usd = EXCLUDED.total_cost_usd,
+          tools_used = EXCLUDED.tools_used,
+          cache_hit_count = EXCLUDED.cache_hit_count,
+          cache_miss_count = EXCLUDED.cache_miss_count,
+          is_extended_session = EXCLUDED.is_extended_session,
+          has_background_tasks = EXCLUDED.has_background_tasks,
+          has_subagents = EXCLUDED.has_subagents,
+          has_vscode_integration = EXCLUDED.has_vscode_integration,
+          session_type = EXCLUDED.session_type,
+          autonomy_level = EXCLUDED.autonomy_level,
+          updated_at = NOW()
+        RETURNING id, session_id,
+          (xmax = 0) AS inserted
+      `;
+
+      values = [
+        session.session_id,
+        session.project_name,
+        session.started_at,
+        session.ended_at,
+        session.duration_seconds,
+        session.model_name,
+        session.total_input_tokens,
+        session.total_output_tokens,
+        session.total_cost_usd,
+        session.tools_used,
+        session.cache_hit_count,
+        session.cache_miss_count,
+        session.is_extended_session,
+        session.has_background_tasks,
+        session.has_subagents,
+        session.has_vscode_integration,
+        session.session_type,
+        session.autonomy_level,
+      ];
+    } else {
+      // Standard schema without CC2 fields
+      insertQuery = `
+        INSERT INTO sessions (
+          session_id, project_name, started_at, ended_at, duration_seconds,
+          model_name, total_input_tokens, total_output_tokens, total_cost_usd,
+          tools_used, cache_hit_count, cache_miss_count
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        )
+        ON CONFLICT (session_id) DO UPDATE SET
+          ended_at = EXCLUDED.ended_at,
+          duration_seconds = EXCLUDED.duration_seconds,
+          total_input_tokens = EXCLUDED.total_input_tokens,
+          total_output_tokens = EXCLUDED.total_output_tokens,
+          total_cost_usd = EXCLUDED.total_cost_usd,
+          tools_used = EXCLUDED.tools_used,
+          cache_hit_count = EXCLUDED.cache_hit_count,
+          cache_miss_count = EXCLUDED.cache_miss_count,
+          updated_at = NOW()
+        RETURNING id, session_id,
+          (xmax = 0) AS inserted
+      `;
+
+      values = [
+        session.session_id,
+        session.project_name,
+        session.started_at,
+        session.ended_at,
+        session.duration_seconds,
+        session.model_name,
+        session.total_input_tokens,
+        session.total_output_tokens,
+        session.total_cost_usd,
+        session.tools_used,
+        session.cache_hit_count,
+        session.cache_miss_count,
+      ];
+    }
 
     const result = await client.query(insertQuery, values);
     const row = result.rows[0];
@@ -302,59 +373,102 @@ export class DatabaseInserter {
     }
 
     const sessionUuid = sessionResult.rows[0].id;
+    const hasCC2 = await this.detectCC2Schema(client);
 
-    const insertQuery = `
-      INSERT INTO session_metrics (
-        session_id, date_bucket, hour_bucket, weekday, week_of_year,
-        month, year, input_tokens, output_tokens, cost_usd,
-        duration_seconds, message_count, tool_usage_count, cache_efficiency,
-        checkpoint_count, rewind_count, background_task_count, subagent_count,
-        vscode_integration_count, autonomy_score, parallel_development_efficiency
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
-      )
-      ON CONFLICT (session_id) DO UPDATE SET
-        input_tokens = EXCLUDED.input_tokens,
-        output_tokens = EXCLUDED.output_tokens,
-        cost_usd = EXCLUDED.cost_usd,
-        duration_seconds = EXCLUDED.duration_seconds,
-        message_count = EXCLUDED.message_count,
-        tool_usage_count = EXCLUDED.tool_usage_count,
-        cache_efficiency = EXCLUDED.cache_efficiency,
-        checkpoint_count = EXCLUDED.checkpoint_count,
-        rewind_count = EXCLUDED.rewind_count,
-        background_task_count = EXCLUDED.background_task_count,
-        subagent_count = EXCLUDED.subagent_count,
-        vscode_integration_count = EXCLUDED.vscode_integration_count,
-        autonomy_score = EXCLUDED.autonomy_score,
-        parallel_development_efficiency = EXCLUDED.parallel_development_efficiency
-      RETURNING (xmax = 0) AS inserted
-    `;
+    let insertQuery: string;
+    let values: unknown[];
 
-    const values = [
-      sessionUuid,
-      metrics.date_bucket,
-      metrics.hour_bucket,
-      metrics.weekday,
-      metrics.week_of_year,
-      metrics.month,
-      metrics.year,
-      metrics.input_tokens,
-      metrics.output_tokens,
-      metrics.cost_usd,
-      metrics.duration_seconds,
-      metrics.message_count,
-      metrics.tool_usage_count,
-      metrics.cache_efficiency,
-      // Claude Code 2.0 enhancements
-      metrics.checkpoint_count,
-      metrics.rewind_count,
-      metrics.background_task_count,
-      metrics.subagent_count,
-      metrics.vscode_integration_count,
-      metrics.autonomy_score,
-      metrics.parallel_development_efficiency,
-    ];
+    if (hasCC2) {
+      // Claude Code 2.0 schema with enhanced metrics
+      insertQuery = `
+        INSERT INTO session_metrics (
+          session_id, date_bucket, hour_bucket, weekday, week_of_year,
+          month, year, input_tokens, output_tokens, cost_usd,
+          duration_seconds, message_count, tool_usage_count, cache_efficiency,
+          checkpoint_count, rewind_count, background_task_count, subagent_count,
+          vscode_integration_count, autonomy_score, parallel_development_efficiency
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+        )
+        ON CONFLICT (session_id) DO UPDATE SET
+          input_tokens = EXCLUDED.input_tokens,
+          output_tokens = EXCLUDED.output_tokens,
+          cost_usd = EXCLUDED.cost_usd,
+          duration_seconds = EXCLUDED.duration_seconds,
+          message_count = EXCLUDED.message_count,
+          tool_usage_count = EXCLUDED.tool_usage_count,
+          cache_efficiency = EXCLUDED.cache_efficiency,
+          checkpoint_count = EXCLUDED.checkpoint_count,
+          rewind_count = EXCLUDED.rewind_count,
+          background_task_count = EXCLUDED.background_task_count,
+          subagent_count = EXCLUDED.subagent_count,
+          vscode_integration_count = EXCLUDED.vscode_integration_count,
+          autonomy_score = EXCLUDED.autonomy_score,
+          parallel_development_efficiency = EXCLUDED.parallel_development_efficiency
+        RETURNING (xmax = 0) AS inserted
+      `;
+
+      values = [
+        sessionUuid,
+        metrics.date_bucket,
+        metrics.hour_bucket,
+        metrics.weekday,
+        metrics.week_of_year,
+        metrics.month,
+        metrics.year,
+        metrics.input_tokens,
+        metrics.output_tokens,
+        metrics.cost_usd,
+        metrics.duration_seconds,
+        metrics.message_count,
+        metrics.tool_usage_count,
+        metrics.cache_efficiency,
+        metrics.checkpoint_count,
+        metrics.rewind_count,
+        metrics.background_task_count,
+        metrics.subagent_count,
+        metrics.vscode_integration_count,
+        metrics.autonomy_score,
+        metrics.parallel_development_efficiency,
+      ];
+    } else {
+      // Standard schema without CC2 fields
+      insertQuery = `
+        INSERT INTO session_metrics (
+          session_id, date_bucket, hour_bucket, weekday, week_of_year,
+          month, year, input_tokens, output_tokens, cost_usd,
+          duration_seconds, message_count, tool_usage_count, cache_efficiency
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+        )
+        ON CONFLICT (session_id) DO UPDATE SET
+          input_tokens = EXCLUDED.input_tokens,
+          output_tokens = EXCLUDED.output_tokens,
+          cost_usd = EXCLUDED.cost_usd,
+          duration_seconds = EXCLUDED.duration_seconds,
+          message_count = EXCLUDED.message_count,
+          tool_usage_count = EXCLUDED.tool_usage_count,
+          cache_efficiency = EXCLUDED.cache_efficiency
+        RETURNING (xmax = 0) AS inserted
+      `;
+
+      values = [
+        sessionUuid,
+        metrics.date_bucket,
+        metrics.hour_bucket,
+        metrics.weekday,
+        metrics.week_of_year,
+        metrics.month,
+        metrics.year,
+        metrics.input_tokens,
+        metrics.output_tokens,
+        metrics.cost_usd,
+        metrics.duration_seconds,
+        metrics.message_count,
+        metrics.tool_usage_count,
+        metrics.cache_efficiency,
+      ];
+    }
 
     const result = await client.query(insertQuery, values);
     return { inserted: result.rows[0].inserted };

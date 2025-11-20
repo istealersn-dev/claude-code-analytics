@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DataQualityDashboard } from '../components/data-quality/DataQualityDashboard';
-import { RealTimeSyncStatus } from '../components/sync/RealTimeSyncStatus';
+import { useSyncWebSocket } from '../hooks/useSyncWebSocket';
 
 import { getApiUrl } from '../config/environment';
 
@@ -153,24 +153,46 @@ function Settings() {
     },
   });
 
+  // WebSocket connection for real-time updates
+  const { isConnected, syncProgress: wsSyncProgress, syncStatus: wsSyncStatus } = useSyncWebSocket();
+
   // Update progress based on sync status
   useEffect(() => {
     if (syncStatus?.progress) {
       setSyncProgress(syncStatus.progress.percentage);
     }
   }, [syncStatus?.progress]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-        <p className="text-gray-400">
-          Configure your analytics dashboard preferences and data sync options
-        </p>
-      </div>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+          <p className="text-gray-400">
+            Configure your analytics dashboard preferences and data sync options
+          </p>
+        </div>
 
-      {/* Real-time Sync Status */}
-      <div className="mb-8">
-        <RealTimeSyncStatus />
+        {/* Inline Sync Status */}
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-gray-400">{isConnected ? 'Connected' : 'Disconnected'}</span>
+          </div>
+          {wsSyncProgress?.status === 'in_progress' ? (
+            <div className="flex items-center gap-2 text-blue-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Syncing {wsSyncProgress.progress}%</span>
+            </div>
+          ) : wsSyncStatus?.isRunning ? (
+            <div className="flex items-center gap-2 text-blue-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Sync running</span>
+            </div>
+          ) : (
+            <span className="text-gray-400">No active sync</span>
+          )}
+        </div>
       </div>
 
       {/* Sync Success/Result Banner */}
@@ -298,7 +320,7 @@ function Settings() {
                           ? 'Failed'
                           : 'Ready'}
                   </p>
-                  {syncStatus.lastSync && (
+                  {syncStatus.lastSync && !isNaN(new Date(syncStatus.lastSync).getTime()) && (
                     <p className="text-sm text-gray-400">
                       Last sync: {new Date(syncStatus.lastSync).toLocaleString()}
                     </p>
