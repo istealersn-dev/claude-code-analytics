@@ -109,6 +109,7 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 6. **Phase 6**: Production & Deployment ✅ **100% Complete** (Merged PR #14, December 2024)
 
 ### Recent Major Achievements
+- ✅ **Sync UI & Schema Compatibility** (November 2025 - PR #15): Improved sync interface and automatic CC2 schema detection
 - ✅ **Phase 6 Complete** (December 2024 - PR #14): Production deployment with optional Claude Code 2.0 enhancements
 - ✅ **Claude Code 2.0 Features**: Extended session handling, checkpoints, background tasks, subagent tracking, VS Code integration
 - ✅ **Testing Suite**: Comprehensive unit, integration, and E2E tests with Vitest and Playwright
@@ -136,24 +137,26 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - Custom dashboard creation and user-configurable widgets
 - Production deployment with Docker containerization
 - Comprehensive testing suite (unit, integration, E2E)
-- Claude Code 2.0 compatibility (optional via separate schema)
+- Claude Code 2.0 compatibility (automatic schema detection for both standard and CC2)
+- Real-time sync status with WebSocket (inline UI display)
 
 ### Future Enhancements ⏳
 See TODOs.md "Post-Launch Enhancements" section for:
 - Data export (CSV, PNG, PDF)
 - Advanced filtering by project/model
-- Real-time sync status with WebSocket
 - Custom metrics and alerts
 - Automated reporting and external integrations
 
 ## Technical Architecture Achievements
 
+- **Schema Auto-Detection**: Automatic detection of standard vs CC2 database schemas with conditional SQL queries
 - **AnalyticsQueryBuilder**: Centralized database abstraction with comprehensive data quality methods
 - **Data Validation System**: Complete data integrity checking with automated cleanup capabilities
 - **Interactive Dashboard**: Advanced chart interactions with date filtering and drill-down navigation
 - **Interactive Charts**: Zoom/pan functionality, annotation system, chart comparisons with overlay/side-by-side views
 - **Dashboard Builder**: Drag-and-drop widget system using react-grid-layout with real-time customization
 - **Template Management**: Complete dashboard template system with import/export, preset templates
+- **Real-Time Sync Status**: WebSocket-based live updates with inline status display
 - **Testing Suite**: Comprehensive unit, integration, and E2E tests with Vitest and Playwright
 - **Claude Code 2.0 Support**: Optional extended session handling, checkpoints, subagents, background tasks
 - **Docker Deployment**: Multi-stage builds, health checks, production secrets management
