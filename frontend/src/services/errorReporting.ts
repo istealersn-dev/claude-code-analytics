@@ -8,21 +8,21 @@ interface ErrorReport {
   url: string;
   userId?: string;
   sessionId?: string;
-  additionalInfo?: Record<string, any>;
+  additionalInfo?: Record<string, unknown>;
 }
 
 interface ErrorReportingService {
-  captureException(error: Error, context?: Record<string, any>): void;
+  captureException(error: Error, context?: Record<string, unknown>): void;
   captureMessage(message: string, level?: 'info' | 'warning' | 'error'): void;
-  setUser(userId: string, userInfo?: Record<string, any>): void;
-  setContext(key: string, value: any): void;
+  setUser(userId: string, userInfo?: Record<string, unknown>): void;
+  setContext(key: string, value: unknown): void;
 }
 
 class ErrorReportingServiceImpl implements ErrorReportingService {
   // private userInfo: Record<string, any> = {};
-  private context: Record<string, any> = {};
+  private context: Record<string, unknown> = {};
 
-  captureException(error: Error, additionalContext?: Record<string, any>): void {
+  captureException(error: Error, additionalContext?: Record<string, unknown>): void {
     const errorReport: ErrorReport = {
       message: error.message,
       stack: error.stack,
@@ -69,12 +69,12 @@ class ErrorReportingServiceImpl implements ErrorReportingService {
     }
   }
 
-  setUser(userId: string, userInfo?: Record<string, any>): void {
+  setUser(userId: string, userInfo?: Record<string, unknown>): void {
     // this.userInfo = { userId, ...userInfo };
     console.log('User set:', userId, userInfo);
   }
 
-  setContext(key: string, value: any): void {
+  setContext(key: string, value: unknown): void {
     this.context[key] = value;
   }
 
@@ -119,7 +119,7 @@ export function useErrorReporting() {
 }
 
 // Utility function for wrapping async functions with error reporting
-export function withErrorReporting<T extends any[], R>(
+export function withErrorReporting<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   context?: string
 ): (...args: T) => Promise<R> {
@@ -138,7 +138,7 @@ export function withErrorReporting<T extends any[], R>(
 }
 
 // Utility function for wrapping sync functions with error reporting
-export function withErrorReportingSync<T extends any[], R>(
+export function withErrorReportingSync<T extends unknown[], R>(
   fn: (...args: T) => R,
   context?: string
 ): (...args: T) => R {

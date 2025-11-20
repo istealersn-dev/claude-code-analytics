@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import fastifyWebsocket from '@fastify/websocket';
 
 export interface SyncProgressUpdate {
   type: 'sync_progress';
@@ -45,7 +46,7 @@ export class WebSocketService {
     this.app = app;
 
     // Register WebSocket plugin
-    await app.register(require('@fastify/websocket'), {
+    await app.register(fastifyWebsocket, {
       options: {
         maxPayload: 1024 * 1024, // 1MB
       },

@@ -4,8 +4,9 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft, ChevronRight, Clock, Hash, Wrench, Zap } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { z } from 'zod';
-import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
+import { formatCurrency, formatDuration, formatNumber, useAnalyticsMetadata } from '../hooks/useAnalytics';
 import { useScreenSize } from '../hooks/useScreenSize';
+import { FilterPillsBar } from '../components/ui/FilterPillsBar';
 
 import { getApiUrl } from '../config/environment';
 
@@ -43,6 +44,8 @@ const sessionsSearchSchema = z.object({
 async function fetchSessions(params?: {
   dateFrom?: string;
   dateTo?: string;
+  project?: string;
+  model?: string;
 }): Promise<SessionsResponse> {
   const queryParams = new URLSearchParams();
   queryParams.append('limit', '20');
@@ -50,6 +53,8 @@ async function fetchSessions(params?: {
 
   if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
   if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
+  if (params?.project) queryParams.append('projectName', params.project);
+  if (params?.model) queryParams.append('modelName', params.model);
 
   const url = `${getApiUrl('/analytics/sessions')}?${queryParams.toString()}`;
   console.log('Fetching sessions from URL:', url);
@@ -70,13 +75,15 @@ export const Route = createFileRoute('/sessions')({
 
 function Sessions() {
   const { dateFrom, dateTo, project, model } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const screenSize = useScreenSize();
+  const { data: metadata } = useAnalyticsMetadata();
 
   console.log('Sessions component - Search params:', { dateFrom, dateTo, project, model });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['sessions', { dateFrom, dateTo, project, model }],
-    queryFn: () => fetchSessions({ dateFrom, dateTo }),
+    queryFn: () => fetchSessions({ dateFrom, dateTo, project, model }),
     staleTime: 10 * 60 * 1000, // Increased cache time for better performance
     gcTime: 30 * 60 * 1000,
   });
@@ -126,6 +133,47 @@ function Sessions() {
             </div>
           )}
         </div>
+        {screenSize.isMobile && (
+          <FilterPillsBar
+            className="mt-3"
+            pills={[
+              ...(dateFrom && dateTo
+                ? [{
+                    label: 'Date',
+                    value:
+                      new Date(dateFrom).toLocaleDateString() ===
+                      new Date(dateTo).toLocaleDateString()
+                        ? new Date(dateFrom).toLocaleDateString()
+                        : `${new Date(dateFrom).toLocaleDateString()} → ${new Date(dateTo).toLocaleDateString()}`,
+                    onClear: () =>
+                      navigate({
+                        search: (prev) => ({ ...prev, dateFrom: undefined, dateTo: undefined }),
+                      }),
+                  }]
+                : []),
+              ...(project
+                ? [{
+                    label: 'Project',
+                    value: project,
+                    onClear: () =>
+                      navigate({
+                        search: (prev) => ({ ...prev, project: undefined }),
+                      }),
+                  }]
+                : []),
+              ...(model
+                ? [{
+                    label: 'Model',
+                    value: model,
+                    onClear: () =>
+                      navigate({
+                        search: (prev) => ({ ...prev, model: undefined }),
+                      }),
+                  }]
+                : []),
+            ]}
+          />
+        )}
       </div>
 
       {/* Filters */}
@@ -152,9 +200,18 @@ function Sessions() {
             </label>
             <select
               id="project"
+              value={project || ''}
+              onChange={(e) =>
+                navigate({
+                  search: (prev) => ({ ...prev, project: e.target.value || undefined }),
+                })
+              }
               className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
             >
-              <option>All projects</option>
+              <option value="">All projects</option>
+              {(metadata?.filters.availableProjects || []).map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -163,9 +220,18 @@ function Sessions() {
             </label>
             <select
               id="model"
+              value={model || ''}
+              onChange={(e) =>
+                navigate({
+                  search: (prev) => ({ ...prev, model: e.target.value || undefined }),
+                })
+              }
               className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
             >
-              <option>All models</option>
+              <option value="">All models</option>
+              {(metadata?.filters.availableModels || []).map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
             </select>
           </div>
           <div className="flex items-end sm:col-span-2 lg:col-span-1">
@@ -184,9 +250,49 @@ function Sessions() {
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Recent Sessions</h2>
-            {data && (
-              <span className="text-sm text-gray-400">{data.pagination.total} total sessions</span>
-            )}
+            <div className="flex items-center gap-3">
+              {data && (
+                <span className="text-sm text-gray-400">{data.pagination.total} total sessions</span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!data) return;
+                  const rows = [
+                    ['session_id','project_name','started_at','duration_seconds','total_cost_usd','total_input_tokens','total_output_tokens','model_name','tools_used'],
+                    ...data.sessions.map((s) => [
+                      s.session_id,
+                      s.project_name || '',
+                      s.started_at,
+                      s.duration_seconds?.toString() || '',
+                      typeof s.total_cost_usd === 'string' ? s.total_cost_usd : s.total_cost_usd.toString(),
+                      s.total_input_tokens.toString(),
+                      s.total_output_tokens.toString(),
+                      s.model_name || '',
+                      (s.tools_used || []).join('|'),
+                    ]),
+                  ];
+                  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  const nameParts = [
+                    'sessions',
+                    dateFrom ? new Date(dateFrom).toISOString().slice(0,10) : undefined,
+                    dateTo ? new Date(dateTo).toISOString().slice(0,10) : undefined,
+                    project || undefined,
+                    model || undefined,
+                  ].filter(Boolean).join('_');
+                  a.href = url;
+                  a.download = `${nameParts || 'sessions'}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
         </div>
 

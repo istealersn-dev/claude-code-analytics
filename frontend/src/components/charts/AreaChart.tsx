@@ -6,6 +6,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useCallback, useRef } from 'react';
 
 interface DataPoint {
   date: string;
@@ -21,6 +22,8 @@ export interface AreaChartProps {
   formatValue?: (value: number) => string;
   formatTooltip?: (value: number, name: string) => [string, string];
   onDataPointClick?: (data: DataPoint) => void;
+  exportable?: boolean;
+  exportFilename?: string;
 }
 
 export function AreaChart({
@@ -31,6 +34,8 @@ export function AreaChart({
   formatValue,
   formatTooltip,
   onDataPointClick,
+  exportable,
+  exportFilename = 'chart.png',
 }: AreaChartProps) {
   const defaultFormatValue = (value: number) => value.toLocaleString();
   const valueFormatter = formatValue || defaultFormatValue;
@@ -38,8 +43,49 @@ export function AreaChart({
   const defaultFormatTooltip = (value: number, name: string) => [valueFormatter(value), name];
   const tooltipFormatter = formatTooltip || defaultFormatTooltip;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = useCallback(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const svg = root.querySelector('svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    const rect = svg.getBoundingClientRect();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(rect.width));
+      canvas.height = Math.max(1, Math.round(rect.height));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const pngUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = exportFilename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }, [exportFilename]);
+
   return (
-    <div className="w-full">
+    <div className="w-full relative" ref={containerRef}>
+      {exportable && (
+        <button
+          type="button"
+          onClick={handleExport}
+          className="absolute top-2 right-2 bg-gray-800/70 hover:bg-gray-800 text-white text-xs px-2 py-1 rounded"
+        >
+          Export PNG
+        </button>
+      )}
       {title && <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>}
       <ResponsiveContainer width="100%" height={height}>
         <RechartsAreaChart

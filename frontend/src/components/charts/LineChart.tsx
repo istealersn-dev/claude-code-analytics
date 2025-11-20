@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import type { CategoricalChartFunc } from 'recharts/types/chart/types';
 import type { MouseHandlerDataParam } from 'recharts/types/synchronisation/types';
@@ -24,6 +24,8 @@ export interface LineChartProps {
   formatTooltip?: (value: number) => [string, string];
   showGrid?: boolean;
   onDataPointClick?: (data: { date: string; value: number; count?: number }) => void;
+  exportable?: boolean;
+  exportFilename?: string;
 }
 
 export const LineChart = memo(function LineChart({
@@ -34,9 +36,43 @@ export const LineChart = memo(function LineChart({
   formatTooltip = (value) => [formatValue?.(value) || value.toString(), 'Value'],
   showGrid = true,
   onDataPointClick,
+  exportable,
+  exportFilename = 'chart.png',
 }: LineChartProps) {
   // Memoize expensive computations
   const chartMargin = useMemo(() => ({ top: 5, right: 30, left: 20, bottom: 5 }), []);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = useCallback(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const svg = root.querySelector('svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    const rect = svg.getBoundingClientRect();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(rect.width));
+      canvas.height = Math.max(1, Math.round(rect.height));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const pngUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = exportFilename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }, [exportFilename]);
 
   const handleOverlayClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -90,9 +126,20 @@ export const LineChart = memo(function LineChart({
 
   return (
     <div
+      ref={containerRef}
       style={{ height, position: 'relative' }}
       className={onDataPointClick ? 'cursor-pointer' : ''}
     >
+      {exportable && (
+        <button
+          type="button"
+          onClick={handleExport}
+          style={{ position: 'absolute', top: 8, right: 8, zIndex: 20 }}
+          className="bg-gray-800/70 hover:bg-gray-800 text-white text-xs px-2 py-1 rounded"
+        >
+          Export PNG
+        </button>
+      )}
       {/* Clickable overlay if onClick handler is provided */}
       {onDataPointClick && (
         // biome-ignore lint/a11y/useSemanticElements: This is an overlay element, not a traditional button

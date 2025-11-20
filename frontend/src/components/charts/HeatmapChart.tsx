@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useCallback } from 'react';
 
 interface HeatmapData {
   hour: number;
@@ -12,6 +12,8 @@ export interface HeatmapChartProps {
   formatValue?: (value: number) => string;
   colorScale?: string[];
   showLabels?: boolean;
+  exportable?: boolean;
+  exportFilename?: string;
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -35,6 +37,8 @@ export function HeatmapChart({
   formatValue = (value) => value.toString(),
   colorScale = DEFAULT_COLOR_SCALE,
   showLabels = true,
+  exportable,
+  exportFilename = 'chart.png',
 }: HeatmapChartProps) {
   const { heatmapData, maxValue } = useMemo(() => {
     // Create a map for quick lookup
@@ -57,6 +61,38 @@ export function HeatmapChart({
 
     return { heatmapData: grid, maxValue: max };
   }, [data]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = useCallback(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const svg = root.querySelector('svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    const rect = svg.getBoundingClientRect();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(rect.width));
+      canvas.height = Math.max(1, Math.round(rect.height));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const pngUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = exportFilename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }, [exportFilename]);
 
   const getColor = (value: number): string => {
     if (value === 0 || maxValue === 0) return colorScale[0];
@@ -81,7 +117,16 @@ export function HeatmapChart({
   const labelWidth = 40;
 
   return (
-    <div style={{ height }} className="overflow-auto">
+    <div style={{ height }} className="overflow-auto relative" ref={containerRef}>
+      {exportable && (
+        <button
+          type="button"
+          onClick={handleExport}
+          className="absolute top-2 right-2 bg-gray-800/70 hover:bg-gray-800 text-white text-xs px-2 py-1 rounded"
+        >
+          Export PNG
+        </button>
+      )}
       <div className="min-w-fit">
         <svg
           width={labelWidth + HOURS.length * cellWidth + 10}

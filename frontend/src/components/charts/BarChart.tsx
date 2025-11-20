@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useCallback, useRef } from 'react';
 
 export interface BarChartProps {
   data: Array<{ name: string; value: number; color?: string }>;
@@ -17,6 +18,8 @@ export interface BarChartProps {
   formatTooltip?: (value: number, name: string) => [string, string];
   orientation?: 'horizontal' | 'vertical';
   maxBars?: number;
+  exportable?: boolean;
+  exportFilename?: string;
 }
 
 export function BarChart({
@@ -28,6 +31,8 @@ export function BarChart({
   formatTooltip = (value, name) => [formatValue(value), name],
   orientation = 'vertical',
   maxBars = 10,
+  exportable,
+  exportFilename = 'chart.png',
 }: BarChartProps) {
   if (!data || data.length === 0) {
     return (
@@ -40,8 +45,49 @@ export function BarChart({
   // Limit the number of bars and sort by value (descending)
   const displayData = data.sort((a, b) => b.value - a.value).slice(0, maxBars);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = useCallback(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const svg = root.querySelector('svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    const rect = svg.getBoundingClientRect();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(rect.width));
+      canvas.height = Math.max(1, Math.round(rect.height));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const pngUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = exportFilename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }, [exportFilename]);
+
   return (
-    <div style={{ height }}>
+    <div style={{ height }} className="relative" ref={containerRef}>
+      {exportable && (
+        <button
+          type="button"
+          onClick={handleExport}
+          className="absolute top-2 right-2 bg-gray-800/70 hover:bg-gray-800 text-white text-xs px-2 py-1 rounded"
+        >
+          Export PNG
+        </button>
+      )}
       <ResponsiveContainer width="100%" height="100%">
         <RechartsBarChart
           data={displayData}

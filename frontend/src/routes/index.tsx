@@ -37,13 +37,17 @@ import {
   useHeatmapData,
   useOverviewMetrics,
   usePerformanceMetrics,
+  useAnalyticsMetadata,
 } from '../hooks/useAnalytics';
 import { getChartHeight, useScreenSize } from '../hooks/useScreenSize';
+import { FilterPillsBar } from '../components/ui/FilterPillsBar';
 import { getProjectDisplayName } from '../utils/projectNames';
 
 const dashboardSearchSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  project: z.string().optional(),
+  model: z.string().optional(),
 });
 
 export const Route = createFileRoute('/')({
@@ -52,9 +56,10 @@ export const Route = createFileRoute('/')({
 });
 
 function Dashboard() {
-  const { startDate, endDate } = Route.useSearch();
+  const { startDate, endDate, project, model } = Route.useSearch();
   const navigate = Route.useNavigate();
   const screenSize = useScreenSize();
+  const { data: metadata } = useAnalyticsMetadata();
 
   const dateRange = startDate && endDate ? { start: startDate, end: endDate } : undefined;
 
@@ -74,22 +79,24 @@ function Dashboard() {
         search: {
           dateFrom: startOfDay,
           dateTo: endOfDay,
+          project,
+          model,
         },
       });
     },
-    [navigate],
+    [navigate, project, model],
   );
 
   const {
     data: overview,
     isLoading: overviewLoading,
     error: overviewError,
-  } = useOverviewMetrics(dateRange);
-  const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis(dateRange);
-  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries(dateRange);
-  const { data: distributions, isLoading: distributionsLoading } = useDistributionData(dateRange);
-  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange);
-  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange);
+  } = useOverviewMetrics(dateRange, project, model);
+  const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis(dateRange, project, model);
+  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries(dateRange, project, model);
+  const { data: distributions, isLoading: distributionsLoading } = useDistributionData(dateRange, project, model);
+  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange, project, model);
+  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange, project, model);
 
   // Memoized processed project data to prevent unnecessary recalculations
   const processedProjectUsage = useMemo(
@@ -120,6 +127,30 @@ function Dashboard() {
           ...prev,
           startDate: range?.start,
           endDate: range?.end,
+        }),
+      });
+    },
+    [navigate],
+  );
+
+  const handleProjectChange = useCallback(
+    (value: string) => {
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          project: value || undefined,
+        }),
+      });
+    },
+    [navigate],
+  );
+
+  const handleModelChange = useCallback(
+    (value: string) => {
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          model: value || undefined,
         }),
       });
     },
@@ -160,14 +191,75 @@ function Dashboard() {
                 Track your Claude Code usage patterns, costs, and productivity metrics
               </p>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
               <DateRangePicker
                 value={dateRange}
                 onChange={handleDateRangeChange}
                 className="w-full sm:w-auto"
               />
+              <select
+                value={project || ''}
+                onChange={(e) => handleProjectChange(e.target.value)}
+                className="bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+              >
+                <option value="">All projects</option>
+                {(metadata?.filters.availableProjects || []).map((p: string, index: number) => (
+                  <option key={`${p}-${index}`} value={p}>{p}</option>
+                ))}
+              </select>
+              <select
+                value={model || ''}
+                onChange={(e) => handleModelChange(e.target.value)}
+                className="bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
+              >
+                <option value="">All models</option>
+                {(metadata?.filters.availableModels || []).map((m: string, index: number) => (
+                  <option key={`${m}-${index}`} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
           </div>
+          {screenSize.isMobile && (
+            <FilterPillsBar
+              className="mt-2"
+              pills={[
+                ...(dateRange?.start && dateRange?.end
+                  ? [{
+                      label: 'Date',
+                      value:
+                        new Date(dateRange.start).toLocaleDateString() ===
+                        new Date(dateRange.end).toLocaleDateString()
+                          ? new Date(dateRange.start).toLocaleDateString()
+                          : `${new Date(dateRange.start).toLocaleDateString()} → ${new Date(dateRange.end).toLocaleDateString()}`,
+                      onClear: () =>
+                        navigate({
+                          search: (prev) => ({ ...prev, startDate: undefined, endDate: undefined }),
+                        }),
+                    }]
+                  : []),
+                ...(project
+                  ? [{
+                      label: 'Project',
+                      value: project,
+                      onClear: () =>
+                        navigate({
+                          search: (prev) => ({ ...prev, project: undefined }),
+                        }),
+                    }]
+                  : []),
+                ...(model
+                  ? [{
+                      label: 'Model',
+                      value: model,
+                      onClear: () =>
+                        navigate({
+                          search: (prev) => ({ ...prev, model: undefined }),
+                        }),
+                    }]
+                  : []),
+              ]}
+            />
+          )}
         </div>
       </div>
 
@@ -228,6 +320,8 @@ function Dashboard() {
                   color="#FF6B35"
                   formatValue={formatCurrency}
                   formatTooltip={(value) => [formatCurrency(value), 'Cost']}
+                  exportable
+                  exportFilename="daily-costs.png"
                 />
               </ChartWithErrorBoundary>
             )}
@@ -313,6 +407,8 @@ function Dashboard() {
                     formatValue={formatNumber}
                     onDataPointClick={handleChartClick}
                     formatTooltip={(value) => [`${formatNumber(value)} sessions`, 'Sessions']}
+                    exportable
+                    exportFilename="daily-sessions.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -346,6 +442,8 @@ function Dashboard() {
                     formatValue={formatNumber}
                     onDataPointClick={handleChartClick}
                     formatTooltip={(value) => [`${formatNumber(value)} tokens`, 'Tokens']}
+                    exportable
+                    exportFilename="daily-tokens.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -379,6 +477,8 @@ function Dashboard() {
                     formatValue={formatDuration}
                     onDataPointClick={handleChartClick}
                     formatTooltip={(value) => [`${formatDuration(value)} avg`, 'Duration']}
+                    exportable
+                    exportFilename="avg-duration.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -408,7 +508,8 @@ function Dashboard() {
                 </div>
               ) : (
                 <ChartWithErrorBoundary fallbackTitle="Model Usage Chart Error">
-                  <PieChart data={distributions?.modelUsage || []} height={250} />
+                  <PieChart data={distributions?.modelUsage || []} height={250} exportable exportFilename="model-usage.png" />
+                  
                 </ChartWithErrorBoundary>
               )}
             </CardContent>
@@ -433,6 +534,8 @@ function Dashboard() {
                     data={distributions?.toolUsage || []}
                     height={250}
                     color="#10B981"
+                    exportable
+                    exportFilename="tool-usage.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -461,6 +564,8 @@ function Dashboard() {
                       `${value} sessions (${percentage.toFixed(1)}%)`,
                       processedProjectUsage.find((p) => p.name === name)?.tooltip || name,
                     ]}
+                    exportable
+                    exportFilename="project-usage.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -495,6 +600,8 @@ function Dashboard() {
                     height={300}
                     formatValue={(value) => value.toString()}
                     showLabels={true}
+                    exportable
+                    exportFilename="usage-heatmap.png"
                   />
                 </ChartWithErrorBoundary>
               )}

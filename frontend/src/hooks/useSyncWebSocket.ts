@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getApiUrl } from '../config/environment';
 
 export interface SyncProgressData {
   status: 'starting' | 'in_progress' | 'completed' | 'failed';
@@ -35,9 +34,11 @@ export function useSyncWebSocket() {
 
   const connect = useCallback(() => {
     try {
-      // Convert HTTP URL to WebSocket URL
-      const apiUrl = getApiUrl('/ws/sync');
-      const wsUrl = apiUrl.replace(/^https?:\/\//, (match) => 
+      // WebSocket routes don't use /api prefix, construct URL directly
+      const baseUrl = import.meta.env.DEV
+        ? 'http://localhost:3001'
+        : window.location.origin;
+      const wsUrl = `${baseUrl}/ws/sync`.replace(/^https?:\/\//, (match) =>
         match === 'https://' ? 'wss://' : 'ws://'
       );
       
