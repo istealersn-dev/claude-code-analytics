@@ -3,7 +3,8 @@
 A comprehensive personal analytics dashboard for Claude Code CLI usage tracking with beautiful visualizations and detailed insights.
 
 ![Claude Code Analytics](https://img.shields.io/badge/Claude%20Code-Analytics-orange?style=for-the-badge)
-![Progress](https://img.shields.io/badge/Progress-100%25-brightgreen?style=for-the-badge)
+![Progress](https://img.shields.io/badge/Progress-95%25-brightgreen?style=for-the-badge)
+![Claude Code 2.0](https://img.shields.io/badge/Claude%20Code-2.0-orange?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
@@ -18,9 +19,10 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 - 📊 **Comprehensive Analytics**: Track sessions, costs, tokens, and model usage
 - 📈 **Beautiful Visualizations**: Interactive charts with Recharts and custom styling
 - 🔄 **Real-time Sync**: Advanced data synchronization with progress tracking
-- 🎯 **Interactive Filtering**: Date ranges, drill-down views, and URL-persistent filters  
+- 🎯 **Interactive Filtering**: Date ranges, drill-down views, and URL-persistent filters
 - 📱 **Responsive Design**: Optimized for desktop and mobile viewing
 - 🔒 **Privacy First**: All data remains local - no external uploads or sharing
+- 🚀 **Claude Code 2.0**: Extended sessions, checkpoints, subagents, and VS Code integration
 
 ## 📋 Table of Contents
 
@@ -85,7 +87,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 
 - Node.js 18+
 - PostgreSQL 14+
-- Claude Code CLI (for data source)
+- Claude Code CLI 2.0+ (for data source)
 
 ### Quick Start
 

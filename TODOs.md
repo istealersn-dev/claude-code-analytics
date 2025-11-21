@@ -456,4 +456,8 @@
 
 *Last updated: November 2025*
 *Status: **PROJECT STREAMLINED** ✅*
-*Recent: **Feature Simplification** - Removed Dashboard Builder (Phase 5.6) and Interactive Charts (Phase 5.5) features to streamline the application and focus on core analytics functionality. All essential dashboard charts remain functional. Project is production-ready with 95% completion, emphasizing simplicity and maintainability.*
+*Recent Changes:*
+- **Claude Code 2.0 Default**: Removed CC1 support, CC2 is now the standard schema
+- **Feature Simplification**: Removed Dashboard Builder (Phase 5.6) and Interactive Charts (Phase 5.5)
+- **Focus**: Core analytics with CC2 features (extended sessions, checkpoints, subagents, VS Code integration)
+- **Status**: Production-ready with 95% completion, emphasizing simplicity and maintainability
