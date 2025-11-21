@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, BarChart3, Calendar, Settings, Wrench } from 'lucide-react';
+import { Plus, X, Calendar, Settings } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
@@ -16,18 +16,6 @@ const quickActions: QuickAction[] = [
     label: 'View Sessions',
     icon: Calendar,
     color: 'bg-blue-600 hover:bg-blue-700',
-  },
-  {
-    to: '/charts',
-    label: 'Open Charts',
-    icon: BarChart3,
-    color: 'bg-green-600 hover:bg-green-700',
-  },
-  {
-    to: '/dashboard-builder',
-    label: 'Build Dashboard',
-    icon: Wrench,
-    color: 'bg-purple-600 hover:bg-purple-700',
   },
   {
     to: '/settings',

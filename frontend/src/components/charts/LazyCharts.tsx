@@ -4,9 +4,6 @@ import type { PieChartProps } from './PieChart';
 import type { AreaChartProps } from './AreaChart';
 import type { BarChartProps } from './BarChart';
 import type { HeatmapChartProps } from './HeatmapChart';
-import type { InteractiveLineChartProps } from './InteractiveLineChart';
-import type { ChartComparisonProps } from './ChartComparison';
-import type { ChartBuilderProps } from './ChartBuilder';
 
 // Lazy load chart components for code splitting
 const LazyLineChart = lazy(() =>
@@ -23,17 +20,6 @@ const LazyBarChart = lazy(() =>
 );
 const LazyHeatmapChart = lazy(() =>
   import('./HeatmapChart').then((module) => ({ default: module.HeatmapChart })),
-);
-
-// Phase 5.5: Interactive Chart Components
-const LazyInteractiveLineChart = lazy(() =>
-  import('./InteractiveLineChart').then((module) => ({ default: module.InteractiveLineChart })),
-);
-const LazyChartComparison = lazy(() =>
-  import('./ChartComparison').then((module) => ({ default: module.ChartComparison })),
-);
-const LazyChartBuilder = lazy(() =>
-  import('./ChartBuilder').then((module) => ({ default: module.ChartBuilder })),
 );
 
 // Loading component for charts
@@ -82,32 +68,6 @@ export function HeatmapChart(props: HeatmapChartProps) {
   return (
     <Suspense fallback={<ChartLoader height={props.height} />}>
       <LazyHeatmapChart {...props} />
-    </Suspense>
-  );
-}
-
-// Phase 5.5: Interactive Chart Components
-export function InteractiveLineChart(props: InteractiveLineChartProps) {
-  return (
-    <Suspense fallback={<ChartLoader height={props.height} />}>
-      <LazyInteractiveLineChart {...props} />
-    </Suspense>
-  );
-}
-
-export function ChartComparison(props: ChartComparisonProps) {
-  return (
-    <Suspense fallback={<ChartLoader height={props.height} />}>
-      <LazyChartComparison {...props} />
-    </Suspense>
-  );
-}
-
-export function ChartBuilder(props: ChartBuilderProps) {
-  const fallbackHeight = props.initialConfig?.height ?? 300;
-  return (
-    <Suspense fallback={<ChartLoader height={fallbackHeight} />}>
-      <LazyChartBuilder {...props} />
     </Suspense>
   );
 }

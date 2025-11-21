@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BarChart3, Calendar, Settings, Wrench, Home } from 'lucide-react';
+import { Calendar, Settings, Home } from 'lucide-react';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
 interface BottomNavItem {
@@ -18,16 +18,6 @@ const bottomNavItems: BottomNavItem[] = [
     to: '/sessions',
     label: 'Sessions',
     icon: Calendar,
-  },
-  {
-    to: '/charts',
-    label: 'Charts',
-    icon: BarChart3,
-  },
-  {
-    to: '/dashboard-builder',
-    label: 'Builder',
-    icon: Wrench,
   },
   {
     to: '/settings',

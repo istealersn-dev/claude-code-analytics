@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BarChart3, Calendar, Settings, Wrench, Bug, Home } from 'lucide-react';
+import { Calendar, Settings, Bug, Home } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
@@ -22,18 +22,6 @@ const navigationItems: NavigationItem[] = [
     label: 'Sessions',
     shortLabel: 'Sessions',
     icon: Calendar,
-  },
-  {
-    to: '/charts',
-    label: 'Interactive Charts',
-    shortLabel: 'Charts',
-    icon: BarChart3,
-  },
-  {
-    to: '/dashboard-builder',
-    label: 'Dashboard Builder',
-    shortLabel: 'Builder',
-    icon: Wrench,
   },
   {
     to: '/settings',

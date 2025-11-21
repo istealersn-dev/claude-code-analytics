@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Menu, X, BarChart3, Calendar, Settings, Wrench, Bug, Home } from 'lucide-react';
+import { Menu, X, Calendar, Settings, Bug, Home } from 'lucide-react';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
 interface NavigationItem {
@@ -22,18 +22,6 @@ const navigationItems: NavigationItem[] = [
     label: 'Sessions',
     icon: Calendar,
     description: 'View all sessions',
-  },
-  {
-    to: '/charts',
-    label: 'Charts',
-    icon: BarChart3,
-    description: 'Interactive visualizations',
-  },
-  {
-    to: '/dashboard-builder',
-    label: 'Builder',
-    icon: Wrench,
-    description: 'Custom dashboards',
   },
   {
     to: '/settings',
