@@ -14,9 +14,7 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - **Backend**: Fastify server with comprehensive API endpoints
 - **Routing**: TanStack Router for type-safe navigation and search params
 - **Data Fetching**: TanStack Query for server state management and caching
-- **Charts**: Recharts with curved styling and advanced interactive features
-- **Dashboard Builder**: react-grid-layout with drag-and-drop widget management
-- **Interactive Features**: Zoom, pan, annotations, and real-time chart comparisons
+- **Charts**: Recharts with curved styling for visualizations
 - **Data Retention**: 90 days (configurable)
 - **Update Strategy**: Manual sync with incremental data processing and real-time sync interface
 
@@ -71,9 +69,7 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - **Performance**: Session duration, tools used, cache hit rates with time-series analysis
 - **Trends**: Daily/weekly usage patterns, historical comparisons with date range filtering
 - **Data Quality**: Duplicate detection, missing data identification, integrity scoring
-- **Interactive Features**: Chart drill-down navigation, URL-persisted filters, real-time sync status
-- **Advanced Charts**: Zoom/pan functionality, annotation system, chart comparisons
-- **Custom Dashboards**: Drag-and-drop widget builder, template management, multi-dashboard support
+- **Interactive Features**: URL-persisted filters, real-time sync status
 
 ## Error Handling Philosophy
 - **Fail Fast**: Stop execution with clear error messages when critical issues occur
@@ -105,7 +101,7 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 2. **Phase 2**: Frontend Foundation & Basic Dashboard ✅ **100% Complete**
 3. **Phase 3**: Advanced Analytics & Visualizations ✅ **85% Complete**
 4. **Phase 4**: Enhanced Features & Polish ✅ **100% Complete**
-5. **Phase 5**: Advanced Features & Automation ✅ **67% Complete** (5.1-5.2 Complete ✅, 5.3-5.4 Skipped ⏭️, 5.5-5.6 Complete ✅)
+5. **Phase 5**: Advanced Features & Automation ✅ **50% Complete** (5.1-5.2 Complete ✅, 5.3-5.6 Skipped ⏭️)
 6. **Phase 6**: Production & Deployment ✅ **100% Complete** (Merged PR #14, December 2024)
 
 ### Recent Major Achievements
@@ -115,7 +111,6 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - ✅ **Testing Suite**: Comprehensive unit, integration, and E2E tests with Vitest and Playwright
 - ✅ **Docker Deployment**: Production-ready containerization with optional CC2 schema
 - ✅ **Phase 5.1-5.2 Complete**: Advanced Trends & Cost Optimization features
-- ✅ **Phase 5.5-5.6 Complete**: Interactive Charts & Custom Dashboard Builder
 - ✅ **Code Quality Overhaul** (October 2025 - PR #13): Zero TypeScript/ESLint errors
 - ✅ **Documentation Cleanup** (November 2025): Consolidated from 14 to 3 essential docs
 
@@ -133,8 +128,6 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - Mobile and tablet responsive design improvements
 - Advanced trend analysis (week-over-week, seasonal patterns, anomaly detection)
 - Cost optimization insights and budget tracking
-- Interactive charts with zoom, pan, and annotations
-- Custom dashboard creation and user-configurable widgets
 - Production deployment with Docker containerization
 - Comprehensive testing suite (unit, integration, E2E)
 - Claude Code 2.0 compatibility (automatic schema detection for both standard and CC2)
@@ -152,47 +145,13 @@ See TODOs.md "Post-Launch Enhancements" section for:
 - **Schema Auto-Detection**: Automatic detection of standard vs CC2 database schemas with conditional SQL queries
 - **AnalyticsQueryBuilder**: Centralized database abstraction with comprehensive data quality methods
 - **Data Validation System**: Complete data integrity checking with automated cleanup capabilities
-- **Interactive Dashboard**: Advanced chart interactions with date filtering and drill-down navigation
-- **Interactive Charts**: Zoom/pan functionality, annotation system, chart comparisons with overlay/side-by-side views
-- **Dashboard Builder**: Drag-and-drop widget system using react-grid-layout with real-time customization
-- **Template Management**: Complete dashboard template system with import/export, preset templates
+- **Interactive Dashboard**: Chart visualizations with date filtering and data exploration
 - **Real-Time Sync Status**: WebSocket-based live updates with inline status display
 - **Testing Suite**: Comprehensive unit, integration, and E2E tests with Vitest and Playwright
 - **Claude Code 2.0 Support**: Optional extended session handling, checkpoints, subagents, background tasks
 - **Docker Deployment**: Multi-stage builds, health checks, production secrets management
 - **Type Safety**: Full TypeScript coverage with strict mode and proper error handling
 - **Production Ready**: Zero compilation errors, clean architecture, optimized builds
-
-## New Interactive Features (Phase 5.5-5.6)
-
-### Interactive Charts (`/charts`)
-- **InteractiveLineChart**: Zoom and pan with drag-to-zoom selection, double-click annotations
-- **ChartComparison**: Multi-metric overlays, side-by-side, and stacked comparisons
-- **ChartBuilder**: Custom chart configuration with real-time preview
-- **Chart Controls**: Enable/disable interactions, annotation management, export functionality
-
-### Custom Dashboard Builder (`/dashboard-builder`)
-- **DashboardBuilder**: Drag-and-drop widget placement with react-grid-layout
-- **Widget Management**: Add, remove, duplicate, and configure chart widgets
-- **Property Panel**: Real-time widget customization (title, color, height, data sources)
-- **Template System**: Save, load, import, export dashboard configurations
-- **Preset Templates**: Executive Summary, Usage Analytics, Cost Optimization dashboards
-- **Grid Layout**: Responsive design with mobile-optimized widget arrangements
-
-## Component File Structure (Phase 5.5-5.6)
-
-### Interactive Charts
-- `frontend/src/components/charts/InteractiveLineChart.tsx` - Zoom, pan, annotation functionality
-- `frontend/src/components/charts/ChartComparison.tsx` - Multi-chart comparison views
-- `frontend/src/components/charts/ChartBuilder.tsx` - Custom chart configuration interface
-- `frontend/src/routes/charts.tsx` - Interactive charts showcase page
-
-### Dashboard Builder
-- `frontend/src/components/dashboard/DashboardBuilder.tsx` - Main drag-and-drop builder
-- `frontend/src/components/dashboard/DashboardTemplates.tsx` - Template management system
-- `frontend/src/routes/dashboard-builder.tsx` - Dashboard builder route
-- `frontend/src/components/ui/tabs.tsx` - Custom tabs component
-- `frontend/src/styles/grid-layout.css` - Grid layout styling
 
 ## Key Files Reference
 
