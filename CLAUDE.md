@@ -105,8 +105,9 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 6. **Phase 6**: Production & Deployment ✅ **100% Complete** (Merged PR #14, December 2024)
 
 ### Recent Major Achievements
-- ✅ **Sync UI & Schema Compatibility** (November 2025 - PR #15): Improved sync interface and automatic CC2 schema detection
-- ✅ **Phase 6 Complete** (December 2024 - PR #14): Production deployment with optional Claude Code 2.0 enhancements
+- ✅ **Claude Code 2.0 Default** (November 2025): CC2 is now the standard - removed legacy CC1 support
+- ✅ **Sync UI & Schema Compatibility** (November 2025 - PR #15): Improved sync interface and schema compatibility
+- ✅ **Phase 6 Complete** (December 2024 - PR #14): Production deployment with Claude Code 2.0 features
 - ✅ **Claude Code 2.0 Features**: Extended session handling, checkpoints, background tasks, subagent tracking, VS Code integration
 - ✅ **Testing Suite**: Comprehensive unit, integration, and E2E tests with Vitest and Playwright
 - ✅ **Docker Deployment**: Production-ready containerization with optional CC2 schema
@@ -115,11 +116,10 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - ✅ **Documentation Cleanup** (November 2025): Consolidated from 14 to 3 essential docs
 
 ### Optional Enhancements (Post-Launch)
-1. **Claude Code 2.0 Activation**: Use `schema-claude-code-2.sql` and CC2 scripts for extended features
-2. **Phase 5.3-5.4 Features** (Optional):
+1. **Phase 5.3-5.4 Features** (Optional):
    - Automated reporting (weekly summaries, cost reports)
    - External integrations (Slack notifications, email reports)
-3. **Additional Features**: See TODOs.md "Post-Launch Enhancements" section
+2. **Additional Features**: See TODOs.md "Post-Launch Enhancements" section
 
 ## Future Considerations
 
@@ -130,7 +130,7 @@ Personal usage analytics dashboard for Claude Code CLI with beautiful visualizat
 - Cost optimization insights and budget tracking
 - Production deployment with Docker containerization
 - Comprehensive testing suite (unit, integration, E2E)
-- Claude Code 2.0 compatibility (automatic schema detection for both standard and CC2)
+- Claude Code 2.0 features (extended sessions, checkpoints, subagents, VS Code integration)
 - Real-time sync status with WebSocket (inline UI display)
 
 ### Future Enhancements ⏳
@@ -142,7 +142,7 @@ See TODOs.md "Post-Launch Enhancements" section for:
 
 ## Technical Architecture Achievements
 
-- **Schema Auto-Detection**: Automatic detection of standard vs CC2 database schemas with conditional SQL queries
+- **Claude Code 2.0 Schema**: Comprehensive database schema supporting all CC2 features
 - **AnalyticsQueryBuilder**: Centralized database abstraction with comprehensive data quality methods
 - **Data Validation System**: Complete data integrity checking with automated cleanup capabilities
 - **Interactive Dashboard**: Chart visualizations with date filtering and data exploration
