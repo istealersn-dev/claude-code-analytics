@@ -13,7 +13,7 @@ export function cleanProjectName(projectName: string): string {
   const meaningfulParts = pathParts.filter(
     (part) =>
       part &&
-      !['Users', 'stanleynadar', 'Documents', 'Side', 'Projects', 'Experiments'].includes(part),
+      !['Users', 'stanleynadar', 'Documents', 'Side', 'Projects', 'Experiments', 'Engineering', 'Claude', 'Code'].includes(part),
   );
 
   if (meaningfulParts.length === 0) {

@@ -1,5 +1,5 @@
 /**
- * Environment configuration for Claude Code Analytics
+ * Environment configuration for Claulytics
  * Centralizes all environment variables and provides fallbacks
  */
 

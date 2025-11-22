@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
 import { useScreenSize } from '../hooks/useScreenSize';
 import { FilterPillsBar } from '../components/ui/FilterPillsBar';
+import { getProjectDisplayName } from '../utils/projectNames';
 
 import { getApiUrl } from '../config/environment';
 
@@ -268,7 +269,7 @@ function Sessions() {
               {virtualizer.getVirtualItems().map((virtualItem) => {
                 const session = sessions[virtualItem.index];
                 const startedAt = new Date(session.started_at);
-                const projectName = session.project_name?.split('-').pop() || 'Unknown Project';
+                const projectName = getProjectDisplayName(session.project_name || 'Unknown', 'legend');
                 const totalTokens = session.total_input_tokens + session.total_output_tokens;
                 const cost =
                   typeof session.total_cost_usd === 'string'
@@ -278,7 +279,7 @@ function Sessions() {
                 return (
                   <Link
                     key={session.session_id}
-                    to="/sessions/$sessionId"
+                    to="/session/$sessionId"
                     params={{ sessionId: session.session_id }}
                     className="absolute top-0 left-0 w-full block hover:bg-primary-500/10 transition-colors border-b border-primary-500/10"
                     style={{
