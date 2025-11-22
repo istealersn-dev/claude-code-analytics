@@ -155,7 +155,7 @@ function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                Claude Code Analytics
+                Dashboard
               </h1>
               <p className="text-sm sm:text-base text-gray-400">
                 Track your Claude Code usage patterns, costs, and productivity metrics
@@ -586,7 +586,7 @@ function Dashboard() {
           <Card>
             <CardContent className="p-8 text-center">
               <h2 className="text-xl font-semibold text-white mb-4">
-                Welcome to Claude Code Analytics
+                Welcome to Claulytics
               </h2>
               <p className="text-gray-400 mb-6">
                 Your dashboard is ready! Connect your Claude Code data to start tracking your usage

@@ -40,9 +40,9 @@ export function ResponsiveNavigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold text-primary-500 hover:text-primary-400 transition-colors">
-              <span className="hidden sm:inline">Claude Code Analytics</span>
-              <span className="sm:hidden">CCA</span>
+            <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-500 hover:text-primary-400 transition-colors">
+              <img src="/claulytics-logo.svg" alt="Claulytics" className="w-8 h-8" />
+              <span className="hidden sm:inline">Claulytics</span>
             </Link>
           </div>
 
