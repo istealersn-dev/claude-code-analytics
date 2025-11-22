@@ -279,7 +279,7 @@ function Sessions() {
                 return (
                   <Link
                     key={session.session_id}
-                    to="/sessions/$sessionId"
+                    to="/session/$sessionId"
                     params={{ sessionId: session.session_id }}
                     className="absolute top-0 left-0 w-full block hover:bg-primary-500/10 transition-colors border-b border-primary-500/10"
                     style={{

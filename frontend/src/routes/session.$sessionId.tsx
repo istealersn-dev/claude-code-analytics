@@ -4,6 +4,7 @@ import { ArrowLeft, Bot, Clock, DollarSign, ExternalLink, Hash, Wrench, Zap } fr
 import { StatsCard } from '../components/analytics/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
+import { getProjectDisplayName } from '../utils/projectNames';
 
 import { getApiUrl } from '../config/environment';
 
@@ -30,10 +31,11 @@ async function fetchSessionDetail(sessionId: string): Promise<SessionDetail> {
     }
     throw new Error('Failed to fetch session details');
   }
-  return response.json();
+  const result = await response.json();
+  return result.data;
 }
 
-export const Route = createFileRoute('/sessions/$sessionId')({
+export const Route = createFileRoute('/session/$sessionId')({
   component: SessionDetail,
 });
 
@@ -132,7 +134,7 @@ function SessionDetail() {
 
   const startedAt = new Date(session.started_at);
   const endedAt = session.ended_at ? new Date(session.ended_at) : null;
-  const projectName = session.project_name || 'Unknown Project';
+  const projectName = getProjectDisplayName(session.project_name || 'Unknown', 'full');
   const totalTokens = session.total_input_tokens + session.total_output_tokens;
   const cacheEfficiency =
     session.cache_hit_count + session.cache_miss_count > 0
