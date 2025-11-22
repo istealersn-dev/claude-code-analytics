@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Calendar, Settings, Bug, Home } from 'lucide-react';
+import { Calendar, Settings, Home } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
@@ -29,19 +29,13 @@ const navigationItems: NavigationItem[] = [
     shortLabel: 'Settings',
     icon: Settings,
   },
-  {
-    to: '/debug',
-    label: 'Debug',
-    shortLabel: 'Debug',
-    icon: Bug,
-  },
 ];
 
 export function ResponsiveNavigation() {
   const screenSize = useScreenSize();
 
   return (
-    <nav className="border-b border-gray-800 bg-background-secondary/80 backdrop-blur-sm">
+    <nav className="border-b border-primary-500/20 bg-black/90 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -61,8 +55,8 @@ export function ResponsiveNavigation() {
                   <Link
                     key={item.to}
                     to={item.to}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-                    activeProps={{ className: 'bg-gray-700 text-white' }}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                    activeProps={{ className: 'bg-primary-500/20 text-primary-500' }}
                   >
                     <Icon className="h-4 w-4" />
                     <span>{item.label}</span>
@@ -81,8 +75,8 @@ export function ResponsiveNavigation() {
                   <Link
                     key={item.to}
                     to={item.to}
-                    className="flex items-center space-x-1 px-2 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-                    activeProps={{ className: 'bg-gray-700 text-white' }}
+                    className="flex items-center space-x-1 px-2 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                    activeProps={{ className: 'bg-primary-500/20 text-primary-500' }}
                     title={item.label}
                   >
                     <Icon className="h-4 w-4" />

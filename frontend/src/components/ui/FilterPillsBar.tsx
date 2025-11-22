@@ -17,7 +17,7 @@ export function FilterPillsBar({ pills, className, actions }: FilterPillsBarProp
   if (!pills.length) return null;
 
   return (
-    <div className={`bg-background-secondary/50 border border-gray-700 rounded-lg ${className || ''}`}>
+    <div className={`bg-black/50 border border-primary-500/20 rounded-lg ${className || ''}`}>
       <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-2">
           {pills.map((pill, idx) => (
@@ -25,11 +25,11 @@ export function FilterPillsBar({ pills, className, actions }: FilterPillsBarProp
               key={`${pill.label}-${idx}`}
               type="button"
               onClick={pill.onClear}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gray-600 bg-gray-800 text-gray-200 text-xs whitespace-nowrap"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary-500/20 bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors text-xs whitespace-nowrap"
             >
               <span className="font-medium">{pill.label}:</span>
-              <span className="font-mono text-gray-300">{pill.value}</span>
-              <X className="w-3 h-3 text-gray-400" />
+              <span className="font-mono">{pill.value}</span>
+              <X className="w-3 h-3" />
             </button>
           ))}
         </div>

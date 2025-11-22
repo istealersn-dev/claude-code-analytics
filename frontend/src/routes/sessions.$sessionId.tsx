@@ -64,11 +64,11 @@ function SessionDetail() {
           </Link>
         </div>
 
-        <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-red-400 mb-2">
+        <div className="bg-black/50 border border-primary-500/20 rounded-lg p-6 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold text-primary-500 mb-2">
             {error.message === 'Session not found' ? 'Session Not Found' : 'Error Loading Session'}
           </h2>
-          <p className="text-red-300 mb-4">
+          <p className="text-gray-400 mb-4">
             {error.message === 'Session not found'
               ? 'The requested session could not be found. It may have been deleted or never existed.'
               : 'There was an error loading the session details. Please try again later.'}
@@ -77,14 +77,14 @@ function SessionDetail() {
             <button
               type="button"
               onClick={() => navigate({ to: '/sessions' })}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Go to Sessions
             </button>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="bg-black/50 border border-primary-500/20 hover:border-primary-500/40 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Retry
             </button>

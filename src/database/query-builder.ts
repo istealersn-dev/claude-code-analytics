@@ -183,8 +183,8 @@ export class AnalyticsQueryBuilder {
         LIMIT 10
       ),
       project_stats AS (
-        SELECT 
-          s.project_name,
+        SELECT
+          s.project_name as project,
           COUNT(*) as count,
           ROUND(COUNT(*)::numeric / SUM(COUNT(*)) OVER() * 100, 2) as percentage
         FROM sessions s

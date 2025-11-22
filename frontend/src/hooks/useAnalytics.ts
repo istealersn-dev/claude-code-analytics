@@ -63,19 +63,17 @@ export interface DateRange {
 import { getApiUrl } from '../config/environment';
 
 // Helper function to build query string with filters
-function buildQueryString(dateRange?: DateRange, project?: string, model?: string): string {
+function buildQueryString(dateRange?: DateRange): string {
   const params = new URLSearchParams();
   if (dateRange?.start) params.append('dateFrom', dateRange.start);
   if (dateRange?.end) params.append('dateTo', dateRange.end);
-  if (project) params.append('projectName', project);
-  if (model) params.append('modelName', model);
   const queryString = params.toString();
   return queryString ? `?${queryString}` : '';
 }
 
 // Fetch functions
-async function fetchOverviewMetrics(dateRange?: DateRange, project?: string, model?: string): Promise<OverviewMetrics> {
-  const response = await fetch(`${getApiUrl('/analytics')}${buildQueryString(dateRange, project, model)}`);
+async function fetchOverviewMetrics(dateRange?: DateRange): Promise<OverviewMetrics> {
+  const response = await fetch(`${getApiUrl('/analytics')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch overview metrics');
   }
@@ -83,40 +81,40 @@ async function fetchOverviewMetrics(dateRange?: DateRange, project?: string, mod
   return result.data || result;
 }
 
-async function fetchCostAnalysis(dateRange?: DateRange, project?: string, model?: string): Promise<CostAnalysis> {
-  const response = await fetch(`${getApiUrl('/analytics/costs')}${buildQueryString(dateRange, project, model)}`);
+async function fetchCostAnalysis(dateRange?: DateRange): Promise<CostAnalysis> {
+  const response = await fetch(`${getApiUrl('/analytics/costs')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch cost analysis');
   }
   return response.json();
 }
 
-async function fetchDailyUsageTimeSeries(dateRange?: DateRange, project?: string, model?: string): Promise<DailyUsageTimeSeries> {
-  const response = await fetch(`${getApiUrl('/analytics/daily-usage')}${buildQueryString(dateRange, project, model)}`);
+async function fetchDailyUsageTimeSeries(dateRange?: DateRange): Promise<DailyUsageTimeSeries> {
+  const response = await fetch(`${getApiUrl('/analytics/daily-usage')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch daily usage time series');
   }
   return response.json();
 }
 
-async function fetchDistributionData(dateRange?: DateRange, project?: string, model?: string): Promise<DistributionData> {
-  const response = await fetch(`${getApiUrl('/analytics/distributions')}${buildQueryString(dateRange, project, model)}`);
+async function fetchDistributionData(dateRange?: DateRange): Promise<DistributionData> {
+  const response = await fetch(`${getApiUrl('/analytics/distributions')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch distribution data');
   }
   return response.json();
 }
 
-async function fetchHeatmapData(dateRange?: DateRange, project?: string, model?: string): Promise<HeatmapData[]> {
-  const response = await fetch(`${getApiUrl('/analytics/heatmap')}${buildQueryString(dateRange, project, model)}`);
+async function fetchHeatmapData(dateRange?: DateRange): Promise<HeatmapData[]> {
+  const response = await fetch(`${getApiUrl('/analytics/heatmap')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch heatmap data');
   }
   return response.json();
 }
 
-async function fetchPerformanceMetrics(dateRange?: DateRange, project?: string, model?: string): Promise<PerformanceMetrics> {
-  const response = await fetch(`${getApiUrl('/analytics/performance')}${buildQueryString(dateRange, project, model)}`);
+async function fetchPerformanceMetrics(dateRange?: DateRange): Promise<PerformanceMetrics> {
+  const response = await fetch(`${getApiUrl('/analytics/performance')}${buildQueryString(dateRange)}`);
   if (!response.ok) {
     throw new Error('Failed to fetch performance metrics');
   }
@@ -124,60 +122,60 @@ async function fetchPerformanceMetrics(dateRange?: DateRange, project?: string, 
 }
 
 // React Query hooks with optimized caching
-export function useOverviewMetrics(dateRange?: DateRange, project?: string, model?: string) {
+export function useOverviewMetrics(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['analytics', 'overview', dateRange, project, model],
-    queryFn: () => fetchOverviewMetrics(dateRange, project, model),
+    queryKey: ['analytics', 'overview', dateRange],
+    queryFn: () => fetchOverviewMetrics(dateRange),
     staleTime: 15 * 60 * 1000, // 15 minutes - overview data changes less frequently
     gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,
   });
 }
 
-export function useCostAnalysis(dateRange?: DateRange, project?: string, model?: string) {
+export function useCostAnalysis(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['analytics', 'costs', dateRange, project, model],
-    queryFn: () => fetchCostAnalysis(dateRange, project, model),
+    queryKey: ['analytics', 'costs', dateRange],
+    queryFn: () => fetchCostAnalysis(dateRange),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
   });
 }
 
-export function useDailyUsageTimeSeries(dateRange?: DateRange, project?: string, model?: string) {
+export function useDailyUsageTimeSeries(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['analytics', 'daily-usage', dateRange, project, model],
-    queryFn: () => fetchDailyUsageTimeSeries(dateRange, project, model),
+    queryKey: ['analytics', 'daily-usage', dateRange],
+    queryFn: () => fetchDailyUsageTimeSeries(dateRange),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
   });
 }
 
-export function useDistributionData(dateRange?: DateRange, project?: string, model?: string) {
+export function useDistributionData(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['analytics', 'distributions', dateRange, project, model],
-    queryFn: () => fetchDistributionData(dateRange, project, model),
+    queryKey: ['analytics', 'distributions', dateRange],
+    queryFn: () => fetchDistributionData(dateRange),
     staleTime: 15 * 60 * 1000, // 15 minutes - distribution data is more stable
     gcTime: 45 * 60 * 1000, // 45 minutes
     refetchOnWindowFocus: false,
   });
 }
 
-export function useHeatmapData(dateRange?: DateRange, project?: string, model?: string) {
+export function useHeatmapData(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['analytics', 'heatmap', dateRange, project, model],
-    queryFn: () => fetchHeatmapData(dateRange, project, model),
+    queryKey: ['analytics', 'heatmap', dateRange],
+    queryFn: () => fetchHeatmapData(dateRange),
     staleTime: 20 * 60 * 1000, // 20 minutes - heatmap data changes least frequently
     gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,
   });
 }
 
-export function usePerformanceMetrics(dateRange?: DateRange, project?: string, model?: string) {
+export function usePerformanceMetrics(dateRange?: DateRange) {
   return useQuery({
-    queryKey: ['analytics', 'performance', dateRange, project, model],
-    queryFn: () => fetchPerformanceMetrics(dateRange, project, model),
+    queryKey: ['analytics', 'performance', dateRange],
+    queryFn: () => fetchPerformanceMetrics(dateRange),
     staleTime: 15 * 60 * 1000, // 15 minutes
     gcTime: 45 * 60 * 1000, // 45 minutes
     refetchOnWindowFocus: false,

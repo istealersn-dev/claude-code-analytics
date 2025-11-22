@@ -37,7 +37,6 @@ import {
   useHeatmapData,
   useOverviewMetrics,
   usePerformanceMetrics,
-  useAnalyticsMetadata,
 } from '../hooks/useAnalytics';
 import { getChartHeight, useScreenSize } from '../hooks/useScreenSize';
 import { FilterPillsBar } from '../components/ui/FilterPillsBar';
@@ -46,8 +45,6 @@ import { getProjectDisplayName } from '../utils/projectNames';
 const dashboardSearchSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  project: z.string().optional(),
-  model: z.string().optional(),
 });
 
 export const Route = createFileRoute('/')({
@@ -56,10 +53,9 @@ export const Route = createFileRoute('/')({
 });
 
 function Dashboard() {
-  const { startDate, endDate, project, model } = Route.useSearch();
+  const { startDate, endDate } = Route.useSearch();
   const navigate = Route.useNavigate();
   const screenSize = useScreenSize();
-  const { data: metadata } = useAnalyticsMetadata();
 
   const dateRange = startDate && endDate ? { start: startDate, end: endDate } : undefined;
 
@@ -79,24 +75,22 @@ function Dashboard() {
         search: {
           dateFrom: startOfDay,
           dateTo: endOfDay,
-          project,
-          model,
         },
       });
     },
-    [navigate, project, model],
+    [navigate],
   );
 
   const {
     data: overview,
     isLoading: overviewLoading,
     error: overviewError,
-  } = useOverviewMetrics(dateRange, project, model);
-  const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis(dateRange, project, model);
-  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries(dateRange, project, model);
-  const { data: distributions, isLoading: distributionsLoading } = useDistributionData(dateRange, project, model);
-  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange, project, model);
-  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange, project, model);
+  } = useOverviewMetrics(dateRange);
+  const { data: costAnalysis, isLoading: costsLoading } = useCostAnalysis(dateRange);
+  const { data: dailyUsage, isLoading: usageLoading } = useDailyUsageTimeSeries(dateRange);
+  const { data: distributions, isLoading: distributionsLoading } = useDistributionData(dateRange);
+  const { data: heatmapData, isLoading: heatmapLoading } = useHeatmapData(dateRange);
+  const { data: performance, isLoading: performanceLoading } = usePerformanceMetrics(dateRange);
 
   // Memoized processed project data to prevent unnecessary recalculations
   const processedProjectUsage = useMemo(
@@ -133,43 +127,19 @@ function Dashboard() {
     [navigate],
   );
 
-  const handleProjectChange = useCallback(
-    (value: string) => {
-      navigate({
-        search: (prev) => ({
-          ...prev,
-          project: value || undefined,
-        }),
-      });
-    },
-    [navigate],
-  );
-
-  const handleModelChange = useCallback(
-    (value: string) => {
-      navigate({
-        search: (prev) => ({
-          ...prev,
-          model: value || undefined,
-        }),
-      });
-    },
-    [navigate],
-  );
-
   if (overviewError) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-red-400 mb-2">Connection Error</h2>
-          <p className="text-red-300 mb-4">
+        <div className="bg-black/50 border border-primary-500/20 rounded-lg p-6 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold text-primary-500 mb-2">Connection Error</h2>
+          <p className="text-gray-400 mb-4">
             Unable to connect to the analytics API. Make sure the backend server is running on port
             3001.
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             Retry Connection
           </button>
@@ -191,73 +161,29 @@ function Dashboard() {
                 Track your Claude Code usage patterns, costs, and productivity metrics
               </p>
             </div>
-            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+            <div className="flex-shrink-0">
               <DateRangePicker
                 value={dateRange}
                 onChange={handleDateRangeChange}
                 className="w-full sm:w-auto"
               />
-              <select
-                value={project || ''}
-                onChange={(e) => handleProjectChange(e.target.value)}
-                className="bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
-              >
-                <option value="">All projects</option>
-                {(metadata?.filters.availableProjects || []).map((p: string, index: number) => (
-                  <option key={`${p}-${index}`} value={p}>{p}</option>
-                ))}
-              </select>
-              <select
-                value={model || ''}
-                onChange={(e) => handleModelChange(e.target.value)}
-                className="bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
-              >
-                <option value="">All models</option>
-                {(metadata?.filters.availableModels || []).map((m: string, index: number) => (
-                  <option key={`${m}-${index}`} value={m}>{m}</option>
-                ))}
-              </select>
             </div>
           </div>
-          {screenSize.isMobile && (
+          {screenSize.isMobile && dateRange?.start && dateRange?.end && (
             <FilterPillsBar
               className="mt-2"
-              pills={[
-                ...(dateRange?.start && dateRange?.end
-                  ? [{
-                      label: 'Date',
-                      value:
-                        new Date(dateRange.start).toLocaleDateString() ===
-                        new Date(dateRange.end).toLocaleDateString()
-                          ? new Date(dateRange.start).toLocaleDateString()
-                          : `${new Date(dateRange.start).toLocaleDateString()} → ${new Date(dateRange.end).toLocaleDateString()}`,
-                      onClear: () =>
-                        navigate({
-                          search: (prev) => ({ ...prev, startDate: undefined, endDate: undefined }),
-                        }),
-                    }]
-                  : []),
-                ...(project
-                  ? [{
-                      label: 'Project',
-                      value: project,
-                      onClear: () =>
-                        navigate({
-                          search: (prev) => ({ ...prev, project: undefined }),
-                        }),
-                    }]
-                  : []),
-                ...(model
-                  ? [{
-                      label: 'Model',
-                      value: model,
-                      onClear: () =>
-                        navigate({
-                          search: (prev) => ({ ...prev, model: undefined }),
-                        }),
-                    }]
-                  : []),
-              ]}
+              pills={[{
+                label: 'Date',
+                value:
+                  new Date(dateRange.start).toLocaleDateString() ===
+                  new Date(dateRange.end).toLocaleDateString()
+                    ? new Date(dateRange.start).toLocaleDateString()
+                    : `${new Date(dateRange.start).toLocaleDateString()} → ${new Date(dateRange.end).toLocaleDateString()}`,
+                onClear: () =>
+                  navigate({
+                    search: (prev) => ({ ...prev, startDate: undefined, endDate: undefined }),
+                  }),
+              }]}
             />
           )}
         </div>
@@ -320,7 +246,6 @@ function Dashboard() {
                   color="#FF6B35"
                   formatValue={formatCurrency}
                   formatTooltip={(value) => [formatCurrency(value), 'Cost']}
-                  exportable
                   exportFilename="daily-costs.png"
                 />
               </ChartWithErrorBoundary>
@@ -388,9 +313,6 @@ function Dashboard() {
                   <Activity className="w-5 h-5 text-primary-500" />
                   Daily Sessions
                 </div>
-                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
-                  Click to filter sessions
-                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -407,8 +329,7 @@ function Dashboard() {
                     formatValue={formatNumber}
                     onDataPointClick={handleChartClick}
                     formatTooltip={(value) => [`${formatNumber(value)} sessions`, 'Sessions']}
-                    exportable
-                    exportFilename="daily-sessions.png"
+                      exportFilename="daily-sessions.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -423,9 +344,6 @@ function Dashboard() {
                   <Hash className="w-5 h-5 text-primary-500" />
                   Token Usage
                 </div>
-                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
-                  Click to filter sessions
-                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -442,8 +360,7 @@ function Dashboard() {
                     formatValue={formatNumber}
                     onDataPointClick={handleChartClick}
                     formatTooltip={(value) => [`${formatNumber(value)} tokens`, 'Tokens']}
-                    exportable
-                    exportFilename="daily-tokens.png"
+                      exportFilename="daily-tokens.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -458,9 +375,6 @@ function Dashboard() {
                   <Clock className="w-5 h-5 text-primary-500" />
                   Avg Session Duration
                 </div>
-                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
-                  Click to filter sessions
-                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -477,8 +391,7 @@ function Dashboard() {
                     formatValue={formatDuration}
                     onDataPointClick={handleChartClick}
                     formatTooltip={(value) => [`${formatDuration(value)} avg`, 'Duration']}
-                    exportable
-                    exportFilename="avg-duration.png"
+                      exportFilename="avg-duration.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -508,8 +421,8 @@ function Dashboard() {
                 </div>
               ) : (
                 <ChartWithErrorBoundary fallbackTitle="Model Usage Chart Error">
-                  <PieChart data={distributions?.modelUsage || []} height={250} exportable exportFilename="model-usage.png" />
-                  
+                  <PieChart data={distributions?.modelUsage || []} height={250} exportFilename="model-usage.png" />
+
                 </ChartWithErrorBoundary>
               )}
             </CardContent>
@@ -534,8 +447,7 @@ function Dashboard() {
                     data={distributions?.toolUsage || []}
                     height={250}
                     color="#10B981"
-                    exportable
-                    exportFilename="tool-usage.png"
+                      exportFilename="tool-usage.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -564,8 +476,7 @@ function Dashboard() {
                       `${value} sessions (${percentage.toFixed(1)}%)`,
                       processedProjectUsage.find((p) => p.name === name)?.tooltip || name,
                     ]}
-                    exportable
-                    exportFilename="project-usage.png"
+                      exportFilename="project-usage.png"
                   />
                 </ChartWithErrorBoundary>
               )}
@@ -574,152 +485,151 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Phase 3.3: Performance Metrics */}
+      {/* Phase 3.3: Usage Heatmap - Full Width */}
       <div className="mb-6 sm:mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">
-          Performance Insights
+          Usage Heatmap
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Usage Heatmap */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Thermometer className="w-5 h-5 text-primary-500" />
-                Usage Heatmap (Hour of Day)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {heatmapLoading ? (
-                <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-                </div>
-              ) : (
-                <ChartWithErrorBoundary fallbackTitle="Usage Heatmap Chart Error">
-                  <HeatmapChart
-                    data={heatmapData || []}
-                    height={300}
-                    formatValue={(value) => value.toString()}
-                    showLabels={true}
-                    exportable
-                    exportFilename="usage-heatmap.png"
-                  />
-                </ChartWithErrorBoundary>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Performance Metrics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gauge className="w-5 h-5 text-primary-500" />
-                Performance Stats
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {performanceLoading ? (
-                <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-                </div>
-              ) : performance ? (
-                <div className="space-y-6">
-                  {/* Session Length Distribution */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-300 mb-3">
-                      Session Length Distribution
-                    </h4>
-                    <div className="space-y-2">
-                      {performance.sessionLengthDistribution?.slice(0, 5).map((range, index) => (
-                        <div
-                          key={`${range.range}-${index}`}
-                          className="flex justify-between items-center"
-                        >
-                          <span className="text-sm text-gray-400">{range.range}</span>
-                          <span className="text-sm text-white font-medium">
-                            {range.count} sessions
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Cache Stats */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-300 mb-3">Cache Performance</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-2xl font-bold text-primary-400">
-                          {performance.cacheStats?.hitRate
-                            ? `${Math.round(performance.cacheStats.hitRate * 100)}%`
-                            : 'N/A'}
-                        </p>
-                        <p className="text-xs text-gray-400">Hit Rate</p>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-white">
-                          {performance.cacheStats?.totalRequests || 0}
-                        </p>
-                        <p className="text-xs text-gray-400">Total Requests</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-400 text-center py-8">No performance data available</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Welcome Message or Data Summary */}
-      {overview?.totalSessions === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Welcome to Claude Code Analytics
-            </h2>
-            <p className="text-gray-400 mb-6">
-              Your dashboard is ready! Connect your Claude Code data to start tracking your usage
-              patterns and insights.
-            </p>
-            <button
-              type="button"
-              className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-            >
-              Sync Data
-            </button>
-          </CardContent>
-        </Card>
-      ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity Summary</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Thermometer className="w-5 h-5 text-primary-500" />
+              Usage Heatmap (Hour of Day)
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Most Used Tool</p>
-                <p className="text-lg font-semibold text-white">
-                  {overview?.topTools?.[0]?.tool || 'N/A'}
-                </p>
+            {heatmapLoading ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
               </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Most Active Project</p>
-                <p className="text-lg font-semibold text-white">
-                  {overview?.topProjects?.[0]?.project || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Total Models Used</p>
-                <p className="text-lg font-semibold text-white">
-                  {overview?.topModels?.length || 0}
-                </p>
-              </div>
-            </div>
+            ) : (
+              <ChartWithErrorBoundary fallbackTitle="Usage Heatmap Chart Error">
+                <HeatmapChart
+                  data={heatmapData || []}
+                  height={220}
+                  formatValue={(value) => value.toString()}
+                  showLabels={true}
+                    exportFilename="usage-heatmap.png"
+                />
+              </ChartWithErrorBoundary>
+            )}
           </CardContent>
         </Card>
-      )}
+      </div>
+
+      {/* Performance Stats & Activity Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Performance Metrics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gauge className="w-5 h-5 text-primary-500" />
+              Performance Stats
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {performanceLoading ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+              </div>
+            ) : performance ? (
+              <div className="space-y-6">
+                {/* Session Length Distribution */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">
+                    Session Length Distribution
+                  </h4>
+                  <div className="space-y-2">
+                    {performance.sessionLengthDistribution?.slice(0, 5).map((range, index) => (
+                      <div
+                        key={`${range.range}-${index}`}
+                        className="flex justify-between items-center"
+                      >
+                        <span className="text-sm text-gray-400">{range.range}</span>
+                        <span className="text-sm text-white font-medium">
+                          {range.count} sessions
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cache Stats */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">Cache Performance</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-2xl font-bold text-primary-400">
+                        {performance.cacheStats?.hitRate
+                          ? `${Math.round(performance.cacheStats.hitRate * 100)}%`
+                          : 'N/A'}
+                      </p>
+                      <p className="text-xs text-gray-400">Hit Rate</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-white">
+                        {performance.cacheStats?.totalRequests || 0}
+                      </p>
+                      <p className="text-xs text-gray-400">Total Requests</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-400 text-center py-8">No performance data available</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity Summary */}
+        {overview?.totalSessions === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Welcome to Claude Code Analytics
+              </h2>
+              <p className="text-gray-400 mb-6">
+                Your dashboard is ready! Connect your Claude Code data to start tracking your usage
+                patterns and insights.
+              </p>
+              <button
+                type="button"
+                className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                Sync Data
+              </button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Most Used Tool</p>
+                  <p className="text-lg font-semibold text-white">
+                    {overview?.topTools?.[0]?.tool || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Most Active Project</p>
+                  <p className="text-lg font-semibold text-white">
+                    {overview?.topProjects?.[0]?.project || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Total Models Used</p>
+                  <p className="text-lg font-semibold text-white">
+                    {overview?.topModels?.length || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

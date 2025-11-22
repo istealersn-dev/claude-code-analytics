@@ -4,7 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft, ChevronRight, Clock, Hash, Wrench, Zap } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { z } from 'zod';
-import { formatCurrency, formatDuration, formatNumber, useAnalyticsMetadata } from '../hooks/useAnalytics';
+import { formatCurrency, formatDuration, formatNumber } from '../hooks/useAnalytics';
 import { useScreenSize } from '../hooks/useScreenSize';
 import { FilterPillsBar } from '../components/ui/FilterPillsBar';
 
@@ -37,15 +37,11 @@ interface SessionsResponse {
 const sessionsSearchSchema = z.object({
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  project: z.string().optional(),
-  model: z.string().optional(),
 });
 
 async function fetchSessions(params?: {
   dateFrom?: string;
   dateTo?: string;
-  project?: string;
-  model?: string;
 }): Promise<SessionsResponse> {
   const queryParams = new URLSearchParams();
   queryParams.append('limit', '20');
@@ -53,8 +49,6 @@ async function fetchSessions(params?: {
 
   if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
   if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
-  if (params?.project) queryParams.append('projectName', params.project);
-  if (params?.model) queryParams.append('modelName', params.model);
 
   const url = `${getApiUrl('/analytics/sessions')}?${queryParams.toString()}`;
   console.log('Fetching sessions from URL:', url);
@@ -74,16 +68,15 @@ export const Route = createFileRoute('/sessions')({
 });
 
 function Sessions() {
-  const { dateFrom, dateTo, project, model } = Route.useSearch();
+  const { dateFrom, dateTo } = Route.useSearch();
   const navigate = Route.useNavigate();
   const screenSize = useScreenSize();
-  const { data: metadata } = useAnalyticsMetadata();
 
-  console.log('Sessions component - Search params:', { dateFrom, dateTo, project, model });
+  console.log('Sessions component - Search params:', { dateFrom, dateTo });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['sessions', { dateFrom, dateTo, project, model }],
-    queryFn: () => fetchSessions({ dateFrom, dateTo, project, model }),
+    queryKey: ['sessions', { dateFrom, dateTo }],
+    queryFn: () => fetchSessions({ dateFrom, dateTo }),
     staleTime: 10 * 60 * 1000, // Increased cache time for better performance
     gcTime: 30 * 60 * 1000,
   });
@@ -133,121 +126,29 @@ function Sessions() {
             </div>
           )}
         </div>
-        {screenSize.isMobile && (
+        {screenSize.isMobile && dateFrom && dateTo && (
           <FilterPillsBar
             className="mt-3"
-            pills={[
-              ...(dateFrom && dateTo
-                ? [{
-                    label: 'Date',
-                    value:
-                      new Date(dateFrom).toLocaleDateString() ===
-                      new Date(dateTo).toLocaleDateString()
-                        ? new Date(dateFrom).toLocaleDateString()
-                        : `${new Date(dateFrom).toLocaleDateString()} → ${new Date(dateTo).toLocaleDateString()}`,
-                    onClear: () =>
-                      navigate({
-                        search: (prev) => ({ ...prev, dateFrom: undefined, dateTo: undefined }),
-                      }),
-                  }]
-                : []),
-              ...(project
-                ? [{
-                    label: 'Project',
-                    value: project,
-                    onClear: () =>
-                      navigate({
-                        search: (prev) => ({ ...prev, project: undefined }),
-                      }),
-                  }]
-                : []),
-              ...(model
-                ? [{
-                    label: 'Model',
-                    value: model,
-                    onClear: () =>
-                      navigate({
-                        search: (prev) => ({ ...prev, model: undefined }),
-                      }),
-                  }]
-                : []),
-            ]}
+            pills={[{
+              label: 'Date',
+              value:
+                new Date(dateFrom).toLocaleDateString() ===
+                new Date(dateTo).toLocaleDateString()
+                  ? new Date(dateFrom).toLocaleDateString()
+                  : `${new Date(dateFrom).toLocaleDateString()} → ${new Date(dateTo).toLocaleDateString()}`,
+              onClear: () =>
+                navigate({
+                  search: (prev) => ({ ...prev, dateFrom: undefined, dateTo: undefined }),
+                }),
+            }]}
           />
         )}
       </div>
 
-      {/* Filters */}
-      <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4">Filters</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div>
-            <label htmlFor="date-range" className="block text-sm font-medium text-gray-400 mb-2">
-              Date Range
-            </label>
-            <select
-              id="date-range"
-              className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
-            >
-              <option>Last 30 days</option>
-              <option>Last 7 days</option>
-              <option>Last 24 hours</option>
-              <option>All time</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="project" className="block text-sm font-medium text-gray-400 mb-2">
-              Project
-            </label>
-            <select
-              id="project"
-              value={project || ''}
-              onChange={(e) =>
-                navigate({
-                  search: (prev) => ({ ...prev, project: e.target.value || undefined }),
-                })
-              }
-              className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
-            >
-              <option value="">All projects</option>
-              {(metadata?.filters.availableProjects || []).map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="model" className="block text-sm font-medium text-gray-400 mb-2">
-              Model
-            </label>
-            <select
-              id="model"
-              value={model || ''}
-              onChange={(e) =>
-                navigate({
-                  search: (prev) => ({ ...prev, model: e.target.value || undefined }),
-                })
-              }
-              className="w-full bg-background-primary border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-primary-500 focus:outline-none"
-            >
-              <option value="">All models</option>
-              {(metadata?.filters.availableModels || []).map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-end sm:col-span-2 lg:col-span-1">
-            <button
-              type="button"
-              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Apply Filters
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Sessions List */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg">
-        <div className="p-6 border-b border-gray-700">
+      <div className="bg-black/50 border border-primary-500/20 rounded-lg backdrop-blur-sm">
+        <div className="p-6 border-b border-primary-500/20">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Recent Sessions</h2>
             <div className="flex items-center gap-3">
@@ -280,8 +181,6 @@ function Sessions() {
                     'sessions',
                     dateFrom ? new Date(dateFrom).toISOString().slice(0,10) : undefined,
                     dateTo ? new Date(dateTo).toISOString().slice(0,10) : undefined,
-                    project || undefined,
-                    model || undefined,
                   ].filter(Boolean).join('_');
                   a.href = url;
                   a.download = `${nameParts || 'sessions'}.csv`;
@@ -298,13 +197,13 @@ function Sessions() {
 
         {error && (
           <div className="p-8 text-center">
-            <div className="text-red-400 mb-4">⚠️</div>
-            <h3 className="text-lg font-semibold text-red-400 mb-2">Error Loading Sessions</h3>
+            <div className="text-primary-500 mb-4">⚠️</div>
+            <h3 className="text-lg font-semibold text-primary-500 mb-2">Error Loading Sessions</h3>
             <p className="text-gray-400 mb-4">{error.message}</p>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               Retry
             </button>
@@ -316,15 +215,15 @@ function Sessions() {
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="flex items-center gap-4 p-4 bg-gray-700/50 rounded-lg">
-                    <div className="w-12 h-12 bg-gray-600 rounded"></div>
+                  <div className="flex items-center gap-4 p-4 bg-primary-500/5 rounded-lg border border-primary-500/10">
+                    <div className="w-12 h-12 bg-primary-500/20 rounded"></div>
                     <div className="flex-1">
-                      <div className="h-4 bg-gray-600 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-600 rounded w-2/3"></div>
+                      <div className="h-4 bg-primary-500/20 rounded mb-2"></div>
+                      <div className="h-3 bg-primary-500/20 rounded w-2/3"></div>
                     </div>
                     <div className="text-right">
-                      <div className="h-4 bg-gray-600 rounded mb-2 w-16"></div>
-                      <div className="h-3 bg-gray-600 rounded w-12"></div>
+                      <div className="h-4 bg-primary-500/20 rounded mb-2 w-16"></div>
+                      <div className="h-3 bg-primary-500/20 rounded w-12"></div>
                     </div>
                   </div>
                 </div>
@@ -342,7 +241,7 @@ function Sessions() {
             </p>
             <Link
               to="/"
-              className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block"
+              className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block"
             >
               Go to Dashboard
             </Link>
@@ -381,7 +280,7 @@ function Sessions() {
                     key={session.session_id}
                     to="/sessions/$sessionId"
                     params={{ sessionId: session.session_id }}
-                    className="absolute top-0 left-0 w-full block hover:bg-gray-750 transition-colors border-b border-gray-700"
+                    className="absolute top-0 left-0 w-full block hover:bg-primary-500/10 transition-colors border-b border-primary-500/10"
                     style={{
                       height: `${virtualItem.size}px`,
                       transform: `translateY(${virtualItem.start}px)`,
@@ -392,10 +291,10 @@ function Sessions() {
                     >
                       <div className="flex-shrink-0">
                         <div
-                          className={`${screenSize.isMobile ? 'w-10 h-10' : 'w-12 h-12'} bg-orange-900/30 rounded-lg flex items-center justify-center`}
+                          className={`${screenSize.isMobile ? 'w-10 h-10' : 'w-12 h-12'} bg-primary-500/10 rounded-lg flex items-center justify-center border border-primary-500/20`}
                         >
                           <Hash
-                            className={`${screenSize.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-400`}
+                            className={`${screenSize.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-primary-500`}
                           />
                         </div>
                       </div>
@@ -444,7 +343,7 @@ function Sessions() {
                         </div>
                       </div>
 
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500/50" />
                     </div>
                   </Link>
                 );

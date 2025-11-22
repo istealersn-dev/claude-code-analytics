@@ -15,13 +15,13 @@ const quickActions: QuickAction[] = [
     to: '/sessions',
     label: 'View Sessions',
     icon: Calendar,
-    color: 'bg-blue-600 hover:bg-blue-700',
+    color: 'bg-primary-500 hover:bg-primary-600',
   },
   {
     to: '/settings',
     label: 'Settings',
     icon: Settings,
-    color: 'bg-gray-600 hover:bg-gray-700',
+    color: 'bg-primary-500/80 hover:bg-primary-500',
   },
 ];
 
@@ -72,8 +72,8 @@ export function FloatingActionButton() {
         onClick={toggleMenu}
         className={`w-14 h-14 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105 touch-manipulation no-select ${
           isOpen
-            ? 'bg-red-600 hover:bg-red-700 rotate-45'
-            : 'bg-primary-600 hover:bg-primary-700'
+            ? 'bg-primary-500 hover:bg-primary-600 rotate-45'
+            : 'bg-primary-500 hover:bg-primary-600'
         }`}
         aria-label={isOpen ? 'Close quick actions' : 'Open quick actions'}
       >
