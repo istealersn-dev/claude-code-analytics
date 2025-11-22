@@ -10,8 +10,8 @@ export function Card({ className, children }: CardProps) {
   return (
     <div
       className={clsx(
-        'bg-background-secondary/50 border border-gray-700 rounded-lg',
-        'hover:border-primary-500/50 transition-colors',
+        'bg-black/50 border border-primary-500/20 rounded-lg backdrop-blur-sm',
+        'hover:border-primary-500/40 transition-colors',
         className,
       )}
     >

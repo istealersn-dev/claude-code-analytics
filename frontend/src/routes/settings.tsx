@@ -197,7 +197,7 @@ function Settings() {
 
       {/* Sync Success/Result Banner */}
       {showSyncResult && syncMutation.data && (
-        <div className="bg-green-900/30 border border-green-700 rounded-lg p-4 mb-6">
+        <div className="bg-black/30 border border-green-500/30 rounded-lg p-4 mb-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
             <div>
@@ -219,7 +219,7 @@ function Settings() {
 
       {/* Enhanced Sync Error Banner */}
       {syncMutation.isError && (
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 mb-6">
+        <div className="bg-black/30 border border-red-500/30 rounded-lg p-4 mb-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
             <div className="flex-1">
@@ -287,7 +287,7 @@ function Settings() {
         )}
 
       {/* Data Sync Settings */}
-      <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-6 mb-6">
+      <div className="bg-black/50 border border-primary-500/20 rounded-lg p-6 mb-6 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white">Data Synchronization</h2>
           {statusLoading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
@@ -295,7 +295,7 @@ function Settings() {
 
         {/* Enhanced Sync Status */}
         {syncStatus && (
-          <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 mb-4">
+          <div className="bg-black/30 border border-primary-500/20 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div
@@ -388,7 +388,7 @@ function Settings() {
 
         {/* Database Stats */}
         {syncStats && (
-          <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-4 mb-4">
+          <div className="bg-black/30 border border-primary-500/20 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-gray-400" />
               <h3 className="font-medium text-gray-300">Database Statistics</h3>
@@ -446,7 +446,7 @@ function Settings() {
           </div>
 
           {/* Auto-sync Settings */}
-          <div className="space-y-4 p-4 bg-gray-800/30 rounded-lg border border-gray-600">
+          <div className="space-y-4 p-4 bg-black/30 rounded-lg border border-primary-500/20">
             <div className="flex items-center space-x-3">
               <input
                 type="checkbox"
@@ -544,7 +544,7 @@ function Settings() {
       <DataQualityDashboard />
 
       {/* Display Settings */}
-      <div className="bg-background-secondary/50 border border-gray-700 rounded-lg p-6 mb-6">
+      <div className="bg-black/50 border border-primary-500/20 rounded-lg p-6 mb-6 backdrop-blur-sm">
         <h2 className="text-lg font-semibold text-white mb-4">Display Preferences</h2>
         <div className="space-y-4">
           <div>
@@ -600,7 +600,7 @@ function Settings() {
             </p>
           </div>
 
-          <div className="pt-4 border-t border-gray-700">
+          <div className="pt-4 border-t border-primary-500/20">
             <button
               type="button"
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"

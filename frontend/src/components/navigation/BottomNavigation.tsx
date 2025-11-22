@@ -35,7 +35,7 @@ export function BottomNavigation() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 mobile-nav mobile-safe-area">
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-primary-500/20 mobile-nav mobile-safe-area backdrop-blur-sm">
       <div className="flex justify-around items-center h-16">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
@@ -43,7 +43,7 @@ export function BottomNavigation() {
             <Link
               key={item.to}
               to={item.to}
-              className="flex flex-col items-center justify-center flex-1 py-2 px-1 text-xs font-medium text-gray-400 hover:text-white transition-colors touch-manipulation mobile-hover no-select"
+              className="flex flex-col items-center justify-center flex-1 py-2 px-1 text-xs font-medium text-gray-400 hover:text-primary-500 transition-colors touch-manipulation mobile-hover no-select"
               activeProps={{ className: 'text-primary-500' }}
             >
               <Icon className="h-5 w-5 mb-1" />

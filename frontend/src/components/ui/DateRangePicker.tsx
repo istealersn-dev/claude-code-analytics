@@ -78,12 +78,12 @@ export function DateRangePicker({ value, onChange, className = '' }: DateRangePi
     <div className={`relative ${className}`}>
       <button type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg text-white transition-colors duration-200"
+        className="flex items-center gap-2 px-4 py-2 bg-black/50 hover:bg-primary-500/10 border border-primary-500/20 hover:border-primary-500/40 rounded-lg text-white transition-colors duration-200"
       >
-        <Calendar className="w-4 h-4 text-gray-400" />
+        <Calendar className="w-4 h-4 text-primary-500" />
         <span className="text-sm">{displayValue}</span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-primary-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -105,23 +105,23 @@ export function DateRangePicker({ value, onChange, className = '' }: DateRangePi
           />
 
           {/* Dropdown */}
-          <div className="absolute top-full mt-2 left-0 w-80 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-20">
+          <div className="absolute top-full mt-2 left-0 w-80 bg-black/95 border border-primary-500/20 rounded-lg shadow-lg z-20 backdrop-blur-sm">
             <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-200 mb-3">Quick Select</h3>
+              <h3 className="text-sm font-medium text-primary-500 mb-3">Quick Select</h3>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {PRESET_RANGES.map((preset) => (
                   <button type="button"
                     key={preset.label}
                     onClick={() => handlePresetClick(preset.days)}
-                    className="px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors text-left"
+                    className="px-3 py-2 text-sm text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-md transition-colors text-left border border-transparent hover:border-primary-500/20"
                   >
                     {preset.label}
                   </button>
                 ))}
               </div>
 
-              <div className="border-t border-gray-600 pt-4">
-                <h3 className="text-sm font-medium text-gray-200 mb-3">Custom Range</h3>
+              <div className="border-t border-primary-500/20 pt-4 mb-4">
+                <h3 className="text-sm font-medium text-primary-500 mb-3">Custom Range</h3>
                 <div className="space-y-3">
                   <div>
                     <label htmlFor="date-from" className="block text-xs text-gray-400 mb-1">From</label>
@@ -130,7 +130,7 @@ export function DateRangePicker({ value, onChange, className = '' }: DateRangePi
                       type="date"
                       value={value?.start || ''}
                       onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:border-orange-500"
+                      className="w-full px-3 py-2 bg-black/50 border border-primary-500/20 rounded-md text-white text-sm focus:outline-none focus:border-primary-500"
                     />
                   </div>
                   <div>
@@ -140,11 +140,26 @@ export function DateRangePicker({ value, onChange, className = '' }: DateRangePi
                       type="date"
                       value={value?.end || ''}
                       onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:border-orange-500"
+                      className="w-full px-3 py-2 bg-black/50 border border-primary-500/20 rounded-md text-white text-sm focus:outline-none focus:border-primary-500"
                     />
                   </div>
                 </div>
               </div>
+
+              {value && (
+                <div className="border-t border-primary-500/20 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(undefined);
+                      setIsOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-sm text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-md transition-colors border border-primary-500/20 hover:border-primary-500/40"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </>

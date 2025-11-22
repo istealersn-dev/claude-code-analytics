@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Menu, X, Calendar, Settings, Bug, Home } from 'lucide-react';
+import { Menu, X, Calendar, Settings, Home } from 'lucide-react';
 import { useScreenSize } from '../../hooks/useScreenSize';
 
 interface NavigationItem {
@@ -29,12 +29,6 @@ const navigationItems: NavigationItem[] = [
     icon: Settings,
     description: 'App configuration',
   },
-  {
-    to: '/debug',
-    label: 'Debug',
-    icon: Bug,
-    description: 'Development tools',
-  },
 ];
 
 export function MobileNavigation() {
@@ -59,7 +53,7 @@ export function MobileNavigation() {
       {/* Mobile menu button */}
       <button
         onClick={toggleMenu}
-        className="md:hidden p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+        className="md:hidden p-2 rounded-md text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
         aria-label="Toggle navigation menu"
       >
         {isOpen ? (
@@ -78,16 +72,16 @@ export function MobileNavigation() {
             onClick={closeMenu}
             aria-hidden="true"
           />
-          
+
           {/* Menu panel */}
-          <div className="fixed top-0 right-0 h-full w-80 max-w-sm bg-gray-900 shadow-xl mobile-menu-enter">
+          <div className="fixed top-0 right-0 h-full w-80 max-w-sm bg-black/95 shadow-xl mobile-menu-enter border-l border-primary-500/20">
             <div className="flex flex-col h-full">
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-800">
-                <h2 className="text-lg font-semibold text-white">Navigation</h2>
+              <div className="flex items-center justify-between p-4 border-b border-primary-500/20">
+                <h2 className="text-lg font-semibold text-primary-500">Navigation</h2>
                 <button
                   onClick={closeMenu}
-                  className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-md text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
                   aria-label="Close menu"
                 >
                   <X className="h-5 w-5" />
@@ -104,14 +98,14 @@ export function MobileNavigation() {
                         key={item.to}
                         to={item.to}
                         onClick={closeMenu}
-                        className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors group touch-manipulation mobile-hover"
-                        activeProps={{ className: 'bg-primary-600 text-white' }}
+                        className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors group touch-manipulation mobile-hover"
+                        activeProps={{ className: 'bg-primary-500/20 text-primary-500' }}
                       >
                         <Icon className="h-5 w-5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium">{item.label}</div>
                           {item.description && (
-                            <div className="text-xs text-gray-400 mt-0.5">
+                            <div className="text-xs text-gray-500 mt-0.5">
                               {item.description}
                             </div>
                           )}
@@ -123,8 +117,8 @@ export function MobileNavigation() {
               </nav>
 
               {/* Footer */}
-              <div className="p-4 border-t border-gray-800">
-                <div className="text-xs text-gray-400 text-center">
+              <div className="p-4 border-t border-primary-500/20">
+                <div className="text-xs text-gray-500 text-center">
                   Claude Code Analytics
                 </div>
               </div>

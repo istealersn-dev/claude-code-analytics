@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 
 interface HeatmapData {
   hour: number;
@@ -40,6 +40,22 @@ export function HeatmapChart({
   exportable,
   exportFilename = 'chart.png',
 }: HeatmapChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Track container width for responsive sizing
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
   const { heatmapData, maxValue } = useMemo(() => {
     // Create a map for quick lookup
     const dataMap = new Map<string, number>();
@@ -61,8 +77,6 @@ export function HeatmapChart({
 
     return { heatmapData: grid, maxValue: max };
   }, [data]);
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleExport = useCallback(() => {
     const root = containerRef.current;
@@ -111,10 +125,18 @@ export function HeatmapChart({
     );
   }
 
-  const cellWidth = 32;
-  const cellHeight = 20;
   const labelHeight = 20;
   const labelWidth = 40;
+  const padding = 20;
+
+  // Calculate responsive cell width based on container
+  const cellWidth = containerWidth > 0
+    ? Math.max(20, Math.floor((containerWidth - labelWidth - padding) / HOURS.length))
+    : 32;
+  const cellHeight = 20;
+
+  const svgWidth = labelWidth + HOURS.length * cellWidth + 10;
+  const svgHeight = labelHeight + DAYS.length * cellHeight + 10;
 
   return (
     <div style={{ height }} className="overflow-auto relative" ref={containerRef}>
@@ -127,10 +149,12 @@ export function HeatmapChart({
           Export PNG
         </button>
       )}
-      <div className="min-w-fit">
+      <div className="w-full">
         <svg
-          width={labelWidth + HOURS.length * cellWidth + 10}
-          height={labelHeight + DAYS.length * cellHeight + 10}
+          width="100%"
+          height={svgHeight}
+          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          preserveAspectRatio="xMinYMin meet"
           className="font-mono text-xs"
           role="img"
           aria-label="Heatmap showing activity by day and hour"

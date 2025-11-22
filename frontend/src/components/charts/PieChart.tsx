@@ -121,10 +121,10 @@ export const PieChart = memo(function PieChart({
         <RechartsPieChart>
           <Pie
             data={processedData.dataWithColors}
-            cx="50%"
+            cx={showLegend ? "45%" : "50%"}
             cy="50%"
-            innerRadius={showLegend ? 60 : 40}
-            outerRadius={showLegend ? 100 : 120}
+            innerRadius={showLegend ? 45 : 40}
+            outerRadius={showLegend ? 75 : 120}
             paddingAngle={2}
             dataKey="value"
             stroke="none"
@@ -156,23 +156,28 @@ export const PieChart = memo(function PieChart({
 
           {showLegend && (
             <Legend
-              verticalAlign="bottom"
-              height={60}
+              verticalAlign="middle"
+              align="right"
+              layout="vertical"
               wrapperStyle={{
-                paddingTop: '20px',
-                fontSize: '12px',
+                paddingLeft: '10px',
+                fontSize: '11px',
                 color: '#9CA3AF',
-                lineHeight: '1.2',
+                lineHeight: '1.4',
+                maxHeight: '100%',
+                overflowY: 'auto',
               }}
               iconType="circle"
+              iconSize={8}
               formatter={(value) => (
                 <span
                   style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     wordBreak: 'break-word',
                     display: 'inline-block',
-                    maxWidth: '150px',
-                    lineHeight: '1.3',
+                    maxWidth: '120px',
+                    lineHeight: '1.4',
+                    paddingLeft: '4px',
                   }}
                 >
                   {value}
