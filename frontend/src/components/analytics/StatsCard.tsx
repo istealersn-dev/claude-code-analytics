@@ -6,6 +6,7 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
+  subMetrics?: Array<{ label: string; value: string | number }>;
   icon: LucideIcon;
   trend?: {
     value: number;
@@ -19,6 +20,7 @@ export function StatsCard({
   title,
   value,
   subtitle,
+  subMetrics,
   icon: Icon,
   trend,
   loading = false,
@@ -66,6 +68,18 @@ export function StatsCard({
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+          {subMetrics && subMetrics.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {subMetrics.map((metric, idx) => (
+                <div key={idx} className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500">{metric.label}:</span>
+                  <span className="text-gray-300 font-medium">
+                    {typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           {trend && <p className="text-xs text-gray-400 mt-1">{trend.label}</p>}
         </div>
       </CardContent>

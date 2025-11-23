@@ -135,6 +135,7 @@ export class JSONLParser {
       role: obj.message?.role || obj.role || (obj.type === 'user' ? 'user' : 'assistant'),
       content: obj.message?.content || obj.content || obj.text || '',
       timestamp: obj.timestamp || obj.created_at || new Date().toISOString(),
+      model: obj.message?.model || obj.model,
       tokens: {
         input:
           obj.message?.usage?.input_tokens ||
@@ -202,8 +203,6 @@ export class JSONLParser {
           usageData.cache_creation_input_tokens || cacheData.cache_creation_input_tokens || 0,
         cache_read_input_tokens:
           usageData.cache_read_input_tokens || cacheData.cache_read_input_tokens || 0,
-        cache_hits: cacheData.cache_hits || 0,
-        cache_misses: cacheData.cache_misses || 0,
       };
     }
 
@@ -262,9 +261,19 @@ export class JSONLParser {
       totalInputTokens += inputTokens;
       totalOutputTokens += outputTokens;
 
+      // Calculate cache hits/misses from actual cache usage data
       if (msg.cache_stats) {
-        totalCacheHits += msg.cache_stats.cache_hits || 0;
-        totalCacheMisses += msg.cache_stats.cache_misses || 0;
+        // Claude Code uses cache_read_input_tokens to indicate cache hits
+        const cacheReadTokens = msg.cache_stats.cache_read_input_tokens || 0;
+        if (cacheReadTokens > 0) {
+          totalCacheHits += 1; // This request used cached data
+        } else if (inputTokens > 0) {
+          // Request with tokens but no cache read = cache miss
+          totalCacheMisses += 1;
+        }
+      } else if (inputTokens > 0) {
+        // Request with tokens but no cache stats = cache miss
+        totalCacheMisses += 1;
       }
 
       if (msg.tool_calls) {
@@ -388,11 +397,20 @@ export class JSONLParser {
   }
 
   private detectModel(messages: ClaudeCodeMessage[]): string {
+    // Find the first message with a model field
     for (const message of messages) {
-      if (message.role === 'assistant') {
-        return 'claude-3-sonnet-20240229';
+      if (message.model) {
+        return message.model;
       }
     }
+
+    // Fallback to checking for assistant messages
+    for (const message of messages) {
+      if (message.role === 'assistant') {
+        return 'claude-3-sonnet-20240229'; // Default for older sessions
+      }
+    }
+
     return 'unknown';
   }
 
@@ -402,6 +420,7 @@ export class JSONLParser {
       'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125 },
       'claude-3-opus-20240229': { input: 0.015, output: 0.075 },
       'claude-sonnet-4-20250514': { input: 0.003, output: 0.015 },
+      'claude-sonnet-4-5-20250929': { input: 0.003, output: 0.015 },
     };
 
     const modelCosts = costs[model as keyof typeof costs] || costs['claude-3-sonnet-20240229'];
