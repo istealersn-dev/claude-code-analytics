@@ -23,6 +23,7 @@ export interface ClaudeCodeMessage {
   role: 'user' | 'assistant' | 'tool' | 'subagent' | 'background_task';
   content?: string;
   timestamp: string;
+  model?: string;
   tokens?: {
     input?: number;
     output?: number;
@@ -55,8 +56,6 @@ export interface ToolResult {
 export interface CacheStats {
   cache_creation_input_tokens?: number;
   cache_read_input_tokens?: number;
-  cache_hits?: number;
-  cache_misses?: number;
 }
 
 export interface SessionMetadata {

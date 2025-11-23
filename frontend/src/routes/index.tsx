@@ -195,6 +195,10 @@ function Dashboard() {
           title="Total Sessions"
           value={overview?.totalSessions || 0}
           subtitle="All time"
+          subMetrics={[
+            { label: 'This Month', value: overview?.sessionsThisMonth || 0 },
+            { label: 'This Week', value: overview?.sessionsThisWeek || 0 },
+          ]}
           icon={BarChart3}
           loading={overviewLoading}
         />
@@ -202,6 +206,10 @@ function Dashboard() {
           title="Total Cost"
           value={overview ? formatCurrency(overview.totalCost) : '$0.00'}
           subtitle="All time"
+          subMetrics={[
+            { label: 'This Month', value: overview ? formatCurrency(overview.costThisMonth) : '$0.00' },
+            { label: 'This Week', value: overview ? formatCurrency(overview.costThisWeek) : '$0.00' },
+          ]}
           icon={DollarSign}
           loading={overviewLoading}
         />
@@ -211,6 +219,9 @@ function Dashboard() {
             overview ? formatNumber(overview.totalInputTokens + overview.totalOutputTokens) : '0'
           }
           subtitle={`${formatNumber(overview?.totalInputTokens || 0)} in, ${formatNumber(overview?.totalOutputTokens || 0)} out`}
+          subMetrics={[
+            { label: 'This Month', value: overview ? formatNumber(overview.inputTokensThisMonth + overview.outputTokensThisMonth) : '0' },
+          ]}
           icon={Target}
           loading={overviewLoading}
         />
@@ -218,21 +229,31 @@ function Dashboard() {
           title="Avg Session"
           value={overview ? `${Math.round(overview.averageSessionDuration / 60)}min` : '0min'}
           subtitle="Duration"
+          subMetrics={[
+            { label: 'This Month', value: overview ? `${Math.round(overview.avgDurationThisMonth / 60)}min` : '0min' },
+          ]}
           icon={Zap}
           loading={overviewLoading}
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        {/* Daily Cost Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary-500" />
-              Daily Cost Trend
-            </CardTitle>
-          </CardHeader>
+      {/* 💰 Cost Analytics Section */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+            💰 Cost Analytics
+          </h2>
+          <p className="text-sm text-gray-400">Monitor spending patterns and cost efficiency</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          {/* Daily Cost Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary-500" />
+                Daily Cost Trend
+              </CardTitle>
+            </CardHeader>
           <CardContent>
             {costsLoading ? (
               <div className="h-64 flex items-center justify-center">
@@ -299,11 +320,17 @@ function Dashboard() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
 
-      {/* Phase 3: Time-Series Charts */}
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Usage Trends</h2>
+      {/* 📊 Session Intelligence Section */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+            📊 Session Intelligence
+          </h2>
+          <p className="text-sm text-gray-400">Analyze session patterns, models, and tool utilization</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Daily Sessions */}
           <Card>
@@ -400,11 +427,14 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Phase 3.2: Distribution Charts */}
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">
-          Usage Distributions
-        </h2>
+      {/* 🔢 Usage Distributions Section */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+            🔢 Usage Distributions
+          </h2>
+          <p className="text-sm text-gray-400">Breakdown of models, tools, and project activity</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Model Usage Distribution */}
           <Card>
@@ -485,11 +515,14 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Phase 3.3: Usage Heatmap - Full Width */}
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">
-          Usage Heatmap
-        </h2>
+      {/* 🕒 Activity & Performance Section */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+            🕒 Activity & Performance
+          </h2>
+          <p className="text-sm text-gray-400">Heatmap patterns and performance metrics</p>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -515,10 +548,9 @@ function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Performance Stats & Activity Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Performance Stats & Activity Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6">
         {/* Performance Metrics */}
         <Card>
           <CardHeader>
@@ -560,7 +592,7 @@ function Dashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-2xl font-bold text-primary-400">
-                        {performance.cacheStats?.hitRate
+                        {performance.cacheStats?.hitRate != null
                           ? `${Math.round(performance.cacheStats.hitRate * 100)}%`
                           : 'N/A'}
                       </p>
@@ -616,7 +648,9 @@ function Dashboard() {
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Most Active Project</p>
                   <p className="text-lg font-semibold text-white">
-                    {overview?.topProjects?.[0]?.project || 'N/A'}
+                    {overview?.topProjects?.[0]?.project
+                      ? getProjectDisplayName(overview.topProjects[0].project, 'full')
+                      : 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -629,6 +663,7 @@ function Dashboard() {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
     </div>
   );

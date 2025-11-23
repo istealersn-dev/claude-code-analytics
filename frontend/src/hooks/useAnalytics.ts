@@ -3,10 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 // Types for analytics data
 export interface OverviewMetrics {
   totalSessions: number;
+  sessionsThisMonth: number;
+  sessionsThisWeek: number;
   totalCost: number;
+  costThisMonth: number;
+  costThisWeek: number;
   totalInputTokens: number;
+  inputTokensThisMonth: number;
   totalOutputTokens: number;
+  outputTokensThisMonth: number;
   averageSessionDuration: number;
+  avgDurationThisMonth: number;
   topModels: Array<{ model: string; count: number; percentage: number }>;
   topProjects: Array<{ project: string; count: number; percentage: number }>;
   topTools: Array<{ tool: string; count: number; percentage: number }>;

@@ -30,10 +30,17 @@ export interface SessionSummary {
 
 export interface UsageMetrics {
   totalSessions: number;
+  sessionsThisMonth: number;
+  sessionsThisWeek: number;
   totalCost: number;
+  costThisMonth: number;
+  costThisWeek: number;
   totalInputTokens: number;
+  inputTokensThisMonth: number;
   totalOutputTokens: number;
+  outputTokensThisMonth: number;
   averageSessionDuration: number;
+  avgDurationThisMonth: number;
   topModels: Array<{ model: string; count: number; percentage: number }>;
   topProjects: Array<{ project: string; count: number; percentage: number }>;
   topTools: Array<{ tool: string; count: number; percentage: number }>;
@@ -162,18 +169,25 @@ export class AnalyticsQueryBuilder {
 
     const metricsQuery = `
       WITH session_stats AS (
-        SELECT 
+        SELECT
           COUNT(*) as total_sessions,
+          COUNT(*) FILTER (WHERE s.started_at >= DATE_TRUNC('month', CURRENT_DATE)) as sessions_this_month,
+          COUNT(*) FILTER (WHERE s.started_at >= DATE_TRUNC('week', CURRENT_DATE)) as sessions_this_week,
           COALESCE(SUM(s.total_cost_usd), 0) as total_cost,
+          COALESCE(SUM(s.total_cost_usd) FILTER (WHERE s.started_at >= DATE_TRUNC('month', CURRENT_DATE)), 0) as cost_this_month,
+          COALESCE(SUM(s.total_cost_usd) FILTER (WHERE s.started_at >= DATE_TRUNC('week', CURRENT_DATE)), 0) as cost_this_week,
           COALESCE(SUM(s.total_input_tokens), 0) as total_input_tokens,
+          COALESCE(SUM(s.total_input_tokens) FILTER (WHERE s.started_at >= DATE_TRUNC('month', CURRENT_DATE)), 0) as input_tokens_this_month,
           COALESCE(SUM(s.total_output_tokens), 0) as total_output_tokens,
-          COALESCE(AVG(s.duration_seconds), 0) as avg_duration
+          COALESCE(SUM(s.total_output_tokens) FILTER (WHERE s.started_at >= DATE_TRUNC('month', CURRENT_DATE)), 0) as output_tokens_this_month,
+          COALESCE(AVG(s.duration_seconds), 0) as avg_duration,
+          COALESCE(AVG(s.duration_seconds) FILTER (WHERE s.started_at >= DATE_TRUNC('month', CURRENT_DATE)), 0) as avg_duration_this_month
         FROM sessions s
         ${whereClause}
       ),
       model_stats AS (
-        SELECT 
-          s.model_name,
+        SELECT
+          s.model_name as model,
           COUNT(*) as count,
           ROUND(COUNT(*)::numeric / SUM(COUNT(*)) OVER() * 100, 2) as percentage
         FROM sessions s
@@ -225,10 +239,17 @@ export class AnalyticsQueryBuilder {
 
     return {
       totalSessions: metrics.total_sessions || 0,
+      sessionsThisMonth: metrics.sessions_this_month || 0,
+      sessionsThisWeek: metrics.sessions_this_week || 0,
       totalCost: parseFloat(metrics.total_cost || '0'),
+      costThisMonth: parseFloat(metrics.cost_this_month || '0'),
+      costThisWeek: parseFloat(metrics.cost_this_week || '0'),
       totalInputTokens: metrics.total_input_tokens || 0,
+      inputTokensThisMonth: metrics.input_tokens_this_month || 0,
       totalOutputTokens: metrics.total_output_tokens || 0,
+      outputTokensThisMonth: metrics.output_tokens_this_month || 0,
       averageSessionDuration: parseFloat(metrics.avg_duration || '0'),
+      avgDurationThisMonth: parseFloat(metrics.avg_duration_this_month || '0'),
       topModels: Array.isArray(topModels) ? topModels : [],
       topProjects: Array.isArray(topProjects) ? topProjects : [],
       topTools: Array.isArray(topTools) ? topTools : [],
@@ -880,9 +901,13 @@ export class AnalyticsQueryBuilder {
         LIMIT 30
       ),
       cache_stats AS (
-        SELECT 
-          AVG(CASE WHEN s.cache_hit_count > 0 THEN 1.0 ELSE 0.0 END) as hit_rate,
-          COUNT(*) as total_requests
+        SELECT
+          CASE
+            WHEN SUM(s.cache_hit_count) + SUM(s.cache_miss_count) > 0
+            THEN SUM(s.cache_hit_count)::float / (SUM(s.cache_hit_count) + SUM(s.cache_miss_count))
+            ELSE NULL
+          END as hit_rate,
+          SUM(s.cache_hit_count) + SUM(s.cache_miss_count) as total_requests
         FROM sessions s
         ${whereClause}
       )
