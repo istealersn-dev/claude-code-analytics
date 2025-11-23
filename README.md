@@ -3,8 +3,8 @@
 A comprehensive personal analytics dashboard for Claude Code CLI usage tracking with beautiful visualizations and detailed insights.
 
 ![Claude Code Analytics](https://img.shields.io/badge/Claude%20Code-Analytics-orange?style=for-the-badge)
-![Progress](https://img.shields.io/badge/Progress-95%25-brightgreen?style=for-the-badge)
-![Claude Code 2.0](https://img.shields.io/badge/Claude%20Code-2.0-orange?style=for-the-badge)
+![Progress](https://img.shields.io/badge/Progress-100%25-brightgreen?style=for-the-badge)
+![Claude Code 2.0](https://img.shields.io/badge/Claude%20Code-2.0%20Default-orange?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
@@ -14,6 +14,8 @@ A comprehensive personal analytics dashboard for Claude Code CLI usage tracking 
 
 Track your Claude Code usage patterns, costs, and productivity metrics with this feature-rich analytics dashboard. Built specifically for individual developers who want deep insights into their AI-assisted coding sessions.
 
+**Latest Update**: Now featuring **Claulytics** branding with enhanced UI design and full **Claude Code 2.0 support** as the default schema (November 2025).
+
 ### ✨ Key Features
 
 - 📊 **Comprehensive Analytics**: Track sessions, costs, tokens, and model usage
@@ -22,7 +24,7 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 - 🎯 **Interactive Filtering**: Date ranges, drill-down views, and URL-persistent filters
 - 📱 **Responsive Design**: Optimized for desktop and mobile viewing
 - 🔒 **Privacy First**: All data remains local - no external uploads or sharing
-- 🚀 **Claude Code 2.0**: Extended sessions, checkpoints, subagents, and VS Code integration
+- 🚀 **Claude Code 2.0 Default**: Extended sessions, checkpoints, subagents, and VS Code integration (now standard)
 
 ## 📋 Table of Contents
 
@@ -87,14 +89,14 @@ Track your Claude Code usage patterns, costs, and productivity metrics with this
 
 - Node.js 18+
 - PostgreSQL 14+
-- Claude Code CLI 2.0+ (for data source)
+- Claude Code CLI 2.0+ (data source - CC2 is now the standard)
 
 ### Quick Start
 
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/your-username/claude-code-analytics.git
+git clone https://github.com/istealersn-dev/claude-code-analytics.git
 cd claude-code-analytics
 ```
 
@@ -323,10 +325,15 @@ All development phases complete - production ready:
 - ✅ **Phase 2**: Frontend Foundation (100%)
 - ✅ **Phase 3**: Advanced Analytics (85%)
 - ✅ **Phase 4**: Enhanced Features (100%)
-- ✅ **Phase 5**: Advanced Features & Automation (67% - Core features complete)
+- ✅ **Phase 5**: Advanced Features & Automation (50% - Phases 5.1-5.2 Complete ✅, 5.3-5.6 Skipped ⏭️)
 - ✅ **Phase 6**: Production & Deployment (100% - Merged PR #14)
 
-**Note**: Claude Code 2.0 features (checkpoints, subagents, extended sessions) are available as optional enhancements via `schema-claude-code-2.sql`. See npm scripts for CC2-specific commands.
+**Recent Updates**:
+- ✅ **November 2025**: Claude Code 2.0 is now the **default schema** (CC1 support removed)
+- ✅ **PR #18**: Enhanced dashboard with sub-metrics, thematic sections, and improved model detection
+- ✅ **PR #17**: Rebranded to **Claulytics** with redesigned Settings & Data Quality UI
+- ✅ **PR #16**: Added chart export functionality
+- ✅ **PR #15**: Improved sync interface and schema compatibility
 
 ## 📡 API Reference
 
@@ -421,12 +428,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Fastify** for fast and efficient backend framework
 - **Tailwind CSS** for utility-first styling approach
 
+## 🎨 Branding
+
+The dashboard features **Claulytics** branding in the UI (introduced in PR #17), while the project repository retains the name "claude-code-analytics" for consistency with existing installations.
+
 ---
 
 <div align="center">
 
 **Built with ❤️ for the Claude Code community**
 
-[Report Bug](https://github.com/your-username/claude-code-analytics/issues) · [Request Feature](https://github.com/your-username/claude-code-analytics/issues) · [Documentation](https://github.com/your-username/claude-code-analytics/wiki)
+[Report Bug](https://github.com/istealersn-dev/claude-code-analytics/issues) · [Request Feature](https://github.com/istealersn-dev/claude-code-analytics/issues) · [Documentation](https://github.com/istealersn-dev/claude-code-analytics)
 
 </div>
